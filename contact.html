@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONTACT — SATSUMA NOIR</title>
+  <meta name="description" content="SATSUMA NOIR へのお問い合わせ。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="contact" id="contact">
+      <div class="section-head">
+        <h2 class="section-head__title">CONTACT</h2>
+      </div>
+      <p class="contact__lead">商品・ギフト・その他のお問い合わせは、こちらのフォームよりお気軽にどうぞ。</p>
+      <form class="contact__form" id="contactForm" onsubmit="return false;">
+        <label class="field">
+          <span>お名前</span>
+          <input type="text" placeholder="鈴木 花子" required />
+        </label>
+        <label class="field">
+          <span>メールアドレス</span>
+          <input type="email" placeholder="mail@example.com" required />
+        </label>
+        <label class="field">
+          <span>お問い合わせ内容</span>
+          <textarea rows="5" placeholder="お問い合わせ内容をご記入ください。" required></textarea>
+        </label>
+        <button type="submit" class="btn btn--primary btn--full">送信する</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="settings.js"></script>
+
+  <script src="store.js"></script>
+
+  <script src="app.js"></script>
+</body>
+</html>
