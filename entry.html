@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENTRY — SATSUMA NOIR</title>
+  <meta name="description" content="SATSUMA NOIR の採用エントリーフォーム。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=65" />
+</head>
+<body>
+  <main class="page">
+    <section class="contact" id="entry">
+      <div class="section-head">
+        <h2 class="section-head__title">ENTRY</h2>
+      </div>
+      <p class="contact__lead">下記フォームに必要事項をご記入のうえ、ご応募ください。担当者より追ってご連絡いたします。</p>
+      <form class="contact__form" id="entryForm" onsubmit="return false;">
+        <label class="field">
+          <span>お名前 *</span>
+          <input type="text" id="entryName" placeholder="鈴木 花子" required />
+        </label>
+        <label class="field">
+          <span>フリガナ</span>
+          <input type="text" id="entryKana" placeholder="スズキ ハナコ" />
+        </label>
+        <label class="field">
+          <span>メールアドレス *</span>
+          <input type="email" id="entryEmail" placeholder="mail@example.com" required />
+        </label>
+        <label class="field">
+          <span>電話番号</span>
+          <input type="tel" id="entryPhone" placeholder="090-0000-0000" />
+        </label>
+        <label class="field">
+          <span>希望職種 *</span>
+          <select id="entryPosition" required>
+            <option value="">選択してください</option>
+            <option value="パティシエ">パティシエ</option>
+            <option value="販売スタッフ">販売スタッフ</option>
+            <option value="ECチーム">ECチーム</option>
+            <option value="その他">その他</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>自己PR・志望動機 *</span>
+          <textarea id="entryMessage" rows="5" placeholder="これまでのご経験や、応募の動機をご記入ください。" required></textarea>
+        </label>
+        <button type="submit" class="btn btn--primary btn--full">応募する</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="settings.js?v=5"></script>
+
+  <script src="store.js?v=5"></script>
+
+  <script src="recruit.js?v=6"></script>
+
+  <script src="applicants.js?v=5"></script>
+
+  <script src="app.js?v=12"></script>
+</body>
+</html>

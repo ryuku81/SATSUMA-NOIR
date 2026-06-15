@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=65" />
 </head>
 <body>
   <!-- Hero -->
@@ -19,18 +19,11 @@
       <h1 class="hero__brand">SATSUMA NOIR</h1>
     </div>
     <div class="hero-concept">
-      <p class="hero-concept__label">CONCEPT：WEEKEND_BASQUE</p>
-      <p class="hero-concept__head">『ひと口食べた瞬間、週末気分に』</p>
-      <p class="hero-concept__body">その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。</p>
+      <p class="hero-concept__label" data-site-text="heroConceptLabel">CONCEPT：WEEKEND_BASQUE</p>
+      <p class="hero-concept__head" data-site-text="heroConceptHead">『ひと口食べた瞬間、週末気分に』</p>
+      <p class="hero-concept__body" data-site-text="heroConceptBody">その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。</p>
     </div>
     <div class="hero__scroll">SCROLL</div>
-  </section>
-
-  <!-- Statement -->
-  <section class="statement">
-    <h2 class="statement__head">いつもの一日を、特別な週末に。</h2>
-    <img class="statement__photo" src="images/rare-cheesecake.png" alt="" loading="lazy" data-site-img="statement" />
-    <p class="statement__body">濃厚なのに、すっと溶ける。<br />ひと口ごとに広がる、深い余韻。<br />素材と静かに向き合い、手仕事で仕上げた一皿を。<br />あなたの週末に、ささやかな贅沢を。</p>
   </section>
 
   <!-- Ranking -->
@@ -42,30 +35,78 @@
     <div class="section-more"><a href="item.html" class="btn btn--ghost">すべての商品を見る</a></div>
   </section>
 
+  <!-- Statement -->
+  <section class="statement">
+    <img class="statement__bg" src="images/rare-cheesecake.png" alt="" loading="lazy" data-site-img="statement" />
+    <div class="statement__inner">
+      <h2 class="statement__head" data-site-text="statementHead">いつもの一日を、特別な週末に。</h2>
+      <p class="statement__body" data-site-text="statementBody">濃厚なのに、すっと溶ける。<br />ひと口ごとに広がる、深い余韻。<br />素材と静かに向き合い、手仕事で仕上げた一皿を。<br />あなたの週末に、ささやかな贅沢を。</p>
+    </div>
+  </section>
+
   <!-- How to eat -->
   <section class="howto" id="howto">
     <div class="howto__head">
-      <p class="howto__eyebrow">HOW TO EAT</p>
-      <h2 class="howto__title">熟成冷凍チーズケーキの、<br />お召し上がり方</h2>
+      <p class="howto__eyebrow" data-site-text="howtoEyebrow">HOW TO EAT</p>
+      <div class="howto__strip">
+        <img class="howto__strip-img" src="images/basque-cheesecake.png" alt="バスクチーズケーキ" loading="lazy" data-site-img="howto1" />
+        <img class="howto__strip-img" src="images/souffle-cheesecake.png" alt="" loading="lazy" data-site-img="howto2" />
+        <img class="howto__strip-img" src="images/berry-rare-cheesecake.png" alt="" loading="lazy" data-site-img="howto3" />
+      </div>
     </div>
 
-    <div class="howto__recommend">
-      <span class="howto__recommend-label">STAFF RECOMMEND</span>
-      <p class="howto__recommend-text">スタッフおすすめは、室温で1時間解凍したら小分けにカットし、食べる分だけ解凍し、残りは冷凍庫へ♪<br />毎日のご褒美に少しずつお楽しみ頂けます。</p>
+    <div class="howto__split">
+      <div class="howto__col">
+        <h2 class="howto__title" data-site-text="howtoTitle">熟成冷凍チーズケーキの<br />お召し上がり方</h2>
+      </div>
+      <div class="howto__col howto__col--divider">
+        <p class="howto__recommend-text" data-site-text="howtoRecommendText">スタッフおすすめは、室温で1時間解凍したら小分けにカットし、食べる分だけ解凍し、残りは冷凍庫へ♪<br />毎日のご褒美に少しずつお楽しみ頂けます。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Topics -->
+  <section class="topics" id="topics">
+    <div class="section-head">
+      <h2 class="section-head__title">TOPICS</h2>
+    </div>
+    <div class="topics__viewport">
+      <button class="topics__arrow topics__arrow--prev" id="topicsPrev" aria-label="前へ">‹</button>
+      <div class="topics__row" id="topicsRow"></div>
+            <button class="topics__arrow topics__arrow--next" id="topicsNext" aria-label="次へ">›</button>
     </div>
   </section>
 
   <!-- About -->
   <section class="about" id="about">
-    <h2 class="about__head">SOUL CAKE SHOPへようこそ</h2>
-    <p class="about__body">2018年、九州初のバスクチーズケーキ専門店として創業。</p>
-    <p class="about__body">独自製法”熟成冷凍”加工にて『解凍後がいちばんの食べごろ』となるように製造しています。全国各地のお客様に愛され続けるモノ作りに取り組んでいます。2025年、原点回帰による”目が届く範囲”のみで運営します。</p>
+    <h2 class="about__head" data-site-about="head">SOUL CAKE SHOPへようこそ</h2>
+    <div data-site-about="body">
+      <p class="about__body">2018年、九州初のバスクチーズケーキ専門店として創業。</p>
+      <p class="about__body">独自製法”熟成冷凍”加工にて『解凍後がいちばんの食べごろ』となるように製造しています。全国各地のお客様に愛され続けるモノ作りに取り組んでいます。2025年、原点回帰による”目が届く範囲”のみで運営します。</p>
+    </div>
   </section>
 
-  <script src="settings.js"></script>
+  <!-- Mail Magazine -->
+  <section class="mailmag" id="mailmag">
+    <div class="mailmag__inner">
+      <h2 class="mailmag__title">MAIL MAGAZINE</h2>
+      <p class="mailmag__lead">SATSUMA NOIR の販売開始や限定商品のお知らせをお届けいたします。</p>
+      <form class="mailmag__form" id="mailmagForm" novalidate>
+        <input type="email" class="mailmag__input" id="mailmagEmail" placeholder="メールアドレス" required />
+        <button type="submit" class="mailmag__btn">登録</button>
+      </form>
+      <p class="mailmag__note">登録が完了した時点で、<a href="privacy.html">プライバシーポリシー</a>に同意したものとみなします。携帯キャリアのメールアドレス（@icloud.com / @docomo.ne.jp / @ezweb.ne.jp / @au.com / @softbank.ne.jp等）の登録は、弊社からのメールが届かない可能性があるため、非推奨です。</p>
+    </div>
+  </section>
 
-  <script src="store.js"></script>
+  <script src="settings.js?v=4"></script>
 
-  <script src="app.js"></script>
+  <script src="store.js?v=4"></script>
+
+  <script src="topics.js?v=1"></script>
+
+  <script src="subscribers.js?v=1"></script>
+
+  <script src="app.js?v=12"></script>
 </body>
 </html>

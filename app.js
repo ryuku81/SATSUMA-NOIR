@@ -52,7 +52,6 @@ function buildChrome() {
       </nav>
       <a href="index.html" class="brand">SATSUMA NOIR</a>
       <div class="header__actions">
-        <button class="icon-btn" aria-label="検索">${ICON_SEARCH}</button>
         <a class="icon-btn cart-btn" href="cart.html" aria-label="カート">${ICON_CART}<span class="cart-count" id="cartCount">0</span></a>
         <a class="login-btn" href="login.html">LOGIN</a>
       </div>
@@ -69,31 +68,22 @@ function buildChrome() {
   const footer = document.createElement("footer");
   footer.className = "footer";
   footer.innerHTML = `
-    <div class="footer__top">
-      <div class="footer__brand">
-        <a href="index.html" class="brand">SATSUMA NOIR</a>
-        <p>夜のように静かで、深い甘さを。</p>
-      </div>
-      <nav class="footer__links">
-        <a href="faq.html">FAQ</a>
-        <a href="privacy.html">プライバシーポリシー</a>
-        <a href="tokushoho.html">特定商取引法に基づく表示</a>
-        <a href="recruit.html">採用情報</a>
-        <a href="contact.html">お問い合わせ</a>
-      </nav>
+    <nav class="footer__links">
+      <a href="faq.html">FAQ</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="tokushoho.html">特定商取引法に基づく表示</a>
+      <a href="recruit.html">採用情報</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <div class="footer__social">
+      <a href="#" aria-label="X" class="footer__social-icon" data-social="x">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+      <a href="#" aria-label="Instagram" class="footer__social-icon" data-social="instagram">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
+      </a>
     </div>
-    <div class="footer__bottom">
-      <p>© 2026 SATSUMA NOIR. All rights reserved.</p>
-      <div class="footer__social">
-        <a href="#" aria-label="Instagram" class="footer__social-icon" data-social="instagram">
-          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.1" fill="currentColor" stroke="none"/></svg>
-        </a>
-        <a href="#" aria-label="X" class="footer__social-icon" data-social="x">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        </a>
-        <a href="#" aria-label="Note" data-social="note">NOTE</a>
-      </div>
-    </div>`;
+    <p class="footer__copy">© 2026 SATSUMA NOIR. All rights reserved.</p>`;
   document.body.appendChild(footer);
   applySocialLinks(footer);
 
@@ -116,7 +106,13 @@ function applySiteImages() {
   if (typeof SettingsStore === "undefined") return;
   SettingsStore.get()
     .then((settings) => {
-      const map = { hero: settings.heroImage, statement: settings.statementImage };
+      const map = {
+        hero: settings.heroImage,
+        statement: settings.statementImage,
+        howto1: settings.howtoImage1,
+        howto2: settings.howtoImage2,
+        howto3: settings.howtoImage3,
+      };
       Object.entries(map).forEach(([key, src]) => {
         if (!src) return;
         const el = document.querySelector(`[data-site-img="${key}"]`);
@@ -124,6 +120,68 @@ function applySiteImages() {
       });
     })
     .catch((err) => console.error("サイト画像の読み込みに失敗しました:", err));
+}
+
+// 設定（SettingsStore）からトップページ各所の文章を反映。
+// data-site-text="KEY" を持つ要素に、設定値を反映する。
+// 下の MULTILINE のキーは改行を <br> に変換して表示する。
+const SITE_TEXT_MULTILINE = new Set([
+  "heroConceptBody",
+  "statementBody",
+  "howtoTitle",
+  "howtoRecommendText",
+]);
+function applySiteText() {
+  if (typeof SettingsStore === "undefined") return;
+  const els = document.querySelectorAll("[data-site-text]");
+  if (!els.length) return;
+  const escapeHtml = (s) =>
+    String(s ?? "").replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+  SettingsStore.get()
+    .then((settings) => {
+      els.forEach((el) => {
+        const key = el.dataset.siteText;
+        const val = settings[key];
+        if (typeof val !== "string") return;
+        if (SITE_TEXT_MULTILINE.has(key)) {
+          el.innerHTML = escapeHtml(val).replace(/\n/g, "<br />");
+        } else {
+          el.textContent = val;
+        }
+      });
+    })
+    .catch((err) => console.error("文章の読み込みに失敗しました:", err));
+}
+
+// 設定（SettingsStore）から About セクションの文章を反映（トップページ）。
+// data-site-about="head" / "body" を持つ要素がある場合のみ。
+function applyAboutText() {
+  if (typeof SettingsStore === "undefined") return;
+  const headEl = document.querySelector('[data-site-about="head"]');
+  const bodyEl = document.querySelector('[data-site-about="body"]');
+  if (!headEl && !bodyEl) return;
+  const escapeHtml = (s) =>
+    String(s ?? "").replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+  SettingsStore.get()
+    .then((settings) => {
+      if (headEl && typeof settings.aboutHeading === "string") {
+        headEl.textContent = settings.aboutHeading;
+      }
+      if (bodyEl && typeof settings.aboutBody === "string") {
+        // 改行で段落を分け、各行を <p class="about__body"> に
+        bodyEl.innerHTML = settings.aboutBody
+          .split("\n")
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+          .map((line) => `<p class="about__body">${escapeHtml(line)}</p>`)
+          .join("");
+      }
+    })
+    .catch((err) => console.error("About文章の読み込みに失敗しました:", err));
 }
 
 // 設定（SettingsStore）から SNS リンクをフッターに反映。
@@ -188,6 +246,22 @@ function cardHtml(p) {
     </article>`;
 }
 
+// カテゴリのフィルタボタンを CategoryStore から描画（ITEM ページ）
+function renderFilters() {
+  const filters = document.getElementById("filters");
+  if (!filters || typeof CategoryStore === "undefined") return;
+  const esc = (s) =>
+    String(s ?? "").replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+    );
+  const cats = CategoryStore.listSync();
+  filters.innerHTML =
+    `<button class="filter is-active" data-filter="all">ALL</button>` +
+    cats
+      .map((c) => `<button class="filter" data-filter="${esc(c.value)}">${esc(c.label)}</button>`)
+      .join("");
+}
+
 function renderProducts(filter = "all") {
   const grid = document.getElementById("productGrid");
   if (!grid) return;
@@ -215,18 +289,20 @@ function renderRanking() {
   if (!row) return;
   row.innerHTML = getRankingProducts().map((p, i) => {
     const no = String(i + 1).padStart(2, "0");
+    const media = p.img
+      ? `<img src="${p.img}" alt="${p.name}" loading="lazy" />`
+      : `<span class="rank-row__glyph">${p.glyph}</span>`;
     return `
-    <article class="rank-card" data-id="${p.id}">
-      <div class="rank-card__media">
-        <span class="rank-card__no">${no}</span>
-        ${p.img ? `<img class="card__img" src="${p.img}" alt="${p.name}" loading="lazy" />` : `<span class="rank-card__glyph">${p.glyph}</span>`}
+    <article class="rank-row" data-id="${p.id}">
+      <div class="rank-row__media">
+        <span class="rank-row__no">${no}</span>
+        ${media}
       </div>
-      <div class="rank-card__body">
-        <h3 class="rank-card__name">${p.name}</h3>
-        <div class="rank-card__foot">
-          <span class="rank-card__price">${yen(p.price)}</span>
-          <button class="card__add" data-add="${p.id}" aria-label="カートに追加">${ICON_CART_SM}</button>
-        </div>
+      <div class="rank-row__info">
+        ${p.catLabel ? `<p class="rank-row__cat">${p.catLabel}</p>` : ""}
+        <h3 class="rank-row__name">${p.name}</h3>
+        <p class="rank-row__price">${yen(p.price)}</p>
+        <button class="rank-row__add" data-add="${p.id}">カートに追加</button>
       </div>
     </article>`;
   }).join("");
@@ -365,9 +441,237 @@ function renderCartPage() {
     <div class="cart-page__list">${items}</div>
     <div class="cart-page__summary">
       <div class="cart-page__total"><span>合計</span><span>${yen(total)}</span></div>
-      <button class="btn btn--primary btn--full">レジに進む</button>
+      <a href="checkout.html" class="btn btn--primary btn--full">レジに進む</a>
       <a href="item.html" class="cart-page__continue">買い物を続ける</a>
     </div>`;
+}
+
+// ============================================================
+//  Checkout (checkout.html page)
+// ============================================================
+// ▼ Stripe の「公開可能キー」をここに設定すると、本物の Stripe 決済フォーム
+//   （Stripe Elements）になります。例: "pk_test_xxxxxxxx"
+//   未設定（空文字）の場合は、デモ用のカード入力欄にフォールバックします。
+//   ※ 実際の課金にはサーバー側で PaymentIntent を作成する処理が別途必要です。
+const STRIPE_PUBLISHABLE_KEY = "";
+
+// Stripe 関連の状態（checkout ページでのみ使用）
+let _stripe = null;
+let _stripeCard = null;
+let _stripeReady = false;
+
+function stripeKeyConfigured() {
+  return typeof window.Stripe === "function" && /^pk_(test|live)_/.test(STRIPE_PUBLISHABLE_KEY);
+}
+
+// 決済フォームの初期化（Stripe Elements もしくはデモ入力欄）
+function setupCheckoutPayment() {
+  const mount = document.getElementById("paymentElement");
+  const note = document.getElementById("payNote");
+  const cardSection = document.getElementById("cardSection");
+
+  // 支払い方法ラジオの切り替え（カードのときだけカード欄を表示）
+  document.querySelectorAll('input[name="payMethod"]').forEach((r) => {
+    r.addEventListener("change", () => {
+      cardSection.hidden = document.querySelector('input[name="payMethod"]:checked').value !== "card";
+    });
+  });
+
+  if (stripeKeyConfigured()) {
+    // 本物の Stripe Elements
+    try {
+      _stripe = window.Stripe(STRIPE_PUBLISHABLE_KEY);
+      const elements = _stripe.elements();
+      _stripeCard = elements.create("card", {
+        style: {
+          base: { color: "#f4efe6", fontSize: "16px", "::placeholder": { color: "#8a8275" } },
+          invalid: { color: "#e07a7a" },
+        },
+      });
+      _stripeCard.mount("#paymentElement");
+      _stripeCard.on("change", (ev) => {
+        const cardError = document.getElementById("cardError");
+        cardError.hidden = !ev.error;
+        cardError.textContent = ev.error ? ev.error.message : "";
+      });
+      _stripeReady = true;
+      note.textContent = "Stripe のテスト環境では、テストカード 4242 4242 4242 4242（任意の将来日付・任意のCVC）が使えます。";
+    } catch (err) {
+      console.error("Stripe の初期化に失敗しました:", err);
+      _stripeReady = false;
+    }
+  }
+
+  if (!_stripeReady) {
+    // デモ用カード入力欄（Stripe 未設定時）
+    mount.innerHTML = `
+      <div class="demo-card">
+        <label class="field"><span>カード番号</span><input type="text" id="demoCardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="4242 4242 4242 4242" /></label>
+        <div class="demo-card__row">
+          <label class="field"><span>有効期限 (MM/YY)</span><input type="text" id="demoCardExp" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="12/29" /></label>
+          <label class="field"><span>セキュリティコード</span><input type="text" id="demoCardCvc" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123" /></label>
+        </div>
+      </div>`;
+    note.textContent = "※ デモ用の入力欄です。app.js の STRIPE_PUBLISHABLE_KEY に pk_test_… を設定すると、本物の Stripe 決済フォームになります。";
+  }
+}
+
+// 支払い処理。成功なら { label, brand, last4, method } を返し、失敗なら例外。
+async function processPayment(method, name, email) {
+  if (method === "cod") {
+    return { label: "代金引換（着払い）", method: "cod" };
+  }
+  // カード払い
+  if (_stripeReady) {
+    const { paymentMethod, error } = await _stripe.createPaymentMethod({
+      type: "card",
+      card: _stripeCard,
+      billing_details: { name, email },
+    });
+    if (error) throw new Error(error.message);
+    const c = paymentMethod.card || {};
+    return { label: `カード（${(c.brand || "card").toUpperCase()} ****${c.last4 || "----"}）`, brand: c.brand, last4: c.last4, method: "card", paymentMethodId: paymentMethod.id };
+  }
+  // デモ用カード入力のバリデーション
+  const num = (document.getElementById("demoCardNumber").value || "").replace(/\s+/g, "");
+  const exp = (document.getElementById("demoCardExp").value || "").trim();
+  const cvc = (document.getElementById("demoCardCvc").value || "").trim();
+  if (!/^\d{12,19}$/.test(num) || !/^\d{2}\/\d{2}$/.test(exp) || !/^\d{3,4}$/.test(cvc)) {
+    throw new Error("カード情報を正しくご入力ください。（番号・有効期限 MM/YY・セキュリティコード）");
+  }
+  return { label: `カード ****${num.slice(-4)}（デモ）`, last4: num.slice(-4), method: "card" };
+}
+
+function renderCheckoutPage() {
+  const root = document.getElementById("checkoutPage");
+  if (!root) return;
+
+  // 未ログインで直接来た場合はログイン画面へ
+  if (!UserAuth.isLoggedIn()) {
+    window.location.href = "login.html?redirect=checkout.html";
+    return;
+  }
+
+  if (cart.length === 0) {
+    root.innerHTML = `
+      <p class="cart-page__empty">カートが空のため、購入手続きに進めません。</p>
+      <div class="section-more"><a href="item.html" class="btn btn--ghost">商品一覧へ</a></div>`;
+    return;
+  }
+
+  let total = 0;
+  const rows = cart
+    .map((l) => {
+      const p = PRODUCTS.find((x) => x.id === l.id);
+      if (!p) return "";
+      total += p.price * l.qty;
+      return `
+      <div class="checkout-line">
+        <span class="checkout-line__name">${p.name} <span class="checkout-line__qty">× ${l.qty}</span></span>
+        <span class="checkout-line__price">${yen(p.price * l.qty)}</span>
+      </div>`;
+    })
+    .join("");
+
+  root.innerHTML = `
+    <div class="checkout">
+      <div class="checkout__col">
+        <h3 class="checkout__subtitle">ご注文内容</h3>
+        <div class="checkout__items">${rows}</div>
+        <div class="cart-page__total"><span>合計</span><span>${yen(total)}</span></div>
+      </div>
+      <form class="checkout__col checkout__form" id="checkoutForm" novalidate>
+        <h3 class="checkout__subtitle">お届け先・お客様情報</h3>
+        <label class="field"><span>お名前 *</span><input type="text" id="coName" placeholder="鈴木 花子" required /></label>
+        <label class="field"><span>メールアドレス *</span><input type="email" id="coEmail" placeholder="mail@example.com" required /></label>
+        <label class="field"><span>お届け先住所 *</span><textarea id="coAddress" rows="3" placeholder="〒000-0000 ○○県○○市…" required></textarea></label>
+        <label class="field"><span>備考（任意）</span><textarea id="coNote" rows="2" placeholder="ギフト包装のご希望など"></textarea></label>
+
+        <h3 class="checkout__subtitle">お支払い方法</h3>
+        <div class="pay-methods" id="payMethods">
+          <label class="pay-method"><input type="radio" name="payMethod" value="card" checked /><span>クレジット / デビットカード</span></label>
+          <label class="pay-method"><input type="radio" name="payMethod" value="cod" /><span>代金引換（着払い）</span></label>
+        </div>
+        <div id="cardSection">
+          <div id="paymentElement" class="stripe-card"></div>
+          <p class="checkout__error" id="cardError" hidden></p>
+          <p class="pay-note" id="payNote"></p>
+        </div>
+
+        <p class="checkout__error" id="checkoutError" hidden>必須項目をご入力ください。</p>
+        <button type="submit" class="btn btn--primary btn--full" id="placeOrderBtn">注文を確定する</button>
+        <a href="cart.html" class="cart-page__continue">カートに戻る</a>
+      </form>
+    </div>`;
+
+  setupCheckoutPayment();
+
+  document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("coName").value.trim();
+    const email = document.getElementById("coEmail").value.trim();
+    const address = document.getElementById("coAddress").value.trim();
+    const note = document.getElementById("coNote").value.trim();
+    const err = document.getElementById("checkoutError");
+    const submitBtn = document.getElementById("placeOrderBtn");
+    if (!name || !email || !address) {
+      err.textContent = "必須項目をご入力ください。";
+      err.hidden = false;
+      return;
+    }
+    err.hidden = true;
+
+    const method = document.querySelector('input[name="payMethod"]:checked').value;
+
+    // 支払い処理（Stripe もしくはデモ）
+    let payment;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "処理中…";
+    try {
+      payment = await processPayment(method, name, email);
+    } catch (payErr) {
+      err.textContent = payErr.message || "決済情報の確認に失敗しました。";
+      err.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "注文を確定する";
+      return;
+    }
+
+    const items = cart
+      .map((l) => {
+        const p = PRODUCTS.find((x) => x.id === l.id);
+        return p ? { id: p.id, name: p.name, price: p.price, qty: l.qty } : null;
+      })
+      .filter(Boolean);
+    const orderTotal = items.reduce((sum, it) => sum + it.price * it.qty, 0);
+
+    try {
+      const order = await OrderStore.create({
+        customer: name,
+        email,
+        address,
+        note,
+        items,
+        total: orderTotal,
+        payment: payment.label,
+      });
+      cart = [];
+      saveCart();
+      updateCartBadge();
+      root.innerHTML = `
+        <div class="checkout-done">
+          <p class="checkout-done__title">ご注文ありがとうございました。</p>
+          <p class="checkout-done__sub">注文番号：#${order.id}<br />お支払い方法：${payment.label}<br />確認メールを ${email} 宛にお送りします。（デモ）</p>
+          <div class="section-more"><a href="item.html" class="btn btn--ghost">買い物を続ける</a></div>
+        </div>`;
+    } catch (e2) {
+      console.error("注文の確定に失敗しました:", e2);
+      err.textContent = "注文の確定に失敗しました。時間をおいて再度お試しください。";
+      err.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "注文を確定する";
+    }
+  });
 }
 
 // ============================================================
@@ -489,10 +793,99 @@ function wire() {
   // Contact form (CONTACT page)
   const contactForm = document.getElementById("contactForm");
   if (contactForm) {
-    contactForm.addEventListener("submit", (e) => {
+    contactForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      contactForm.reset();
-      alert("お問い合わせを送信しました。（デモ）");
+      const name = document.getElementById("contactName")?.value.trim() || "";
+      const email = document.getElementById("contactEmail")?.value.trim() || "";
+      const message = document.getElementById("contactMessage")?.value.trim() || "";
+      if (!name || !email || !message) return;
+      try {
+        // 入力内容を保存（管理画面のお問い合わせ一覧で確認できる）
+        if (window.InquiryStore) {
+          await InquiryStore.create({ name, email, message });
+        }
+        contactForm.reset();
+        alert("お問い合わせを送信しました。");
+      } catch (err) {
+        console.error("お問い合わせの保存に失敗しました:", err);
+        alert("送信に失敗しました。時間をおいて再度お試しください。");
+      }
+    });
+  }
+
+  // Entry form (ENTRY page)
+  const entryForm = document.getElementById("entryForm");
+  if (entryForm) {
+    entryForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = document.getElementById("entryName")?.value.trim() || "";
+      const kana = document.getElementById("entryKana")?.value.trim() || "";
+      const email = document.getElementById("entryEmail")?.value.trim() || "";
+      const phone = document.getElementById("entryPhone")?.value.trim() || "";
+      const position = document.getElementById("entryPosition")?.value || "";
+      const message = document.getElementById("entryMessage")?.value.trim() || "";
+      if (!name || !email || !position || !message) return;
+      try {
+        // 応募内容を保存（管理画面の応募者管理で確認できる）
+        if (window.ApplicantStore) {
+          await ApplicantStore.create({ name, kana, email, phone, position, message });
+        }
+      } catch (err) {
+        console.error("応募の保存に失敗しました:", err);
+      }
+      const section = document.getElementById("entry");
+      section.innerHTML = `
+        <div class="section-head"><h2 class="section-head__title">ENTRY</h2></div>
+        <p class="contact__lead">ご応募ありがとうございました。<br />内容を確認のうえ、担当者より ${name} 様へご連絡いたします。（デモ）</p>
+        <div class="section-more"><a href="index.html" class="btn btn--ghost">トップへ戻る</a></div>`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
+  // Mail magazine form
+  const mailmagForm = document.getElementById("mailmagForm");
+  if (mailmagForm) {
+    mailmagForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("mailmagEmail");
+      if (!email.value.trim() || !email.checkValidity()) {
+        email.focus();
+        return;
+      }
+      try {
+        // 登録者を保存（管理画面の顧客管理で確認できる）
+        if (window.SubscriberStore) {
+          await SubscriberStore.create(email.value.trim());
+        }
+      } catch (err) {
+        console.error("メルマガ登録の保存に失敗しました:", err);
+      }
+      mailmagForm.reset();
+      alert("メールマガジンにご登録いただきありがとうございます。（デモ）");
+    });
+  }
+
+  // Topics carousel arrows
+  const topicsRow = document.getElementById("topicsRow");
+  if (topicsRow) {
+    const step = () => {
+      const card = topicsRow.querySelector(".topic-card");
+      return card ? card.getBoundingClientRect().width + 26 : 320;
+    };
+    document.getElementById("topicsNext")?.addEventListener("click", () => {
+      const max = topicsRow.scrollWidth - topicsRow.clientWidth;
+      if (topicsRow.scrollLeft >= max - 4) {
+        topicsRow.scrollTo({ left: 0, behavior: "smooth" }); // 末尾→先頭へ一周
+      } else {
+        topicsRow.scrollBy({ left: step(), behavior: "smooth" });
+      }
+    });
+    document.getElementById("topicsPrev")?.addEventListener("click", () => {
+      if (topicsRow.scrollLeft <= 4) {
+        topicsRow.scrollTo({ left: topicsRow.scrollWidth, behavior: "smooth" }); // 先頭→末尾へ一周
+      } else {
+        topicsRow.scrollBy({ left: -step(), behavior: "smooth" });
+      }
     });
   }
 
@@ -510,14 +903,18 @@ buildChrome();
 wire();
 updateCartBadge();
 applySiteImages();
+applyAboutText();
+applySiteText();
 
 // 商品はストアから読み込んでから描画（将来 fetch に変わっても同じ流れ）
 ProductStore.findAll()
   .then((products) => {
     PRODUCTS = products;
     renderRanking();
+    renderFilters();
     renderProducts();
     renderCartPage();
+    renderCheckoutPage();
   })
   .catch((err) => {
     console.error("商品の読み込みに失敗しました:", err);

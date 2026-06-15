@@ -32,9 +32,10 @@
   // 在庫アラートのしきい値（これ以下で「残りわずか」、0で「在庫切れ」）
   const LOW_STOCK_THRESHOLD = 5;
 
-  // cat（内部値）→ 表示ラベル
-  const CAT_LABELS = { baked: "BAKED", rare: "RARE", special: "SPECIAL" };
-  const withLabel = (p) => ({ ...p, catLabel: CAT_LABELS[p.cat] || p.cat?.toUpperCase() || "" });
+  // cat（内部値）→ 表示ラベル。カテゴリは CategoryStore（categories.js）が正。
+  const labelOf = (cat) =>
+    global.CategoryStore ? global.CategoryStore.labelOf(cat) : cat ? String(cat).toUpperCase() : "";
+  const withLabel = (p) => ({ ...p, catLabel: labelOf(p.cat) });
 
   // 旧データ（stock 未設定）を補完する移行処理。
   // 既存の8商品はシード値、それ以外は 0 を既定とする。
@@ -72,11 +73,10 @@
 
   // ---- 公開 API（async = 将来のバックエンドと同じ形）----
   const ProductStore = {
-    CATEGORIES: [
-      { value: "baked", label: "BAKED" },
-      { value: "rare", label: "RARE" },
-      { value: "special", label: "SPECIAL" },
-    ],
+    // カテゴリは CategoryStore（categories.js）から取得（追加・削除に追従）
+    get CATEGORIES() {
+      return global.CategoryStore ? global.CategoryStore.listSync() : [];
+    },
 
     LOW_STOCK_THRESHOLD,
 

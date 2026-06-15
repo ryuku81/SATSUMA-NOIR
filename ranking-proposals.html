@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RANKING — デザイン案 / SATSUMA NOIR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@600;700;800;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#0a0a0b; --bg-soft:#121214; --surface:#16161a; --surface-2:#1d1d22;
+      --line:rgba(255,255,255,.08); --line-strong:rgba(255,255,255,.16);
+      --text:#f4f1ea; --dim:#9a978f; --faint:#5c5a55; --gold:#c9a25f; --gold-soft:#e3c98c;
+      --ease:cubic-bezier(.22,1,.36,1);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:"Noto Sans JP",sans-serif;-webkit-font-smoothing:antialiased;}
+    .num{font-family:"Inter",sans-serif;}
+    .yen{font-family:"Inter",sans-serif;}
+
+    /* ---- ページ枠 ---- */
+    .wrap{max-width:1200px;margin:0 auto;padding:0 2rem;}
+    .topbar{position:sticky;top:0;z-index:50;background:rgba(10,10,11,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+    .topbar__in{max-width:1200px;margin:0 auto;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+    .topbar__title{font-size:.95rem;letter-spacing:.08em;}
+    .topbar__title b{color:var(--gold);}
+    .topbar__nav{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .topbar__nav a{font-size:.74rem;letter-spacing:.06em;color:var(--dim);text-decoration:none;border:1px solid var(--line-strong);border-radius:999px;padding:.4rem .9rem;transition:all .3s var(--ease);}
+    .topbar__nav a:hover{color:var(--gold-soft);border-color:var(--gold);}
+
+    .concept{padding:6rem 0 5rem;border-bottom:1px solid var(--line);}
+    .concept__head{margin-bottom:3rem;}
+    .concept__tag{font-family:"Inter",sans-serif;font-size:.72rem;font-weight:700;letter-spacing:.3em;color:var(--gold);}
+    .concept__name{font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;margin:.5rem 0 .6rem;}
+    .concept__desc{color:var(--dim);font-size:.88rem;line-height:1.9;max-width:640px;}
+    .sec-title{font-family:"Cormorant Garamond",serif;font-size:2.6rem;font-weight:600;letter-spacing:.12em;}
+    .sec-title .en{color:var(--gold);}
+
+    /* =========================================================
+       案A：エディトリアル・オーバーラップ（巨大ナンバー × 交互配置）
+       ========================================================= */
+    .a-row{position:relative;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:2rem;min-height:300px;margin:2.5rem 0;}
+    .a-row:nth-child(even){direction:rtl;}
+    .a-row:nth-child(even) .a-info{direction:ltr;}
+    .a-media{position:relative;direction:ltr;}
+    .a-media img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:6px;box-shadow:0 30px 60px rgba(0,0,0,.55);}
+    .a-rank{position:absolute;top:-3.2rem;left:-1.5rem;font-family:"Inter",sans-serif;font-weight:900;font-size:clamp(6rem,16vw,12rem);line-height:.8;color:transparent;-webkit-text-stroke:2px var(--gold);opacity:.85;z-index:2;pointer-events:none;}
+    .a-row:nth-child(even) .a-rank{left:auto;right:-1.5rem;}
+    .a-info{padding:1rem 1.5rem;}
+    .a-cat{font-family:"Inter",sans-serif;font-size:.7rem;letter-spacing:.28em;color:var(--gold);}
+    .a-name{font-size:1.7rem;font-weight:700;margin:.6rem 0 1rem;line-height:1.4;}
+    .a-price{font-family:"Inter",sans-serif;font-size:1.3rem;color:var(--text);}
+    .a-price small{font-size:.7rem;color:var(--dim);margin-left:.3rem;}
+    .a-btn{display:inline-block;margin-top:1.4rem;border:1px solid var(--gold);color:var(--gold-soft);background:transparent;border-radius:999px;padding:.6rem 1.6rem;font-size:.78rem;letter-spacing:.08em;cursor:pointer;transition:all .3s var(--ease);}
+    .a-btn:hover{background:var(--gold);color:#000;}
+
+    /* =========================================================
+       案B：表彰台（PODIUM）
+       ========================================================= */
+    .b-podium{display:grid;grid-template-columns:1fr 1.25fr 1fr;align-items:end;gap:1.4rem;max-width:920px;margin:0 auto;}
+    .b-card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;text-align:center;transition:transform .4s var(--ease);}
+    .b-card:hover{transform:translateY(-8px);}
+    .b-card__img{width:100%;aspect-ratio:1/1;object-fit:cover;}
+    .b-card--1{border-color:rgba(201,162,95,.6);box-shadow:0 0 0 1px rgba(201,162,95,.3),0 30px 70px rgba(0,0,0,.6);}
+    .b-card--1 .b-card__img{aspect-ratio:4/5;}
+    .b-medal{position:absolute;top:.8rem;left:50%;transform:translateX(-50%);width:2.6rem;height:2.6rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:"Inter",sans-serif;font-weight:800;font-size:1.1rem;color:#000;box-shadow:0 6px 18px rgba(0,0,0,.5);z-index:2;}
+    .b-medal--1{background:linear-gradient(135deg,#f3d27a,#c9a25f);}
+    .b-medal--2{background:linear-gradient(135deg,#e8e8ea,#a9a9ad);}
+    .b-medal--3{background:linear-gradient(135deg,#e2a778,#b97a45);}
+    .b-card__body{padding:1rem .9rem 1.4rem;}
+    .b-card__name{font-size:.98rem;font-weight:700;line-height:1.5;}
+    .b-card__price{font-family:"Inter",sans-serif;color:var(--gold-soft);margin-top:.5rem;}
+    .b-stand{height:0;}
+    .b-col--1{margin-bottom:2.4rem;}
+    .b-crown{position:absolute;top:-1.7rem;left:50%;transform:translateX(-50%);font-size:1.6rem;}
+
+    /* =========================================================
+       案C：ミニマル・インデックス（罫線リスト × 大きな番号）
+       ========================================================= */
+    .c-list{border-top:1px solid var(--line-strong);max-width:860px;margin:0 auto;}
+    .c-item{display:grid;grid-template-columns:auto 76px 1fr auto;align-items:center;gap:1.6rem;padding:1.4rem .5rem;border-bottom:1px solid var(--line);transition:background .3s var(--ease),padding-left .3s var(--ease);cursor:pointer;}
+    .c-item:hover{background:var(--surface);padding-left:1.2rem;}
+    .c-no{font-family:"Inter",sans-serif;font-weight:800;font-size:2rem;color:var(--faint);min-width:2.4rem;transition:color .3s var(--ease);}
+    .c-item:hover .c-no{color:var(--gold);}
+    .c-item--1 .c-no{color:var(--gold);}
+    .c-thumb{width:76px;height:76px;border-radius:6px;object-fit:cover;}
+    .c-name{font-size:1.05rem;font-weight:500;}
+    .c-meta{font-size:.74rem;color:var(--dim);font-family:"Inter",sans-serif;letter-spacing:.04em;margin-top:.25rem;}
+    .c-price{font-family:"Inter",sans-serif;font-size:1.1rem;color:var(--text);white-space:nowrap;}
+    .c-arrow{color:var(--faint);transition:transform .3s var(--ease),color .3s var(--ease);}
+    .c-item:hover .c-arrow{color:var(--gold);transform:translateX(4px);}
+
+    .note{color:var(--faint);font-size:.74rem;text-align:center;padding:3rem 0 5rem;line-height:1.9;}
+
+    @media(max-width:760px){
+      .a-row,.a-row:nth-child(even){grid-template-columns:1fr;direction:ltr;}
+      .a-rank{font-size:6rem;top:-2.4rem;left:-.3rem;}
+      .a-row:nth-child(even) .a-rank{right:auto;left:-.3rem;}
+      .b-podium{grid-template-columns:1fr;max-width:380px;}
+      .b-col--1{margin-bottom:0;order:-1;}
+      .c-item{grid-template-columns:auto 56px 1fr;gap:1rem;}
+      .c-thumb{width:56px;height:56px;}
+      .c-price{display:none;}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar__in">
+      <div class="topbar__title">RANKING <b>デザイン案</b> — SATSUMA NOIR（プレビュー / :8766）</div>
+      <nav class="topbar__nav">
+        <a href="#a">案A 巨大ナンバー</a>
+        <a href="#b">案B 表彰台</a>
+        <a href="#c">案C インデックス</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ===== 案A ===== -->
+  <section class="concept" id="a">
+    <div class="wrap">
+      <div class="concept__head">
+        <p class="concept__tag">PROPOSAL A</p>
+        <h2 class="concept__name">巨大ナンバー × エディトリアル</h2>
+        <p class="concept__desc">中抜きの大きな順位番号を写真に重ね、左右交互に配置する雑誌的なレイアウト。1点ずつをじっくり見せたいときに。スクロールで主役が切り替わる没入感のある見せ方です。</p>
+      </div>
+
+      <div class="a-row">
+        <div class="a-media"><span class="a-rank num">01</span><img src="images/basque-cheesecake.png" alt=""></div>
+        <div class="a-info">
+          <p class="a-cat">BAKED</p>
+          <h3 class="a-name">バスクチーズケーキ</h3>
+          <p class="a-price yen">¥2,600<small>税込</small></p>
+          <button class="a-btn">カートに追加</button>
+        </div>
+      </div>
+
+      <div class="a-row">
+        <div class="a-media"><span class="a-rank num">02</span><img src="images/newyork-cheesecake.png" alt=""></div>
+        <div class="a-info">
+          <p class="a-cat">BAKED</p>
+          <h3 class="a-name">ニューヨークチーズケーキ</h3>
+          <p class="a-price yen">¥3,000<small>税込</small></p>
+          <button class="a-btn">カートに追加</button>
+        </div>
+      </div>
+
+      <div class="a-row">
+        <div class="a-media"><span class="a-rank num">03</span><img src="images/italian-tiramisu.png" alt=""></div>
+        <div class="a-info">
+          <p class="a-cat">SPECIAL</p>
+          <h3 class="a-name">イタリアンティラミス</h3>
+          <p class="a-price yen">¥3,200<small>税込</small></p>
+          <button class="a-btn">カートに追加</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 案B ===== -->
+  <section class="concept" id="b">
+    <div class="wrap">
+      <div class="concept__head">
+        <p class="concept__tag">PROPOSAL B</p>
+        <h2 class="concept__name">表彰台（PODIUM）</h2>
+        <p class="concept__desc">1位を中央で一段高く・大きく見せる表彰台スタイル。金・銀・銅のメダルで順位がひと目で伝わり、人気を直感的に演出します。お祝い感・特別感のある見せ方。</p>
+      </div>
+
+      <div class="b-podium">
+        <!-- 2位 -->
+        <div class="b-col">
+          <div class="b-card b-card--2">
+            <span class="b-medal b-medal--2 num">2</span>
+            <img class="b-card__img" src="images/newyork-cheesecake.png" alt="">
+            <div class="b-card__body">
+              <p class="b-card__name">ニューヨーク<br>チーズケーキ</p>
+              <p class="b-card__price yen">¥3,000</p>
+            </div>
+          </div>
+        </div>
+        <!-- 1位 -->
+        <div class="b-col b-col--1">
+          <div class="b-card b-card--1">
+            <span class="b-crown">👑</span>
+            <span class="b-medal b-medal--1 num">1</span>
+            <img class="b-card__img" src="images/basque-cheesecake.png" alt="">
+            <div class="b-card__body">
+              <p class="b-card__name">バスクチーズケーキ</p>
+              <p class="b-card__price yen">¥2,600</p>
+            </div>
+          </div>
+        </div>
+        <!-- 3位 -->
+        <div class="b-col">
+          <div class="b-card b-card--3">
+            <span class="b-medal b-medal--3 num">3</span>
+            <img class="b-card__img" src="images/italian-tiramisu.png" alt="">
+            <div class="b-card__body">
+              <p class="b-card__name">イタリアン<br>ティラミス</p>
+              <p class="b-card__price yen">¥3,200</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 案C ===== -->
+  <section class="concept" id="c" style="border-bottom:none;">
+    <div class="wrap">
+      <div class="concept__head">
+        <p class="concept__tag">PROPOSAL C</p>
+        <h2 class="concept__name">ミニマル・インデックス</h2>
+        <p class="concept__desc">罫線と大きな番号で構成した洗練リスト型。情報密度が高く、5位・10位まで自然に拡張できます。ホバーで行が浮き上がり、上質さとブランド感を両立。</p>
+      </div>
+
+      <div class="c-list">
+        <div class="c-item c-item--1">
+          <span class="c-no num">1</span>
+          <img class="c-thumb" src="images/basque-cheesecake.png" alt="">
+          <div><div class="c-name">バスクチーズケーキ</div><div class="c-meta">BAKED ・ 人気No.1</div></div>
+          <span class="c-price yen">¥2,600 <span class="c-arrow">→</span></span>
+        </div>
+        <div class="c-item">
+          <span class="c-no num">2</span>
+          <img class="c-thumb" src="images/newyork-cheesecake.png" alt="">
+          <div><div class="c-name">ニューヨークチーズケーキ</div><div class="c-meta">BAKED</div></div>
+          <span class="c-price yen">¥3,000 <span class="c-arrow">→</span></span>
+        </div>
+        <div class="c-item">
+          <span class="c-no num">3</span>
+          <img class="c-thumb" src="images/italian-tiramisu.png" alt="">
+          <div><div class="c-name">イタリアンティラミス</div><div class="c-meta">SPECIAL</div></div>
+          <span class="c-price yen">¥3,200 <span class="c-arrow">→</span></span>
+        </div>
+        <div class="c-item">
+          <span class="c-no num">4</span>
+          <img class="c-thumb" src="images/rare-cheesecake.png" alt="">
+          <div><div class="c-name">レアチーズケーキ</div><div class="c-meta">RARE</div></div>
+          <span class="c-price yen">¥2,200 <span class="c-arrow">→</span></span>
+        </div>
+        <div class="c-item">
+          <span class="c-no num">5</span>
+          <img class="c-thumb" src="images/souffle-cheesecake.png" alt="">
+          <div><div class="c-name">スフレチーズケーキ</div><div class="c-meta">BAKED</div></div>
+          <span class="c-price yen">¥2,300 <span class="c-arrow">→</span></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="note">RANKING デザイン案プレビュー（本番サイトには未反映）<br>気に入った案があれば、その番号を教えてください。トップページの RANKING に組み込みます。</p>
+</body>
+</html>
