@@ -295,10 +295,10 @@ function renderRanking() {
     return `
     <article class="rank-row" data-id="${p.id}">
       <div class="rank-row__media">
-        <span class="rank-row__no">${no}</span>
         ${media}
       </div>
       <div class="rank-row__info">
+        <span class="rank-row__no">${no}</span>
         ${p.catLabel ? `<p class="rank-row__cat">${p.catLabel}</p>` : ""}
         <h3 class="rank-row__name">${p.name}</h3>
         <p class="rank-row__price">${yen(p.price)}</p>

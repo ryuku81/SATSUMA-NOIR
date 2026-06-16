@@ -441,7 +441,7 @@ img { display: block; max-width: 100%; }
 /* HOW TO EAT：3枚横並び＋細い斜めの区切り */
 .howto__strip {
   display: flex;
-  max-width: 860px;
+  max-width: 980px;
   margin: 0 auto 2.6rem;
   aspect-ratio: 3 / 1;
 }
@@ -641,12 +641,14 @@ img { display: block; max-width: 100%; }
 
 /* ---------- Ranking ---------- */
 .ranking { max-width: 1280px; margin: 0 auto; padding: 7rem 2.5rem 0; }
+/* RANKING 見出しだけ少し大きく */
+.ranking .section-head__title { font-size: clamp(2.2rem, 5vw, 3.5rem); }
 /* RANKING：巨大ナンバー × エディトリアル（左右交互） */
 .ranking__row {
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
-  max-width: 1040px;
+  max-width: 1180px;
   margin: 0 auto;
 }
 .rank-row {
@@ -672,12 +674,15 @@ img { display: block; max-width: 100%; }
   aspect-ratio: 4 / 3; font-size: 3rem;
   background: var(--surface); border-radius: 6px;
 }
+/* 数字は文章ブロック内の独立した左列に配置（全行共通・重なり防止）*/
 .rank-row__no {
-  position: absolute;
-  top: -3.2rem; left: -1.5rem;
+  grid-column: 1;
+  grid-row: 1 / -1;
+  align-self: center;
+  direction: ltr;
   font-family: "Inter", sans-serif;
   font-weight: 900;
-  font-size: clamp(6rem, 15vw, 11rem);
+  font-size: clamp(7rem, 16vw, 12.5rem);
   line-height: 0.8;
   color: transparent;
   -webkit-text-stroke: 2px var(--gold);
@@ -685,15 +690,25 @@ img { display: block; max-width: 100%; }
   z-index: 2;
   pointer-events: none;
 }
-.rank-row:nth-child(even) .rank-row__no { left: auto; right: -1.5rem; }
-.rank-row__info { padding: 1rem 1.5rem; }
+.rank-row__info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 1.2rem;
+  align-items: center;
+  padding: 1rem 1.5rem;
+}
+/* 2位（id=3）の数字・文章を右に寄せる */
+.rank-row[data-id="3"] .rank-row__info {
+  grid-template-columns: auto auto;
+  justify-content: end;
+}
 .rank-row__cat {
   font-family: "Inter", sans-serif;
-  font-size: 0.7rem; letter-spacing: 0.28em; color: var(--gold);
+  font-size: 0.78rem; letter-spacing: 0.28em; color: var(--gold);
 }
-.rank-row__name { font-size: 1.6rem; font-weight: 700; line-height: 1.4; margin: 0.6rem 0 1rem; }
+.rank-row__name { font-size: 1.85rem; font-weight: 700; line-height: 1.4; margin: 0.6rem 0 1rem; }
 .rank-row__price {
-  font-family: "Inter", sans-serif; font-size: 1.3rem; color: var(--text);
+  font-family: "Inter", sans-serif; font-size: 1.45rem; color: var(--text);
 }
 .rank-row__add {
   display: inline-block; margin-top: 1.4rem;
@@ -706,8 +721,7 @@ img { display: block; max-width: 100%; }
 
 @media (max-width: 760px) {
   .rank-row, .rank-row:nth-child(even) { grid-template-columns: 1fr; direction: ltr; gap: 1rem; min-height: 0; }
-  .rank-row__no { font-size: 5.5rem; top: -2.2rem; left: -0.3rem; }
-  .rank-row:nth-child(even) .rank-row__no { right: auto; left: -0.3rem; }
+  .rank-row__no { font-size: 5.5rem; }
   .rank-row__info { padding: 0.5rem 0.3rem 0; }
 }
 
@@ -840,7 +854,7 @@ img { display: block; max-width: 100%; }
 .howto__head { text-align: center; margin-bottom: 2.6rem; }
 .howto__eyebrow {
   font-family: "Inter", sans-serif;
-  font-size: 2rem;
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
   font-weight: 600;
   letter-spacing: 0.42em;
   color: #fff;
