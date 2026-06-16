@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-# 開発用の簡易サーバー。
+# 静的ファイル配信用の簡易サーバー。
 #  - HTML / JS / CSS は常に最新を返す（no-store）
 #  - 画像など重い静的アセットはキャッシュさせる（ページ移動のたびの再DLを防ぐ）
-# 使い方: python3 serve.py [port]
+# 使い方:
+#   ローカル: python3 serve.py [port]   （既定 8765）
+#   Render等: python3 serve.py          （環境変数 PORT を使用、0.0.0.0 で待受）
+import os
 import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
@@ -24,5 +27,9 @@ class DevHandler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
-    HTTPServer(("127.0.0.1", port), DevHandler).serve_forever()
+    # ポート: 引数 > 環境変数 PORT（Render等が付与）> 既定 8765
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", 8765))
+    # 0.0.0.0 で待受（Render など外部公開ホストで必須）。
+    host = os.environ.get("HOST", "0.0.0.0")
+    print(f"Serving on {host}:{port}", flush=True)
+    HTTPServer((host, port), DevHandler).serve_forever()
