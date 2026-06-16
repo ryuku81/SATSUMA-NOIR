@@ -741,6 +741,7 @@ function wire() {
     if (authBtn && UserAuth.isLoggedIn()) {
       e.preventDefault();
       UserAuth.logout();
+      if (window.Auth) Auth.signOut(); // Supabase セッションも破棄
       window.location.href = "index.html";
     }
   });
@@ -748,23 +749,39 @@ function wire() {
   // Auth tabs + form submit (login.html)
   document.querySelectorAll(".auth-tab").forEach((t) => t.addEventListener("click", () => setAuthTab(t.dataset.tab)));
   document.querySelectorAll(".auth-form").forEach((form) => {
-    form.addEventListener("submit", (e) => {
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const action = form.dataset.form === "login" ? "ログイン" : "会員登録";
+      const isSignup = form.dataset.form === "signup";
+      const action = isSignup ? "会員登録" : "ログイン";
 
-      // ログインはテスト用アカウントと照合（会員登録はデモのまま成功扱い）
-      if (form.dataset.form === "login") {
-        const email = form.querySelector('input[type="email"]').value.trim();
-        const password = form.querySelector('input[type="password"]').value;
-        if (email !== TEST_MEMBER.email || password !== TEST_MEMBER.password) {
-          alert("メールアドレスまたはパスワードが違います。\n（テスト用: member@test.com / member123）");
-          return;
-        }
+      if (!window.Auth) {
+        alert("認証モジュールが読み込まれていません。");
+        return;
       }
 
-      UserAuth.login();
+      const email = form.querySelector('input[type="email"]').value.trim();
+      const password = form.querySelector('input[type="password"]').value;
+
+      // Supabase Auth で会員登録／ログイン
+      let result;
+      if (isSignup) {
+        const name = form.querySelector('input[type="text"]').value.trim();
+        result = await Auth.signUp({ email, password, name });
+      } else {
+        result = await Auth.signIn({ email, password });
+      }
+
+      if (result.error) {
+        const msg = isSignup
+          ? "会員登録に失敗しました。" + (result.error.message || "")
+          : "メールアドレスまたはパスワードが違います。";
+        alert(msg);
+        return;
+      }
+
+      UserAuth.login(); // ヘッダーの LOGIN/LOGOUT 表示用フラグ
       form.reset();
-      alert(`${action}が完了しました。（デモ）`);
+      alert(`${action}が完了しました。`);
       const redirect = new URLSearchParams(location.search).get("redirect");
       window.location.href = redirect || "index.html";
     });
@@ -823,12 +840,11 @@ function wire() {
       const email = document.getElementById("entryEmail")?.value.trim() || "";
       const phone = document.getElementById("entryPhone")?.value.trim() || "";
       const position = document.getElementById("entryPosition")?.value || "";
-      const message = document.getElementById("entryMessage")?.value.trim() || "";
-      if (!name || !email || !position || !message) return;
+      if (!name || !email || !position) return;
       try {
         // 応募内容を保存（管理画面の応募者管理で確認できる）
         if (window.ApplicantStore) {
-          await ApplicantStore.create({ name, kana, email, phone, position, message });
+          await ApplicantStore.create({ name, kana, email, phone, position });
         }
       } catch (err) {
         console.error("応募の保存に失敗しました:", err);

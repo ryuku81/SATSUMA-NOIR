@@ -54,18 +54,55 @@
     return list.reduce((max, c) => Math.max(max, Number(c.id) || 0), 0) + 1;
   }
 
+  // ---- Supabase 連携（未接続・エラー時は localStorage にフォールバック）----
+  //  テーブル列 created_at をアプリ内部の createdAt に変換する。
+  const mapRow = (c) => ({
+    id: c.id,
+    name: c.name,
+    email: c.email,
+    phone: c.phone,
+    role: c.role,
+    createdAt: c.created_at,
+  });
+  const COLS = "id, name, email, phone, role, created_at";
+
   const CustomerStore = {
     async findAll() {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("customers")
+          .select(COLS)
+          .order("created_at", { ascending: false });
+        if (!error) return (data || []).map(mapRow);
+        console.error("[CustomerStore] Supabase の取得に失敗しました:", error);
+      }
       return read()
         .slice()
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
 
     async findById(id) {
+      if (global.sb) {
+        const { data, error } = await global.sb.from("customers").select(COLS).eq("id", Number(id)).maybeSingle();
+        if (!error) return data ? mapRow(data) : null;
+        console.error("[CustomerStore] Supabase の取得に失敗しました:", error);
+      }
       return read().find((c) => c.id === Number(id)) ?? null;
     },
 
     async create(data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("customers")
+          .insert({ name: data.name, email: data.email, phone: data.phone || "" })
+          .select(COLS)
+          .single();
+        if (error) {
+          console.error("[CustomerStore] 顧客の追加に失敗しました:", error);
+          throw error;
+        }
+        return mapRow(row);
+      }
       const list = read();
       const customer = { createdAt: new Date().toISOString(), ...data, id: nextId(list) };
       write([...list, customer]);
@@ -73,6 +110,19 @@
     },
 
     async update(id, data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("customers")
+          .update({ name: data.name, email: data.email, phone: data.phone || "" })
+          .eq("id", Number(id))
+          .select(COLS)
+          .single();
+        if (error) {
+          console.error("[CustomerStore] 顧客の更新に失敗しました:", error);
+          throw error;
+        }
+        return mapRow(row);
+      }
       const list = read();
       const target = Number(id);
       write(list.map((c) => (c.id === target ? { ...c, ...data, id: target } : c)));
@@ -80,6 +130,14 @@
     },
 
     async remove(id) {
+      if (global.sb) {
+        const { error } = await global.sb.from("customers").delete().eq("id", Number(id));
+        if (error) {
+          console.error("[CustomerStore] 顧客の削除に失敗しました:", error);
+          throw error;
+        }
+        return;
+      }
       const target = Number(id);
       write(read().filter((c) => c.id !== target));
     },

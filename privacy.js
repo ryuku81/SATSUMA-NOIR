@@ -55,9 +55,25 @@
   }
 
   // ---- 公開 API（async = 将来のバックエンドと同じ形）----
+  // ---- Supabase 読み込み（未接続・エラー時は localStorage にフォールバック）----
+  async function fetchFromSupabase() {
+    if (!global.sb) return null;
+    const { data, error } = await global.sb
+      .from("privacy")
+      .select("lead, blocks, date")
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      console.error("[PrivacyStore] Supabase の取得に失敗しました:", error);
+      return null;
+    }
+    return data || null;
+  }
+
   const PrivacyStore = {
     async get() {
-      return read();
+      const remote = await fetchFromSupabase();
+      return remote !== null ? remote : read();
     },
 
     async update(data) {

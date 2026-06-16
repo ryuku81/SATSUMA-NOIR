@@ -47,10 +47,34 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
 
+  // ---- Supabase 読み込み（未接続・エラー時は localStorage にフォールバック）----
+  //  テーブル列 button_label / button_url をアプリ内部の buttonLabel / buttonUrl に変換。
+  async function fetchFromSupabase() {
+    if (!global.sb) return null;
+    const { data, error } = await global.sb
+      .from("recruit")
+      .select("lead, body, positions, button_label, button_url")
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      console.error("[RecruitStore] Supabase の取得に失敗しました:", error);
+      return null;
+    }
+    if (!data) return null;
+    return {
+      lead: data.lead,
+      body: data.body,
+      positions: Array.isArray(data.positions) ? data.positions : [],
+      buttonLabel: data.button_label,
+      buttonUrl: data.button_url,
+    };
+  }
+
   // ---- 公開 API（async = 将来のバックエンドと同じ形）----
   const RecruitStore = {
     async get() {
-      return read();
+      const remote = await fetchFromSupabase();
+      return remote !== null ? { ...SEED, ...remote } : read();
     },
 
     async update(data) {

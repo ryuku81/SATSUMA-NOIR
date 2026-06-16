@@ -47,20 +47,69 @@
     return list.reduce((max, a) => Math.max(max, Number(a.id) || 0), 0) + 1;
   }
 
+  // ---- Supabase 連携（未接続・エラー時は localStorage にフォールバック）----
+  const mapRow = (a) => ({
+    id: a.id,
+    name: a.name,
+    kana: a.kana,
+    email: a.email,
+    phone: a.phone,
+    position: a.position,
+    status: a.status,
+    createdAt: a.created_at,
+  });
+  const COLS = "id, name, kana, email, phone, position, status, created_at";
+
   const ApplicantStore = {
     // 新しい順（応募日時の降順）
     async findAll() {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("applicants")
+          .select(COLS)
+          .order("created_at", { ascending: false });
+        if (!error) return (data || []).map(mapRow);
+        console.error("[ApplicantStore] Supabase の取得に失敗しました:", error);
+      }
       return read()
         .slice()
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
 
     async findById(id) {
+      if (global.sb) {
+        const { data, error } = await global.sb.from("applicants").select(COLS).eq("id", Number(id)).maybeSingle();
+        if (!error) return data ? mapRow(data) : null;
+        console.error("[ApplicantStore] Supabase の取得に失敗しました:", error);
+      }
       return read().find((a) => a.id === Number(id)) ?? null;
     },
 
-    // entry フォームからの新規応募。status は "new" 固定。
+    // entry フォームからの新規応募。status は "new" 固定（DB既定）。
     async create(data) {
+      if (global.sb) {
+        // anon は insert のみ可（select 不要）。id は返さない。
+        const { error } = await global.sb.from("applicants").insert({
+          name: data.name,
+          kana: data.kana || "",
+          email: data.email,
+          phone: data.phone || "",
+          position: data.position || "",
+        });
+        if (error) {
+          console.error("[ApplicantStore] 応募の保存に失敗しました:", error);
+          throw error;
+        }
+        return {
+          name: data.name,
+          kana: data.kana || "",
+          email: data.email,
+          phone: data.phone || "",
+          position: data.position || "",
+          status: "new",
+          createdAt: new Date().toISOString(),
+        };
+      }
       const list = read();
       const applicant = {
         name: data.name,
@@ -78,6 +127,19 @@
     },
 
     async updateStatus(id, status) {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("applicants")
+          .update({ status })
+          .eq("id", Number(id))
+          .select(COLS)
+          .single();
+        if (error) {
+          console.error("[ApplicantStore] ステータス更新に失敗しました:", error);
+          return null;
+        }
+        return mapRow(data);
+      }
       const list = read();
       const target = Number(id);
       write(list.map((a) => (a.id === target ? { ...a, status } : a)));
@@ -85,12 +147,28 @@
     },
 
     async remove(id) {
+      if (global.sb) {
+        const { error } = await global.sb.from("applicants").delete().eq("id", Number(id));
+        if (error) {
+          console.error("[ApplicantStore] 削除に失敗しました:", error);
+          throw error;
+        }
+        return;
+      }
       const target = Number(id);
       write(read().filter((a) => a.id !== target));
     },
 
     // 未読件数（サイドバーのバッジ用）
     async countNew() {
+      if (global.sb) {
+        const { count, error } = await global.sb
+          .from("applicants")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "new");
+        if (!error) return count || 0;
+        console.error("[ApplicantStore] 未読件数の取得に失敗しました:", error);
+      }
       return read().filter((a) => a.status === "new").length;
     },
 

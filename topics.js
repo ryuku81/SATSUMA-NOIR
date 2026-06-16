@@ -36,9 +36,25 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   }
 
+  // ---- Supabase 読み込み（未接続・エラー時は localStorage にフォールバック）----
+  //  テーブル列 description をアプリ内部の desc に変換して返す。
+  async function fetchFromSupabase() {
+    if (!global.sb) return null;
+    const { data, error } = await global.sb
+      .from("topics")
+      .select("image, title, description, url, sort_order")
+      .order("sort_order", { ascending: true });
+    if (error) {
+      console.error("[TopicStore] Supabase の取得に失敗しました:", error);
+      return null;
+    }
+    return (data || []).map((t) => ({ image: t.image, title: t.title, desc: t.description, url: t.url }));
+  }
+
   const TopicStore = {
     async getAll() {
-      return read();
+      const remote = await fetchFromSupabase();
+      return remote !== null ? remote : read();
     },
     // 編集後の配列をまるごと保存
     async saveAll(list) {
@@ -71,7 +87,7 @@
   async function renderPublicTopics() {
     const row = document.getElementById("topicsRow");
     if (!row) return;
-    const items = read();
+    const items = await TopicStore.getAll();
     if (items.length === 0) {
       row.innerHTML = "";
       return;

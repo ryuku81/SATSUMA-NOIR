@@ -47,17 +47,64 @@
     return list.reduce((max, f) => Math.max(max, Number(f.id) || 0), 0) + 1;
   }
 
+  // ---- Supabase 読み込み ----
+  //  window.sb（supabase-client.js）が読み込まれていれば faqs テーブルから
+  //  取得し、アプリ内部の形 { id, q, a } に変換して返す。
+  //  未接続・エラー時は localStorage（read）にフォールバックする。
+  async function fetchFromSupabase() {
+    if (!global.sb) return null;
+    const { data, error } = await global.sb
+      .from("faqs")
+      .select("id, question, answer, sort_order")
+      .order("sort_order", { ascending: true });
+    if (error) {
+      console.error("[FaqStore] Supabase の取得に失敗しました:", error);
+      return null;
+    }
+    return (data || []).map((row) => ({ id: row.id, q: row.question, a: row.answer }));
+  }
+
   // ---- 公開 API（async = 将来のバックエンドと同じ形）----
   const FaqStore = {
     async findAll() {
-      return read();
+      const remote = await fetchFromSupabase();
+      return remote !== null ? remote : read();
     },
 
     async findById(id) {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("faqs")
+          .select("id, question, answer")
+          .eq("id", Number(id))
+          .maybeSingle();
+        if (!error) return data ? { id: data.id, q: data.question, a: data.answer } : null;
+        console.error("[FaqStore] Supabase の取得に失敗しました:", error);
+      }
       return read().find((f) => f.id === Number(id)) || null;
     },
 
     async create(data) {
+      if (global.sb) {
+        // 末尾に追加：現在の最大 sort_order + 1
+        const { data: maxRow } = await global.sb
+          .from("faqs")
+          .select("sort_order")
+          .order("sort_order", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const nextOrder = ((maxRow && maxRow.sort_order) || 0) + 1;
+        const { data: row, error } = await global.sb
+          .from("faqs")
+          .insert({ question: data.q, answer: data.a, sort_order: nextOrder })
+          .select("id, question, answer")
+          .single();
+        if (error) {
+          console.error("[FaqStore] FAQ の追加に失敗しました:", error);
+          throw error;
+        }
+        return { id: row.id, q: row.question, a: row.answer };
+      }
       const list = read();
       const faq = { q: data.q, a: data.a, id: nextId(list) };
       write([...list, faq]);
@@ -65,6 +112,19 @@
     },
 
     async update(id, data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("faqs")
+          .update({ question: data.q, answer: data.a })
+          .eq("id", Number(id))
+          .select("id, question, answer")
+          .single();
+        if (error) {
+          console.error("[FaqStore] FAQ の更新に失敗しました:", error);
+          throw error;
+        }
+        return { id: row.id, q: row.question, a: row.answer };
+      }
       const list = read();
       const target = Number(id);
       const next = list.map((f) => (f.id === target ? { ...f, q: data.q, a: data.a, id: target } : f));
@@ -73,12 +133,45 @@
     },
 
     async remove(id) {
+      if (global.sb) {
+        const { error } = await global.sb.from("faqs").delete().eq("id", Number(id));
+        if (error) {
+          console.error("[FaqStore] FAQ の削除に失敗しました:", error);
+          throw error;
+        }
+        return;
+      }
       const target = Number(id);
       write(read().filter((f) => f.id !== target));
     },
 
     // 表示順の入れ替え（dir: -1 で上へ, +1 で下へ）
     async move(id, dir) {
+      if (global.sb) {
+        const { data: rows, error } = await global.sb
+          .from("faqs")
+          .select("id, sort_order")
+          .order("sort_order", { ascending: true });
+        if (error) {
+          console.error("[FaqStore] 並べ替えの取得に失敗しました:", error);
+          return;
+        }
+        const list = rows || [];
+        const i = list.findIndex((f) => f.id === Number(id));
+        const j = i + dir;
+        if (i === -1 || j < 0 || j >= list.length) return;
+        const a = list[i];
+        const b = list[j];
+        // 2行の sort_order を入れ替え
+        const [r1, r2] = await Promise.all([
+          global.sb.from("faqs").update({ sort_order: b.sort_order }).eq("id", a.id),
+          global.sb.from("faqs").update({ sort_order: a.sort_order }).eq("id", b.id),
+        ]);
+        if (r1.error || r2.error) {
+          console.error("[FaqStore] 並べ替えに失敗しました:", r1.error || r2.error);
+        }
+        return;
+      }
       const list = read();
       const i = list.findIndex((f) => f.id === Number(id));
       const j = i + dir;

@@ -71,6 +71,31 @@
     return list.reduce((max, p) => Math.max(max, Number(p.id) || 0), 0) + 1;
   }
 
+  // ---- Supabase 読み込み（未接続・エラー時は localStorage にフォールバック）----
+  //  テーブル列 description をアプリ内部の desc に変換して返す。
+  async function fetchFromSupabase() {
+    if (!global.sb) return null;
+    const { data, error } = await global.sb
+      .from("products")
+      .select("id, name, cat, price, stock, tag, img, glyph, description")
+      .order("id", { ascending: true });
+    if (error) {
+      console.error("[ProductStore] Supabase の取得に失敗しました:", error);
+      return null;
+    }
+    return (data || []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      cat: p.cat,
+      price: p.price,
+      stock: p.stock,
+      tag: p.tag,
+      img: p.img,
+      glyph: p.glyph,
+      desc: p.description,
+    }));
+  }
+
   // ---- 公開 API（async = 将来のバックエンドと同じ形）----
   const ProductStore = {
     // カテゴリは CategoryStore（categories.js）から取得（追加・削除に追従）
@@ -81,7 +106,9 @@
     LOW_STOCK_THRESHOLD,
 
     async findAll() {
-      return read().map(withLabel);
+      const remote = await fetchFromSupabase();
+      const list = remote !== null ? remote : read();
+      return list.map(withLabel);
     },
 
     // 在庫切れ・残りわずかの商品を返す（ダッシュボードの在庫アラート用）

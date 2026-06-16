@@ -52,17 +52,53 @@
     return list.reduce((max, n) => Math.max(max, Number(n.id) || 0), 0) + 1;
   }
 
+  // ---- Supabase 読み込み（未接続・エラー時は localStorage にフォールバック）----
+  async function fetchFromSupabase() {
+    if (!global.sb) return null;
+    const { data, error } = await global.sb
+      .from("news")
+      .select("id, date, cat, title, url")
+      .order("date", { ascending: false });
+    if (error) {
+      console.error("[NewsStore] Supabase の取得に失敗しました:", error);
+      return null;
+    }
+    return data || [];
+  }
+
   // ---- 公開 API（async = 将来のバックエンドと同じ形）----
   const NewsStore = {
     async findAll() {
-      return read().slice().sort(byDateDesc);
+      const remote = await fetchFromSupabase();
+      return remote !== null ? remote : read().slice().sort(byDateDesc);
     },
 
     async findById(id) {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("news")
+          .select("id, date, cat, title, url")
+          .eq("id", Number(id))
+          .maybeSingle();
+        if (!error) return data || null;
+        console.error("[NewsStore] Supabase の取得に失敗しました:", error);
+      }
       return read().find((n) => n.id === Number(id)) || null;
     },
 
     async create(data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("news")
+          .insert({ date: data.date, cat: data.cat, title: data.title, url: data.url })
+          .select("id, date, cat, title, url")
+          .single();
+        if (error) {
+          console.error("[NewsStore] NEWS の追加に失敗しました:", error);
+          throw error;
+        }
+        return row;
+      }
       const list = read();
       const item = { date: data.date, cat: data.cat, title: data.title, url: data.url, id: nextId(list) };
       write([...list, item]);
@@ -70,6 +106,19 @@
     },
 
     async update(id, data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("news")
+          .update({ date: data.date, cat: data.cat, title: data.title, url: data.url })
+          .eq("id", Number(id))
+          .select("id, date, cat, title, url")
+          .single();
+        if (error) {
+          console.error("[NewsStore] NEWS の更新に失敗しました:", error);
+          throw error;
+        }
+        return row;
+      }
       const list = read();
       const target = Number(id);
       const next = list.map((n) =>
@@ -80,6 +129,14 @@
     },
 
     async remove(id) {
+      if (global.sb) {
+        const { error } = await global.sb.from("news").delete().eq("id", Number(id));
+        if (error) {
+          console.error("[NewsStore] NEWS の削除に失敗しました:", error);
+          throw error;
+        }
+        return;
+      }
       const target = Number(id);
       write(read().filter((n) => n.id !== target));
     },

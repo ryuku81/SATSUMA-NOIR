@@ -6,25 +6,28 @@
 //  本物の認証に差し替えるだけで動く。
 // ============================================================
 
-// ---- 簡易認証（※プレースホルダ。本番では使わないこと）----
-// 後でサーバ側のログインAPIに置き換える前提。
+// ---- 管理者認証（Supabase Auth ＋ role=admin で認可）----
+//  auth.js（window.Auth）を利用。ログイン後に profiles.role が admin か検証し、
+//  admin でなければサインアウトして拒否する。
 const AdminAuth = {
-  // デモ用パスワード。実運用ではクライアントに置かない。
-  PASSWORD: "admin",
-  KEY: "satsuma_admin_authed",
-
-  isAuthed() {
-    return sessionStorage.getItem(this.KEY) === "1";
+  // ログイン済みかつ管理者か
+  async isAuthed() {
+    if (!window.Auth) return false;
+    return await Auth.isAdmin();
   },
-  login(password) {
-    if (password === this.PASSWORD) {
-      sessionStorage.setItem(this.KEY, "1");
-      return true;
+  // メール＋パスワードでログインし、管理者権限を検証
+  async login(email, password) {
+    if (!window.Auth) return false;
+    const { error } = await Auth.signIn({ email, password });
+    if (error) return false;
+    if (!(await Auth.isAdmin())) {
+      await Auth.signOut(); // 一般会員は管理画面に入れない
+      return false;
     }
-    return false;
+    return true;
   },
-  logout() {
-    sessionStorage.removeItem(this.KEY);
+  async logout() {
+    if (window.Auth) await Auth.signOut();
   },
 };
 
@@ -87,7 +90,7 @@ function showPanel() {
 // ------------------------------------------------------------
 //  タブ切り替え
 // ------------------------------------------------------------
-const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", products: "商品管理", inquiries: "お問い合わせ", news: "NEWS管理", faq: "FAQ管理", privacy: "プライバシーポリシー", tokushoho: "特定商取引法に基づく表示", recruit: "採用情報管理", applicants: "応募者管理", settings: "設定" };
+const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", members: "会員管理", products: "商品管理", inquiries: "お問い合わせ", news: "NEWS管理", faq: "FAQ管理", privacy: "プライバシーポリシー", tokushoho: "特定商取引法に基づく表示", recruit: "採用情報管理", applicants: "応募者管理", settings: "設定" };
 function switchTab(name) {
   tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === name));
   views.forEach((v) => (v.hidden = v.dataset.view !== name));
@@ -96,6 +99,7 @@ function switchTab(name) {
   if (name === "dashboard") renderDashboard();
   if (name === "orders") renderOrders();
   if (name === "customers") { renderCustomers(); renderSubscribers(); }
+  if (name === "members") renderMembers();
   if (name === "inquiries") renderInquiries();
   if (name === "news") renderNews();
   if (name === "faq") renderFaqs();
@@ -133,9 +137,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && adminSidebar.classList.contains("is-open")) closeAdminMenu();
 });
 
-loginForm.addEventListener("submit", (e) => {
+loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  if (AdminAuth.login(passwordInput.value)) {
+  const email = document.getElementById("adminEmail").value.trim();
+  const ok = await AdminAuth.login(email, passwordInput.value);
+  if (ok) {
     loginError.hidden = true;
     passwordInput.value = "";
     showPanel();
@@ -144,8 +150,8 @@ loginForm.addEventListener("submit", (e) => {
   }
 });
 
-logoutBtn.addEventListener("click", () => {
-  AdminAuth.logout();
+logoutBtn.addEventListener("click", async () => {
+  await AdminAuth.logout();
   showGate();
 });
 
@@ -336,6 +342,7 @@ function openOrderModal(order) {
   document.getElementById("orderDetail").innerHTML = `
     <dl class="order-meta">
       <div><dt>顧客</dt><dd>${escapeHtml(order.customer)}</dd></div>
+      <div><dt>お届け先</dt><dd>${order.address ? escapeHtml(order.address) : "—"}</dd></div>
       <div><dt>注文日時</dt><dd>${fmtDateTime(order.createdAt)}</dd></div>
       <div><dt>ステータス</dt><dd>${statusBadge(order.status)}</dd></div>
     </dl>
@@ -465,9 +472,74 @@ customerForm.addEventListener("submit", async (e) => {
     renderCustomers();
   } catch (err) {
     console.error("顧客の保存に失敗しました:", err);
-    showToast("保存に失敗しました。");
+    showToast(err && err.code === "23505" ? "このメールアドレスは既に登録されています。" : "保存に失敗しました。");
   }
 });
+
+// ------------------------------------------------------------
+//  会員管理（Supabase Auth ユーザーの role 変更）
+//  profiles を一覧し、admin/member を切り替える。
+//  RLS の「Profiles admin all」により管理者のみ更新可。
+// ------------------------------------------------------------
+const memberRows = document.getElementById("memberRows");
+
+async function renderMembers() {
+  if (!memberRows) return;
+  if (!window.sb) {
+    memberRows.innerHTML = `<tr><td colspan="5" class="admin-table__empty">Supabase に接続していません。</td></tr>`;
+    return;
+  }
+  const [{ data: rows, error }, me] = await Promise.all([
+    sb.from("profiles").select("id, email, name, role, created_at").order("created_at", { ascending: false }),
+    window.Auth ? Auth.getUser() : Promise.resolve(null),
+  ]);
+  if (error) {
+    console.error("会員の取得に失敗しました:", error);
+    memberRows.innerHTML = `<tr><td colspan="5" class="admin-table__empty">取得に失敗しました。</td></tr>`;
+    return;
+  }
+  const list = rows || [];
+  if (list.length === 0) {
+    memberRows.innerHTML = `<tr><td colspan="5" class="admin-table__empty">会員がいません。</td></tr>`;
+    return;
+  }
+  const myId = me ? me.id : null;
+  memberRows.innerHTML = list
+    .map((m) => {
+      const isSelf = m.id === myId;
+      const badge = m.role === "admin" ? `<span class="admin-badge">管理者</span>` : `<span class="count-pill">会員</span>`;
+      const next = m.role === "admin" ? "member" : "admin";
+      const label = m.role === "admin" ? "会員に戻す" : "管理者にする";
+      const action = isSelf
+        ? `自分（あなた）`
+        : `<button class="admin-op" data-mrole="${m.id}" data-next="${next}">${label}</button>`;
+      return `
+    <tr>
+      <td class="admin-nowrap" data-label="メール">${escapeHtml(m.email || "")}</td>
+      <td data-label="名前">${m.name ? escapeHtml(m.name) : "—"}</td>
+      <td data-label="権限">${badge}</td>
+      <td data-label="登録日">${fmtDate(m.created_at)}</td>
+      <td class="admin-table__ops">${action}</td>
+    </tr>`;
+    })
+    .join("");
+}
+
+if (memberRows) {
+  memberRows.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-mrole]");
+    if (!btn) return;
+    const next = btn.dataset.next;
+    const { error } = await sb.from("profiles").update({ role: next }).eq("id", btn.dataset.mrole);
+    if (error) {
+      console.error("権限の変更に失敗しました:", error);
+      showToast("権限の変更に失敗しました。");
+      return;
+    }
+    showToast(next === "admin" ? "管理者に変更しました。" : "会員に変更しました。");
+    renderMembers();
+  });
+}
 
 // ---- 詳細モーダル（注文履歴つき）----
 const customerDetailModal = document.getElementById("customerDetailModal");
@@ -1330,9 +1402,7 @@ function openApplicantModal(a) {
       <div><dt>電話</dt><dd>${a.phone ? escapeHtml(a.phone) : "—"}</dd></div>
       <div><dt>応募日時</dt><dd>${fmtDateTime(a.createdAt)}</dd></div>
       <div><dt>状態</dt><dd>${inquiryBadge(a.status)}</dd></div>
-    </dl>
-    <h4 class="customer-detail__subtitle">自己PR・志望動機</h4>
-    <div class="inquiry-message">${escapeHtml(a.message)}</div>`;
+    </dl>`;
 
   applicantToggleBtn.textContent = a.status === "read" ? "未読に戻す" : "既読にする";
   applicantToggleBtn.dataset.id = a.id;
@@ -1656,15 +1726,26 @@ document.getElementById("addCategoryConfirm").addEventListener("click", async ()
     showToast("カテゴリ名を入力してください。");
     return;
   }
-  const created = await CategoryStore.create(label);
-  if (!created) {
-    showToast("同じ名前のカテゴリが既にあります。");
-    return;
+  try {
+    const created = await CategoryStore.create(label);
+    if (!created) {
+      showToast("同じ名前のカテゴリが既にあります。");
+      return;
+    }
+    newCategoryInput.value = "";
+    renderCategoryList();
+    fillCategories();
+    showToast("カテゴリを追加しました。");
+  } catch (err) {
+    console.error("カテゴリの追加に失敗しました:", err);
+    showToast("追加に失敗しました。");
   }
-  newCategoryInput.value = "";
-  renderCategoryList();
+});
+
+// Supabase からカテゴリ取得（prime）が完了したら、UIを最新化する
+window.addEventListener("categories:updated", () => {
   fillCategories();
-  showToast("カテゴリを追加しました。");
+  if (categoryModal && !categoryModal.hidden) renderCategoryList();
 });
 
 newCategoryInput.addEventListener("keydown", (e) => {
@@ -1687,11 +1768,16 @@ document.getElementById("categoryList").addEventListener("click", async (e) => {
       ? `「${name}」を削除しますか？このカテゴリには商品が ${used} 件あります（商品は残ります）。`
       : `「${name}」を削除しますか？`;
   if (!confirm(msg)) return;
-  await CategoryStore.remove(value);
-  renderCategoryList();
-  fillCategories();
-  renderTable();
-  showToast("カテゴリを削除しました。");
+  try {
+    await CategoryStore.remove(value);
+    renderCategoryList();
+    fillCategories();
+    renderTable();
+    showToast("カテゴリを削除しました。");
+  } catch (err) {
+    console.error("カテゴリの削除に失敗しました:", err);
+    showToast("削除に失敗しました。");
+  }
 });
 
 // ------------------------------------------------------------
@@ -1860,8 +1946,7 @@ function showToast(message) {
 //  Init
 // ------------------------------------------------------------
 fillCategories();
-if (AdminAuth.isAuthed()) {
-  showPanel();
-} else {
-  showGate();
-}
+showGate(); // 認証チェック中はゲートを表示
+(async () => {
+  if (await AdminAuth.isAuthed()) showPanel();
+})();

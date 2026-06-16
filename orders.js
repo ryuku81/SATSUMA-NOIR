@@ -70,16 +70,83 @@
     return list.reduce((max, o) => Math.max(max, Number(o.id) || 0), 1000) + 1;
   }
 
+  // ---- Supabase 連携（未接続・エラー時は localStorage にフォールバック）----
+  //  テーブル列 created_at をアプリ内部の createdAt に変換する。
+  const mapRow = (o) => ({
+    id: o.id,
+    customer: o.customer,
+    address: o.address,
+    items: Array.isArray(o.items) ? o.items : [],
+    total: o.total,
+    status: o.status,
+    createdAt: o.created_at,
+  });
+
+  async function fetchAllFromSupabase() {
+    if (!global.sb) return null;
+    const { data, error } = await global.sb
+      .from("orders")
+      .select("id, customer, address, items, total, status, created_at")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("[OrderStore] Supabase の取得に失敗しました:", error);
+      return null;
+    }
+    return (data || []).map(mapRow);
+  }
+
+  // 集計用：Supabase 優先で注文一覧を取得（無ければ localStorage）
+  async function loadList() {
+    const remote = await fetchAllFromSupabase();
+    return remote !== null ? remote : read();
+  }
+
   const OrderStore = {
     async findAll() {
-      return read().slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const remote = await fetchAllFromSupabase();
+      return remote !== null
+        ? remote
+        : read().slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     },
 
     async findById(id) {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("orders")
+          .select("id, customer, address, items, total, status, created_at")
+          .eq("id", Number(id))
+          .maybeSingle();
+        if (!error) return data ? mapRow(data) : null;
+        console.error("[OrderStore] Supabase の取得に失敗しました:", error);
+        // エラー時のみ localStorage にフォールバック
+      }
       return read().find((o) => o.id === Number(id)) ?? null;
     },
 
     async create(data) {
+      if (global.sb) {
+        // anon は orders を select できないため、SECURITY DEFINER の RPC で
+        // 新規IDのみ安全に受け取る（customer / items / total のみ保存）。
+        const { data: newId, error } = await global.sb.rpc("create_order", {
+          p_customer: data.customer,
+          p_address: data.address || "",
+          p_items: data.items || [],
+          p_total: data.total,
+        });
+        if (error) {
+          console.error("[OrderStore] 注文の保存に失敗しました:", error);
+          throw error;
+        }
+        return {
+          id: newId,
+          customer: data.customer,
+          address: data.address || "",
+          items: data.items || [],
+          total: data.total,
+          status: "unshipped",
+          createdAt: new Date().toISOString(),
+        };
+      }
       const list = read();
       const order = {
         status: "unshipped",
@@ -92,6 +159,14 @@
     },
 
     async updateStatus(id, status) {
+      if (global.sb) {
+        const { error } = await global.sb.from("orders").update({ status }).eq("id", Number(id));
+        if (error) {
+          console.error("[OrderStore] ステータス更新に失敗しました:", error);
+          return null;
+        }
+        return await this.findById(id);
+      }
       const list = read();
       const target = Number(id);
       write(list.map((o) => (o.id === target ? { ...o, status } : o)));
@@ -100,7 +175,7 @@
 
     // 任意の日付範囲で集計（from / to は "YYYY-MM-DD"、両端含む。空欄は無制限）
     async getSalesByDateRange(from, to) {
-      const list = read();
+      const list = await loadList();
       const start = from ? new Date(`${from}T00:00:00`) : null;
       const end = to ? new Date(`${to}T23:59:59.999`) : null;
 
@@ -119,7 +194,7 @@
 
     // ダッシュボード集計（後でサーバ側の集計APIに置き換え可能）
     async getDashboardStats() {
-      const list = read();
+      const list = await loadList();
       const today = startOfToday().getTime();
 
       const todaysOrders = list.filter((o) => new Date(o.createdAt).getTime() >= today);
