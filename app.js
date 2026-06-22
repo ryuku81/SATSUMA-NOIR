@@ -19,9 +19,9 @@ const ICON_CLOSE = `<svg viewBox="0 0 24 24" width="20" height="20"><line x1="6"
 
 // ---------- Navigation ----------
 const NAV_LINKS = [
-  { label: "ABOUT", href: "index.html" },
-  { label: "ITEM", href: "item.html" },
-  { label: "NEWS", href: "news.html" },
+  { label: "ABOUT", href: "index.html", sub: "ブランドについて" },
+  { label: "ITEM", href: "item.html", sub: "商品について" },
+  { label: "NEWS", href: "news.html", sub: "ニュース" },
 ];
 
 function currentPage() {
@@ -36,7 +36,8 @@ function buildChrome() {
   const page = currentPage();
 
   const navLinks = NAV_LINKS.map(
-    (l) => `<a href="${l.href}" class="nav__link${l.href === page ? " is-current" : ""}">${l.label}</a>`
+    (l) =>
+      `<a href="${l.href}" class="nav__link${l.href === page ? " is-current" : ""}"><span class="nav__en">${l.label}</span>${l.sub ? `<span class="nav__sub">${l.sub}</span>` : ""}</a>`
   ).join("");
 
   // Header
@@ -287,8 +288,7 @@ function getRankingProducts(count = 3) {
 function renderRanking() {
   const row = document.getElementById("rankingRow");
   if (!row) return;
-  row.innerHTML = getRankingProducts().map((p, i) => {
-    const no = String(i + 1).padStart(2, "0");
+  row.innerHTML = getRankingProducts().map((p) => {
     const media = p.img
       ? `<img src="${p.img}" alt="${p.name}" loading="lazy" />`
       : `<span class="rank-row__glyph">${p.glyph}</span>`;
@@ -298,9 +298,9 @@ function renderRanking() {
         ${media}
       </div>
       <div class="rank-row__info">
-        <span class="rank-row__no">${no}</span>
         ${p.catLabel ? `<p class="rank-row__cat">${p.catLabel}</p>` : ""}
         <h3 class="rank-row__name">${p.name}</h3>
+        ${p.desc ? `<p class="rank-row__desc">${p.desc}</p>` : ""}
         <p class="rank-row__price">${yen(p.price)}</p>
         <button class="rank-row__add" data-add="${p.id}">カートに追加</button>
       </div>
@@ -882,27 +882,68 @@ function wire() {
   }
 
   // Topics carousel arrows
+  //  - 短いクリック : 1カード分スライド（端ではループして反対端へ）
+  //  - 長押し       : 連続スクロール。端に来たら反対端へ回り込み、押し続ける限り何周でも回せる
   const topicsRow = document.getElementById("topicsRow");
   if (topicsRow) {
     const step = () => {
       const card = topicsRow.querySelector(".topic-card");
       return card ? card.getBoundingClientRect().width + 26 : 320;
     };
-    document.getElementById("topicsNext")?.addEventListener("click", () => {
-      const max = topicsRow.scrollWidth - topicsRow.clientWidth;
-      if (topicsRow.scrollLeft >= max - 4) {
-        topicsRow.scrollTo({ left: 0, behavior: "smooth" }); // 末尾→先頭へ一周
+    const maxScroll = () => topicsRow.scrollWidth - topicsRow.clientWidth;
+
+    // クリック1回ぶんの移動（端ではループ）。dir: 1=次へ / -1=前へ
+    const stepOnce = (dir) => {
+      const max = maxScroll();
+      if (dir > 0) {
+        if (topicsRow.scrollLeft >= max - 4) topicsRow.scrollTo({ left: 0, behavior: "smooth" });
+        else topicsRow.scrollBy({ left: step(), behavior: "smooth" });
       } else {
-        topicsRow.scrollBy({ left: step(), behavior: "smooth" });
+        if (topicsRow.scrollLeft <= 4) topicsRow.scrollTo({ left: max, behavior: "smooth" });
+        else topicsRow.scrollBy({ left: -step(), behavior: "smooth" });
       }
-    });
-    document.getElementById("topicsPrev")?.addEventListener("click", () => {
-      if (topicsRow.scrollLeft <= 4) {
-        topicsRow.scrollTo({ left: topicsRow.scrollWidth, behavior: "smooth" }); // 先頭→末尾へ一周
-      } else {
-        topicsRow.scrollBy({ left: -step(), behavior: "smooth" });
-      }
-    });
+    };
+
+    // 長押し中の連続スクロール（requestAnimationFrame で滑らかに）。
+    const SPEED = 8; // 1フレームあたりの移動量(px)
+    let rafId = null;
+    let holdTimer = null;
+    const runScroll = (dir) => {
+      const max = maxScroll();
+      let next = topicsRow.scrollLeft + dir * SPEED;
+      if (next > max) next -= max + 1;        // 末尾を越えたら先頭へ回り込む
+      else if (next < 0) next += max + 1;     // 先頭を越えたら末尾へ回り込む
+      topicsRow.scrollLeft = next;
+      rafId = requestAnimationFrame(() => runScroll(dir));
+    };
+    const stopHold = () => {
+      if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+      if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    };
+
+    const bindArrow = (id, dir) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      // 押した瞬間：少し待ってから連続スクロール開始（短いクリックと区別）
+      btn.addEventListener("pointerdown", (e) => {
+        if (e.button != null && e.button !== 0) return; // 左ボタン/タッチのみ
+        holdTimer = setTimeout(() => { holdTimer = null; runScroll(dir); }, 280);
+      });
+      // 連続スクロール中に指/ボタンを離す前にクリックが発火しないよう、離したら止める
+      btn.addEventListener("pointerup", () => {
+        const wasHolding = rafId !== null;
+        stopHold();
+        if (!wasHolding) stepOnce(dir); // 長押しに至らなかった → 通常クリック扱い
+      });
+      btn.addEventListener("pointerleave", stopHold);
+      btn.addEventListener("pointercancel", stopHold);
+      // キーボード操作（Enter/Space）でも1カード分動かせるよう保険
+      btn.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); stepOnce(dir); }
+      });
+    };
+    bindArrow("topicsNext", 1);
+    bindArrow("topicsPrev", -1);
   }
 
   // Section-head reveal

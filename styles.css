@@ -128,10 +128,12 @@ img { display: block; max-width: 100%; }
   font-weight: 600;
   letter-spacing: 0.18em;
   color: var(--text-dim);
-  position: relative;
+  display: inline-flex;
+  align-items: baseline;
   transition: color 0.3s var(--ease);
 }
-.nav__link::after {
+.nav__en { position: relative; }
+.nav__en::after {
   content: "";
   position: absolute;
   left: 0; bottom: -4px;
@@ -141,10 +143,18 @@ img { display: block; max-width: 100%; }
   transform-origin: left;
   transition: transform 0.4s var(--ease);
 }
+.nav__sub {
+  font-family: "Noto Sans JP", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-left: 0.9rem;
+}
 .nav__link:hover { color: var(--text); }
-.nav__link:hover::after { transform: scaleX(1); }
+.nav__link:hover .nav__en::after { transform: scaleX(1); }
 .nav__link.is-current { color: var(--gold-soft); }
-.nav__link.is-current::after { transform: scaleX(1); }
+.nav__link.is-current .nav__en::after { transform: scaleX(1); }
 
 .brand {
   font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
@@ -385,7 +395,7 @@ img { display: block; max-width: 100%; }
   position: relative;
   max-width: none;
   margin: 0;
-  margin-top: 16rem;
+  margin-top: 8rem;
   padding: 0;
   min-height: 74vh;
   display: flex;
@@ -441,15 +451,22 @@ img { display: block; max-width: 100%; }
 /* HOW TO EAT：3枚横並び＋細い斜めの区切り */
 .howto__strip {
   display: flex;
-  max-width: 980px;
+  max-width: 1280px;
   margin: 0 auto 2.6rem;
-  aspect-ratio: 3 / 1;
+  aspect-ratio: 3.3 / 1;
 }
 .howto__strip-img {
   flex: 1;
   min-width: 0;
   height: 100%;
   object-fit: cover;
+  /* ホバーで少しズーム＋色味が戻る（案03と同じ質感変化） */
+  transition: transform 0.9s var(--ease), filter 0.6s var(--ease);
+}
+.howto__strip-img:hover {
+  transform: scale(1.06);
+  filter: none;
+  z-index: 4; /* ズーム時に隣の写真より前面へ */
 }
 /* 斜辺をぴったり合わせ、margin で 2px だけ離して細い区切り線にする */
 .howto__strip-img:nth-child(1) { clip-path: polygon(0 0, 100% 0, calc(100% - 64px) 100%, 0 100%); }
@@ -620,7 +637,7 @@ img { display: block; max-width: 100%; }
   min-height: 70vh;
 }
 .page > section:first-child { padding-top: 3rem; }
-.section-more { text-align: center; margin-top: 3rem; }
+.section-more { text-align: center; margin-top: 5rem; }
 
 /* ---------- Section head ---------- */
 .section-head { text-align: center; margin-bottom: 3rem; }
@@ -643,6 +660,7 @@ img { display: block; max-width: 100%; }
 .ranking { max-width: 1280px; margin: 0 auto; padding: 7rem 2.5rem 0; }
 /* RANKING 見出しだけ少し大きく */
 .ranking .section-head__title { font-size: clamp(2.2rem, 5vw, 3.5rem); }
+.ranking .section-head { margin-bottom: 5.5rem; }
 /* RANKING：巨大ナンバー × エディトリアル（左右交互） */
 .ranking__row {
   display: flex;
@@ -654,25 +672,48 @@ img { display: block; max-width: 100%; }
 .rank-row {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 460px minmax(auto, 460px);
+  justify-content: center;
   align-items: center;
-  gap: 2rem;
+  gap: 2.8rem;
   min-height: 300px;
+  transition: transform 0.5s var(--ease);
 }
 .rank-row:nth-child(even) { direction: rtl; }
 .rank-row:nth-child(even) .rank-row__info { direction: ltr; }
-.rank-row__media { position: relative; direction: ltr; }
+.rank-row__media {
+  position: relative;
+  direction: ltr;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+  transition: box-shadow 0.5s var(--ease);
+}
 .rank-row__media img {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 6px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+  transition: transform 0.9s var(--ease);
 }
+/* ホバー時に画像へ薄い暗幕を重ねて引き締める */
+.rank-row__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to top, rgba(8, 6, 4, 0.45), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  pointer-events: none;
+}
+.rank-row:hover { transform: translateY(-8px); }
+.rank-row:hover .rank-row__media { box-shadow: 0 38px 72px rgba(0, 0, 0, 0.6); }
+.rank-row:hover .rank-row__media img { transform: scale(1.05); }
+.rank-row:hover .rank-row__media::after { opacity: 1; }
 .rank-row__glyph {
   display: grid; place-items: center;
   aspect-ratio: 4 / 3; font-size: 3rem;
-  background: var(--surface); border-radius: 6px;
+  background: var(--surface);
 }
 /* 数字は文章ブロック内の独立した左列に配置（全行共通・重なり防止）*/
 .rank-row__no {
@@ -691,22 +732,29 @@ img { display: block; max-width: 100%; }
   pointer-events: none;
 }
 .rank-row__info {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  column-gap: 1.2rem;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
   padding: 1rem 1.5rem;
 }
-/* 2位（id=3）の数字・文章を右に寄せる */
-.rank-row[data-id="3"] .rank-row__info {
-  grid-template-columns: auto auto;
-  justify-content: end;
+/* 2段目（画像が右）の文章ブロックを右側に寄せる */
+.rank-row:nth-child(2) .rank-row__info {
+  align-items: flex-end;
+  text-align: right;
 }
 .rank-row__cat {
   font-family: "Inter", sans-serif;
   font-size: 0.78rem; letter-spacing: 0.28em; color: var(--gold);
 }
-.rank-row__name { font-size: 1.85rem; font-weight: 700; line-height: 1.4; margin: 0.6rem 0 1rem; }
+.rank-row__name { font-size: 1.85rem; font-weight: 700; line-height: 1.4; margin: 0.6rem 0 0.6rem; transition: color 0.4s var(--ease); }
+.rank-row:hover .rank-row__name { color: var(--gold-soft); }
+.rank-row__desc {
+  font-family: "Noto Sans JP", sans-serif; font-weight: 300;
+  font-size: 0.92rem; line-height: 2.1; color: var(--text);
+  letter-spacing: 0.08em; margin: 0 0 1rem; max-width: 36ch;
+  opacity: 1;
+}
 .rank-row__price {
   font-family: "Inter", sans-serif; font-size: 1.45rem; color: var(--text);
 }
@@ -723,6 +771,8 @@ img { display: block; max-width: 100%; }
   .rank-row, .rank-row:nth-child(even) { grid-template-columns: 1fr; direction: ltr; gap: 1rem; min-height: 0; }
   .rank-row__no { font-size: 5.5rem; }
   .rank-row__info { padding: 0.5rem 0.3rem 0; }
+  /* スマホでは2段目も1・3段目と同じ左揃えに */
+  .rank-row:nth-child(2) .rank-row__info { align-items: flex-start; text-align: left; }
 }
 
 /* ---------- Shop ---------- */
@@ -776,7 +826,21 @@ img { display: block; max-width: 100%; }
   overflow: hidden;
   border-radius: var(--radius);
   background: var(--surface);
+  transition: box-shadow 0.5s var(--ease);
 }
+/* ホバー時に画像へ薄い暗幕を重ねて引き締める */
+.card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to top, rgba(8, 6, 4, 0.45), transparent 55%);
+  opacity: 0;
+  transition: opacity 0.5s var(--ease);
+  pointer-events: none;
+}
+.card:hover .card__media::after { opacity: 1; }
+.card:hover .card__media { box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55); }
 .card__glyph {
   transition: transform 0.6s var(--ease);
   filter: drop-shadow(0 10px 24px rgba(0,0,0,0.5));
@@ -791,6 +855,8 @@ img { display: block; max-width: 100%; }
   transition: transform 0.7s var(--ease);
 }
 .card:hover .card__img { transform: scale(1.05); }
+/* カード全体をふわっと持ち上げる */
+.card.is-in:hover { transform: translateY(-8px); }
 .rank-card__media .card__img { transition: transform 0.7s var(--ease); }
 .rank-card:hover .card__img { transform: scale(1.06); }
 .card__body {
@@ -813,7 +879,9 @@ img { display: block; max-width: 100%; }
   font-weight: 400;
   letter-spacing: 0.02em;
   line-height: 1.5;
+  transition: color 0.4s var(--ease);
 }
+.card:hover .card__name { color: var(--gold-soft); }
 .card__foot {
   width: 100%;
   display: flex;
@@ -937,24 +1005,65 @@ img { display: block; max-width: 100%; }
 }
 
 /* ---------- About ---------- */
+/* センターバナー：全面背景写真＋均一な暗幕＋中央に見出しと文章 */
 .about {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 7rem 2.5rem;
+  position: relative;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  min-height: 48vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
   text-align: center;
 }
+.about__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  filter: brightness(0.85) grayscale(0.1);
+}
+.about::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(8, 6, 4, 0.62);
+}
+.about__inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+.about__eyebrow {
+  font-family: "Inter", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  color: var(--gold);
+}
 .about__head {
-  font-size: clamp(1.2rem, 3vw, 1.7rem);
-  font-weight: 500;
-  letter-spacing: 0.05em;
+  font-size: clamp(1.8rem, 4.4vw, 3rem);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
   color: #fff;
-  margin-bottom: 1.8rem;
+  margin: 0.9rem 0 1.2rem;
 }
 .about__body {
-  color: var(--text-dim);
-  font-size: 0.92rem;
-  line-height: 2.1;
-  margin-bottom: 1.4rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.95rem;
+  line-height: 2;
+  letter-spacing: 0.02em;
+  max-width: 600px;
+  margin: 0 auto 1rem;
 }
 .about__body:last-child { margin-bottom: 0; }
 
@@ -1666,6 +1775,17 @@ img { display: block; max-width: 100%; }
   .brand { text-align: left; font-size: 1rem; letter-spacing: 0.16em; }
 
   .howto { padding: 5rem 1.4rem; }
+  /* スマホでは「HOW TO EAT」を1行に収める（折り返さない） */
+  .howto__eyebrow {
+    white-space: nowrap;
+    font-size: clamp(1.3rem, 7vw, 1.9rem);
+    letter-spacing: 0.26em;
+    padding-left: 0.26em;
+  }
+  /* スマホでは斜めの区切りを細くして、写真同士の間隔を狭める */
+  .howto__strip-img:nth-child(1) { clip-path: polygon(0 0, 100% 0, calc(100% - 32px) 100%, 0 100%); }
+  .howto__strip-img:nth-child(2) { clip-path: polygon(32px 0, 100% 0, calc(100% - 32px) 100%, 0 100%); margin-left: -24px; }
+  .howto__strip-img:nth-child(3) { clip-path: polygon(32px 0, 100% 0, 100% 100%, 0 100%); margin-left: -24px; }
   .howto__recommend { padding: 2.4rem 1.5rem; }
   .howto__recommend-text { font-size: 0.92rem; line-height: 2; }
   /* スマホでは縦積み（見出しが上・本文が下）＋区切りは横線 */
@@ -1681,7 +1801,8 @@ img { display: block; max-width: 100%; }
   .shop { padding: 5rem 1.4rem; }
   .ranking { padding: 5rem 1.4rem 0; }
   .news { padding: 1rem 1.4rem 5rem; }
-  .about { padding: 5rem 1.4rem; }
+  .about { min-height: 52vh; }
+  .about__inner { padding: 2.5rem 1.6rem; }
   .recruit { padding: 5rem 1.4rem; }
   .contact { padding: 5rem 1.4rem; }
   .statement { min-height: 60vh; }
