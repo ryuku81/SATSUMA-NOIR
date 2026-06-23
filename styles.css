@@ -14,6 +14,91 @@
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* ---------- Light theme ----------
+   背景の黒と文字の白を反転（白背景・黒文字）。
+   ただし hero / statement / about など「写真の上に文章があるセクション」は
+   文字色を #fff 等でハードコードしているため、ここでは反転しない。 */
+[data-theme="light"] {
+  --bg: #ffffff;
+  --bg-soft: #f3f2ef;
+  --surface: #f7f6f3;
+  --surface-2: #ebe9e4;
+  --line: rgba(0, 0, 0, 0.10);
+  --line-strong: rgba(0, 0, 0, 0.20);
+  --text: #16161a;
+  --text-dim: #5d5a54;
+  --text-faint: #98948c;
+}
+/* スクロール後のヘッダー／ドロワーを白系に */
+[data-theme="light"] .header.is-scrolled {
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom-color: var(--line);
+}
+[data-theme="light"] .nav {
+  background: rgba(255, 255, 255, 0.97);
+  border-right-color: var(--line);
+}
+/* トップ最上部（透明ヘッダー＝暗い写真の上）では操作ボタンを白のまま保つ */
+[data-theme="light"] .header:not(.is-scrolled) .brand,
+[data-theme="light"] .header:not(.is-scrolled) .icon-btn,
+[data-theme="light"] .header:not(.is-scrolled) .login-btn {
+  color: #f4f1ea;
+}
+[data-theme="light"] .header:not(.is-scrolled) .nav-toggle span {
+  background: #f4f1ea;
+}
+/* HOW TO EAT は写真オーバーレイではないので白文字を反転 */
+[data-theme="light"] .howto__eyebrow,
+[data-theme="light"] .howto__split .howto__title { color: var(--text); }
+[data-theme="light"] .howto__col--divider { border-left-color: var(--line-strong); }
+/* TOPICS のカードはライトのときだけ真っ白に（ダークは元のクリームのまま） */
+[data-theme="light"] .topic-card { background: #fff; }
+/* COLLECTION のカテゴリーをライトでも読みやすく（ピル形状・塗りつぶしの雰囲気は維持） */
+[data-theme="light"] .filter { color: rgba(22, 22, 26, 0.62); border-color: rgba(0, 0, 0, 0.18); }
+/* 商品詳細パンくず（HOME / COLLECTION …）をライトでも読みやすく */
+[data-theme="light"] .pdp__crumbs a { color: rgba(22, 22, 26, 0.7); }
+/* 商品詳細：数量ラベル・気になるリストボタンをライトでも読みやすく */
+[data-theme="light"] .pdp__qty-label,
+[data-theme="light"] .pdp__wish { color: rgba(22, 22, 26, 0.7); }
+/* 商品概要の罫線をライトでは黒に */
+[data-theme="light"] .pdp__spec { border-bottom-color: #000; }
+[data-theme="light"] .pdp__spec-row { border-top-color: #000; }
+/* 特徴セクション見出し下の罫線をライトでは黒に */
+[data-theme="light"] .pdp__feature-head::after { background: #000; }
+/* NEWS のカテゴリーをライトではオレンジに */
+[data-theme="light"] .news-item__cat { color: #e08a3c; }
+/* プライマリボタン（ログインする／登録する 等）をライトでも読みやすく。
+   ライトでは背景が濃色になるため文字を白に、ホバー（地色がゴールド）時は濃色に戻す。 */
+[data-theme="light"] .btn--primary { color: #fff; }
+[data-theme="light"] .btn--primary:hover { color: #0a0a0b; }
+/* ログイン画面の切替リンク（会員登録／ログイン）をライトではオレンジに */
+[data-theme="light"] .auth-form__switch button { color: #e08a3c; }
+/* 会員登録フォームのプライバシーポリシーのリンクをライトではオレンジに */
+[data-theme="light"] .field-check a { color: #e08a3c; }
+/* カート／気になるリスト追加時のトーストは、ライトでもダーク地のまま文字を明色に保つ */
+[data-theme="light"] .toast { color: #f4f1ea; border-color: rgba(255, 255, 255, 0.16); }
+/* 商品詳細の在庫状況（在庫あり）をライトでも読みやすく */
+[data-theme="light"] .pdp__stock { color: rgba(22, 22, 26, 0.7); }
+/* 残りわずか はライトではオレンジに */
+[data-theme="light"] .pdp__stock--low { color: #e08a3c; }
+/* ライトのときはメインビジュアルの暗くするエフェクトを少し薄く（白ロゴは可読を維持） */
+[data-theme="light"] .hero__overlay {
+  background:
+    radial-gradient(ellipse at center, rgba(10,10,11,0.15) 0%, rgba(10,10,11,0.42) 100%),
+    linear-gradient(to bottom, rgba(10,10,11,0.30) 0%, rgba(10,10,11,0.04) 35%, rgba(10,10,11,0.34) 100%);
+}
+/* ライトのときはステートメントの暗くするエフェクトも少し薄く（左の白文字は可読を維持） */
+[data-theme="light"] .statement::after {
+  background: linear-gradient(90deg, rgba(8, 6, 4, 0.55) 0%, rgba(8, 6, 4, 0.28) 45%, rgba(8, 6, 4, 0.04) 100%);
+}
+[data-theme="light"] .filter:hover { color: var(--text); }
+[data-theme="light"] .filter.is-active { color: #fff; }
+/* テーマ切替ボタン：暗→太陽、明→月を表示 */
+.theme-toggle__moon { display: none; }
+.theme-toggle__sun { display: block; }
+[data-theme="light"] .theme-toggle__moon { display: block; }
+[data-theme="light"] .theme-toggle__sun { display: none; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
@@ -22,11 +107,14 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: "Noto Sans JP", sans-serif;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.8;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+/* ABOUT（トップ）画面は本文を 400 に底上げして読みやすく。
+   個別に 400 未満を指定している要素は各セレクタ側でも 400 に揃える。 */
+body.home { font-weight: 400; }
 
 ::selection { background: var(--gold); color: #000; }
 
@@ -295,8 +383,8 @@ img { display: block; max-width: 100%; }
   inset: 0;
   z-index: 1;
   background:
-    radial-gradient(ellipse at center, rgba(10,10,11,0.35) 0%, rgba(10,10,11,0.7) 100%),
-    linear-gradient(to bottom, rgba(10,10,11,0.5) 0%, rgba(10,10,11,0.15) 35%, rgba(10,10,11,0.55) 100%);
+    radial-gradient(ellipse at center, rgba(10,10,11,0.28) 0%, rgba(10,10,11,0.6) 100%),
+    linear-gradient(to bottom, rgba(10,10,11,0.42) 0%, rgba(10,10,11,0.12) 35%, rgba(10,10,11,0.46) 100%);
 }
 .hero__center {
   position: relative;
@@ -333,7 +421,7 @@ img { display: block; max-width: 100%; }
   font-size: clamp(0.85rem, 1.6vw, 1.05rem);
   letter-spacing: 0.1em;
   color: rgba(244,241,234,0.85);
-  font-weight: 300;
+  font-weight: 400;
 }
 .hero-concept {
   position: absolute;
@@ -417,7 +505,7 @@ img { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   z-index: 1;
-  background: linear-gradient(90deg, rgba(8, 6, 4, 0.82) 0%, rgba(8, 6, 4, 0.5) 45%, rgba(8, 6, 4, 0.12) 100%);
+  background: linear-gradient(90deg, rgba(8, 6, 4, 0.68) 0%, rgba(8, 6, 4, 0.4) 45%, rgba(8, 6, 4, 0.08) 100%);
 }
 .statement__inner {
   position: relative;
@@ -661,6 +749,8 @@ img { display: block; max-width: 100%; }
 /* RANKING 見出しだけ少し大きく */
 .ranking .section-head__title { font-size: clamp(2.2rem, 5vw, 3.5rem); }
 .ranking .section-head { margin-bottom: 5.5rem; }
+/* 「すべての商品を見る」ボタンをもう少しだけ下に */
+.ranking .section-more { margin-top: 6.5rem; }
 /* RANKING：巨大ナンバー × エディトリアル（左右交互） */
 .ranking__row {
   display: flex;
@@ -684,7 +774,7 @@ img { display: block; max-width: 100%; }
 .rank-row__media {
   position: relative;
   direction: ltr;
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow: hidden;
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
   transition: box-shadow 0.5s var(--ease);
@@ -750,7 +840,7 @@ img { display: block; max-width: 100%; }
 .rank-row__name { font-size: 1.85rem; font-weight: 700; line-height: 1.4; margin: 0.6rem 0 0.6rem; transition: color 0.4s var(--ease); }
 .rank-row:hover .rank-row__name { color: var(--gold-soft); }
 .rank-row__desc {
-  font-family: "Noto Sans JP", sans-serif; font-weight: 300;
+  font-family: "Noto Sans JP", sans-serif; font-weight: 400;
   font-size: 0.92rem; line-height: 2.1; color: var(--text);
   letter-spacing: 0.08em; margin: 0 0 1rem; max-width: 36ch;
   opacity: 1;
@@ -787,9 +877,10 @@ img { display: block; max-width: 100%; }
 .filter {
   background: none;
   border: 1px solid var(--line);
-  color: var(--text-dim);
+  color: rgba(244, 241, 234, 0.7);
   padding: 0.6rem 1.4rem;
   font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 0.16em;
   border-radius: 999px;
   cursor: pointer;
@@ -868,12 +959,22 @@ img { display: block; max-width: 100%; }
 }
 .card__tag {
   font-size: 0.6rem;
+  font-weight: 700;
   letter-spacing: 0.14em;
-  color: var(--text-dim);
+  color: var(--gold);
   border: 1px solid var(--line-strong);
   border-radius: 999px;
   padding: 0.22rem 0.7rem;
 }
+/* 商品名（左）＋ タグ（右）を同じ行に */
+.card__head {
+  width: 100%;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.card__head .card__tag { flex-shrink: 0; }
 .card__name {
   font-size: 0.92rem;
   font-weight: 400;
@@ -1277,7 +1378,7 @@ img { display: block; max-width: 100%; }
   font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
   font-size: 0.8rem;
   letter-spacing: 0.04em;
-  color: var(--text-dim);
+  color: var(--text);
 }
 .news-item__cat {
   justify-self: start;
@@ -1286,8 +1387,8 @@ img { display: block; max-width: 100%; }
   font-weight: 600;
   letter-spacing: 0.14em;
   color: var(--gold-soft);
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
+  border: none;
+  border-radius: 0;
   padding: 0.25rem 0.7rem;
 }
 .news-item__title {
@@ -2577,4 +2678,678 @@ img { display: block; max-width: 100%; }
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius);
   padding: 0.7rem 1rem;
+}
+
+/* ============================================================
+   Product detail (PRODUCT page / product.html)
+   参考デザインのレイアウトを踏襲しつつ、黒基調で再構成。
+   ============================================================ */
+/* クリックできるカード（コレクション／ベストセラー）*/
+.card.is-clickable,
+.rank-row.is-clickable { cursor: pointer; }
+
+.pdp {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 6.5rem 2.5rem 7rem;
+}
+
+/* パンくず */
+.pdp__crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  margin-bottom: 2.6rem;
+}
+.pdp__crumbs a { color: rgba(244, 241, 234, 0.82); transition: color 0.3s var(--ease); }
+.pdp__crumbs a:hover { color: var(--gold-soft); }
+.pdp__crumbs span { color: var(--text-dim); }
+.pdp__crumbs-current { color: var(--text); }
+
+/* 上段：左ギャラリー＋右情報 */
+.pdp__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 3.4rem;
+  align-items: start;
+}
+
+/* ---- ギャラリー ---- */
+.pdp__stage {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+}
+.pdp__stage img { width: 100%; height: 100%; object-fit: cover; }
+.pdp__stage-glyph { font-size: 5rem; }
+
+/* 画像送りの矢印ボタン（ステージ左右） */
+.pdp__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  color: var(--text);
+  opacity: 0.5;
+  font-size: 2rem;
+  line-height: 1;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  transition: opacity 0.3s var(--ease), color 0.3s var(--ease);
+}
+.pdp__nav:hover {
+  opacity: 1;
+  color: var(--gold-soft);
+}
+.pdp__nav--prev { left: 0.4rem; }
+.pdp__nav--next { right: 0.4rem; }
+
+.pdp__thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.7rem;
+  margin-top: 0.9rem;
+}
+.pdp__thumb {
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+.pdp__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pdp__thumb:hover { opacity: 0.9; }
+.pdp__thumb.is-active { opacity: 1; border-color: var(--gold); }
+
+/* ---- 情報カラム ---- */
+.pdp__info { padding-top: 0.4rem; }
+.pdp__cat {
+  font-family: "Inter", sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.28em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+}
+.pdp__name {
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+}
+.pdp__price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 1.4rem 0 0.5rem;
+  padding-bottom: 1.6rem;
+  border-bottom: 1px solid var(--line);
+}
+.pdp__price-num {
+  font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  font-size: 1.7rem;
+  color: var(--text);
+}
+.pdp__tax { font-size: 0.74rem; color: var(--text-dim); }
+
+.pdp__stock {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(244, 241, 234, 0.82);
+  margin: 1.4rem 0 0;
+}
+.pdp__stock--low { color: var(--gold-soft); }
+.pdp__stock--out { color: #e07a7a; }
+
+/* 購入ブロック */
+.pdp__buy { margin-top: 1.6rem; }
+.pdp__qty {
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  margin-bottom: 1.3rem;
+}
+.pdp__qty-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: rgba(244, 241, 234, 0.82);
+}
+.pdp__stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.pdp__stepper[aria-disabled="true"] { opacity: 0.4; pointer-events: none; }
+.pdp__step {
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.3s var(--ease), color 0.3s var(--ease);
+}
+.pdp__step:hover { background: var(--surface-2); color: var(--gold-soft); }
+.pdp__qty-num {
+  min-width: 48px;
+  text-align: center;
+  font-family: "Inter", sans-serif;
+  font-size: 1rem;
+  border-left: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  line-height: 44px;
+}
+
+.pdp__add { margin-bottom: 0.9rem; }
+.pdp__add[disabled] {
+  background: var(--surface-2);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+.pdp__add[disabled]:hover { letter-spacing: 0.18em; }
+
+.pdp__wish {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  color: rgba(244, 241, 234, 0.82);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.35s var(--ease);
+}
+.pdp__wish:hover { border-color: var(--gold); color: var(--gold-soft); }
+
+/* シェア */
+.pdp__share {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1.8rem;
+}
+.pdp__share-label {
+  font-family: "Inter", sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  color: var(--text-faint);
+}
+.pdp__share-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-dim);
+  transition: all 0.3s var(--ease);
+}
+.pdp__share-icon:hover { color: var(--gold-soft); border-color: var(--line-strong); }
+
+/* 下段：詳細テキスト */
+/* 見出し→画像→本文の中央寄せエディトリアルセクション */
+.pdp__feature {
+  max-width: 720px;
+  margin: 5.5rem auto 0;
+  padding: 0 1rem;
+  text-align: center;
+}
+.pdp__feature-head {
+  font-size: clamp(1rem, 2.4vw, 1.3rem);
+  font-weight: 700;
+  line-height: 1.85;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  margin-bottom: 2.2rem;
+}
+/* タイトルと画像の間の罫線（セクション全幅） */
+.pdp__feature-head::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+  margin: 1.6rem auto 0;
+}
+.pdp__feature-media {
+  max-width: 520px;
+  aspect-ratio: 4 / 3;
+  margin: 0 auto 2.2rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+.pdp__feature-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pdp__feature-glyph { font-size: 4rem; }
+.pdp__feature-body {
+  font-family: "Noto Sans JP", sans-serif;
+  font-weight: 500;
+  font-size: 0.9rem;
+  line-height: 2.1;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* 商品概要セクション（定義リスト＋注意書きボックス） */
+.pdp__overview {
+  max-width: 720px;
+  margin: 5.5rem auto 0;
+  padding: 0 1rem;
+}
+.pdp__overview-title {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text);
+  margin-bottom: 2.4rem;
+}
+.pdp__spec {
+  border-bottom: 1px dashed var(--line-strong);
+}
+.pdp__spec-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 1.5rem;
+  padding: 1.3rem 0.2rem;
+  border-top: 1px dashed var(--line-strong);
+}
+.pdp__spec-row dt {
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  color: var(--text);
+}
+.pdp__spec-row dd {
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.9;
+  letter-spacing: 0.03em;
+  color: var(--text);
+}
+.pdp__note {
+  margin-top: 2.4rem;
+  background: var(--bg);
+  padding: 1.6rem 0 0;
+}
+.pdp__note-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.pdp__note-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.pdp__note-list li {
+  position: relative;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.85;
+  color: var(--text);
+}
+.pdp__note-list li::before {
+  content: "・";
+  position: absolute;
+  left: 0;
+  color: var(--text);
+}
+
+@media (max-width: 560px) {
+  .pdp__spec-row { grid-template-columns: 1fr; gap: 0.5rem; }
+}
+
+.pdp__details {
+  margin-top: 4.5rem;
+  border-top: 1px solid var(--line);
+  counter-reset: pdpblock;
+}
+.pdp__block {
+  padding: 2.2rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.pdp__block-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  counter-increment: pdpblock;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text);
+  margin-bottom: 1rem;
+  max-width: 32rem;
+  margin-left: auto;
+}
+/* 連番（01, 02…）をゴールドで自動採番 */
+.pdp__block-title::before {
+  content: counter(pdpblock, decimal-leading-zero);
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 0.95em;
+  letter-spacing: 0.08em;
+  color: var(--gold);
+}
+/* 番号とタイトルの間の細いゴールド罫線 */
+.pdp__block-line {
+  flex-shrink: 0;
+  width: 1.6rem;
+  height: 1px;
+  background: var(--text);
+}
+.pdp__block-body {
+  font-family: "Noto Sans JP", sans-serif;
+  font-weight: 400;
+  font-size: 0.9rem;
+  line-height: 2.1;
+  letter-spacing: 0.04em;
+  color: var(--text);
+  max-width: 32rem;
+  margin-left: auto;
+  text-align: left;
+}
+.pdp__notfound { padding: 4rem 0; }
+
+@media (max-width: 860px) {
+  .pdp { padding: 5rem 1.4rem 5rem; }
+  .pdp__main { grid-template-columns: 1fr; gap: 2.2rem; }
+  .pdp__info { padding-top: 0; }
+}
+
+/* ============================================================
+   Wishlist modal (未ログインで「気になるリスト」追加時)
+   参考デザインのレイアウトを踏襲し、黒基調で再構成。
+   ============================================================ */
+.wish-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 1.4rem;
+}
+.wish-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.74);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.wish-modal__panel {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 2.4rem 1.9rem 2.1rem;
+  text-align: center;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6);
+  animation: wishPop 0.38s var(--ease);
+}
+@keyframes wishPop {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.wish-modal__close {
+  position: absolute;
+  top: 0.8rem;
+  right: 0.8rem;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: color 0.3s var(--ease);
+}
+.wish-modal__close:hover { color: var(--gold-soft); }
+.wish-modal__title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 1.5rem;
+}
+.wish-modal__media {
+  width: 178px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 1.5rem;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+.wish-modal__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wish-modal__glyph { font-size: 3.6rem; }
+.wish-modal__text {
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--text);
+  margin-bottom: 0.9rem;
+}
+.wish-modal__note {
+  font-size: 0.74rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+  margin-bottom: 1.7rem;
+}
+.wish-modal__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.84rem;
+  letter-spacing: 0.14em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.35s var(--ease);
+}
+.wish-modal__btn--primary {
+  background: var(--gold);
+  color: #0a0a0b;
+  border: 1px solid var(--gold);
+}
+.wish-modal__btn--primary:hover {
+  background: var(--gold-soft);
+  border-color: var(--gold-soft);
+  letter-spacing: 0.2em;
+}
+.wish-modal__sub {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  margin: 1.6rem 0 0.8rem;
+}
+.wish-modal__btn--ghost {
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+}
+.wish-modal__btn--ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold-soft);
+}
+
+/* ============================================================
+   Wishlist / 気になるリスト (wishlist.html)
+   カート行のスタイルを流用しつつ、列構成を上書き。
+   ============================================================ */
+.wish-row {
+  grid-template-columns: 80px 1fr auto;
+}
+.wish-row__cat {
+  font-family: "Inter", sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  text-transform: uppercase;
+}
+.wish-row .cart-row__name a { color: inherit; transition: color 0.3s var(--ease); }
+.wish-row .cart-row__name a:hover { color: var(--gold-soft); }
+.wish-row__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+}
+.wish-row__cart {
+  padding: 0.7rem 1.6rem;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+.wish-row__cart[disabled] {
+  background: var(--surface-2);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+.wish-row__cart[disabled]:hover { letter-spacing: 0.18em; }
+
+@media (max-width: 640px) {
+  /* カートと同じ flex レイアウトに作り直す。
+     1段目: 画像 ＋ 情報（商品名・価格）／ 2段目: ボタン（カートに入れる・削除）。
+     商品名は省略せず自然に折り返す。 */
+  .wish-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.7rem 1rem;
+  }
+  .wish-row .cart-row__media {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+  .wish-row .cart-row__info { flex: 1; min-width: 0; }
+  .wish-row .cart-row__name { white-space: normal; }
+  .wish-row__actions {
+    width: 100%;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 0.7rem;
+  }
+  .wish-row__cart { flex: 1; }
+  .wish-row .cart-row__remove { flex-shrink: 0; }
+}
+
+/* 商品詳細ページ: 追加済みの「気になるリスト」ボタン */
+.pdp__wish.is-active {
+  border-color: var(--gold);
+  color: var(--gold-soft);
+}
+.pdp__wish.is-active svg { fill: var(--gold-soft); stroke: var(--gold-soft); }
+
+/* ============================================================
+   News detail (news-detail.html) — 黒基調の記事ページ
+   ============================================================ */
+.news-article {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 4.5rem 1.4rem 2rem;
+}
+.news-article__eyebrow {
+  text-align: center;
+  font-family: "Inter", sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 3rem;
+  padding-left: 0.4em;
+}
+.news-article__meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.news-article__date {
+  font-family: "Inter", sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+.news-article__cat {
+  font-family: "Inter", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--text-dim);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.22rem 0.7rem;
+}
+.news-article__title {
+  font-size: clamp(1.2rem, 2.6vw, 1.65rem);
+  font-weight: 700;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  margin: 0.9rem 0 2.4rem;
+}
+.news-article__body p {
+  font-family: "Noto Sans JP", sans-serif;
+  font-weight: 400;
+  font-size: 0.9rem;
+  line-height: 2.15;
+  letter-spacing: 0.03em;
+  color: var(--text);
+  margin-bottom: 1.7rem;
+}
+.news-article__figure {
+  margin: 2.4rem 0;
+}
+.news-article__img {
+  width: 100%;
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
 }

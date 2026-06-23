@@ -171,11 +171,9 @@
     }
     listEl.innerHTML = items
       .map((n) => {
-        const url = n.url && n.url.trim() ? n.url.trim() : "#";
-        const external = /^https?:\/\//.test(url);
         return `
         <li class="news-item">
-          <a href="${escapeHtml(url)}"${external ? ' target="_blank" rel="noopener"' : ""}>
+          <a href="news-detail.html?id=${encodeURIComponent(n.id)}">
             <span class="news-item__date">${escapeHtml(dotDate(n.date))}</span>
             <span class="news-item__cat">${escapeHtml(n.cat)}</span>
             <span class="news-item__title">${escapeHtml(n.title)}</span>
@@ -185,9 +183,73 @@
       .join("");
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", renderPublicNews);
-  } else {
+  // ------------------------------------------------------------
+  //  お知らせ詳細ページ（news-detail.html）の描画
+  //  #newsDetail が存在するページでのみ動作する。
+  //  ※ データに本文・画像が無いため、SATSUMA NOIR の文脈で本文を生成する。
+  // ------------------------------------------------------------
+  const NEWS_IMAGES = [
+    "images/noir-tablette.png",
+    "images/truffle-collection.png",
+    "images/gateau-chocolat.png",
+    "images/basque-cheesecake.png",
+  ];
+  function newsImageFor(n) {
+    return NEWS_IMAGES[(Number(n.id) || 0) % NEWS_IMAGES.length];
+  }
+
+  async function renderNewsDetail() {
+    const root = document.getElementById("newsDetail");
+    if (!root) return;
+
+    const id = Number(new URLSearchParams(location.search).get("id"));
+    const n = await NewsStore.findById(id);
+
+    if (!n) {
+      root.innerHTML = `
+        <div class="section-head">
+          <h2 class="section-head__title">NEWS</h2>
+        </div>
+        <p class="cart-page__empty">お探しのお知らせが見つかりませんでした。</p>
+        <div class="section-more"><a href="news.html" class="btn btn--ghost">お知らせ一覧へ</a></div>`;
+      return;
+    }
+
+    const title = escapeHtml(n.title);
+    const img = newsImageFor(n);
+
+    root.innerHTML = `
+      <div class="section-head">
+        <h2 class="section-head__title">NEWS</h2>
+      </div>
+      <div class="news-article__meta">
+        <span class="news-article__date">${escapeHtml(dotDate(n.date))}</span>
+        <span class="news-article__cat">${escapeHtml(n.cat)}</span>
+      </div>
+      <h1 class="news-article__title">${title}</h1>
+
+      <div class="news-article__body">
+        <p>平素より SATSUMA NOIR をご愛顧いただき、誠にありがとうございます。このたび、「${title}」につきまして、お客様へご案内申し上げます。</p>
+
+        <figure class="news-article__figure">
+          <img class="news-article__img" src="${img}" alt="${title}" loading="lazy" />
+        </figure>
+
+        <p>独自の“熟成冷凍”加工により、解凍後がいちばんの食べごろとなるよう、ひとつひとつ手仕事で丁寧に仕上げております。素材本来の風味を引き出すため、配合や焼き加減のわずかな差にもこだわり、地道で地味な作業を一日一日積み重ねてまいりました。室温で1時間ほど解凍していただくと、外側はしっとり、中心はとろりとほどけるような口どけに変わります。小分けにカットして、その日に食べる分だけ解凍し、残りは冷凍庫で保存いただくのがおすすめです。毎日のティータイムや、一日の終わりのほっとするひとときに、少しずつお楽しみいただけます。</p>
+        <p>数に限りがございますので、なくなり次第終了とさせていただきます。ご注文の状況によってはお届けまでお時間をいただく場合がございますが、できる限り食べごろの状態でお手元に届くよう、発送のタイミングまで一つひとつ心を込めて管理しております。商品の保存方法やお召し上がり方について、また配送日のご指定など、ご不明な点がございましたら、お問い合わせフォームよりお気軽にご連絡ください。スタッフ一同、心を込めてご対応いたします。これからも、静かで深い甘さとともに、皆さまの週末に小さな贅沢をお届けできるよう努めてまいります。今後とも SATSUMA NOIR をどうぞよろしくお願いいたします。</p>
+      </div>
+
+      <div class="section-more"><a href="news.html" class="btn btn--ghost">お知らせ一覧へ</a></div>`;
+  }
+
+  function renderNewsPages() {
     renderPublicNews();
+    renderNewsDetail();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderNewsPages);
+  } else {
+    renderNewsPages();
   }
 })(window);

@@ -16,6 +16,21 @@ const ICON_SEARCH = `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx=
 const ICON_CART = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 3.5h2l1.9 10.2a1.2 1.2 0 0 0 1.18.98h8.32a1.2 1.2 0 0 0 1.18-.95L18.8 7H6"/><circle cx="9" cy="19.5" r="1.4"/><circle cx="16.5" cy="19.5" r="1.4"/></svg>`;
 const ICON_CART_SM = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l1.6 9a1 1 0 0 0 1 .82h8a1 1 0 0 0 1-.8L19 7H6"/><circle cx="9" cy="19" r="1.2"/><circle cx="16" cy="19" r="1.2"/></svg>`;
 const ICON_CLOSE = `<svg viewBox="0 0 24 24" width="20" height="20"><line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="1.5"/><line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="1.5"/></svg>`;
+const ICON_HEART_HDR = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5 4.4 13a4.6 4.6 0 0 1 6.5-6.5l1.1 1.1 1.1-1.1A4.6 4.6 0 0 1 19.6 13z"/></svg>`;
+const ICON_SUN = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>`;
+const ICON_MOON = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8 8 0 1 1 9.8 3.5a6.3 6.3 0 0 0 10.7 10.7z"/></svg>`;
+
+// ---------- Theme (dark / light) ----------
+const THEME_KEY = "satsuma-theme";
+function getStoredTheme() {
+  try { return localStorage.getItem(THEME_KEY); } catch (e) { return null; }
+}
+function applyTheme(theme) {
+  if (theme === "light") document.documentElement.setAttribute("data-theme", "light");
+  else document.documentElement.removeAttribute("data-theme");
+}
+// チラつきを抑えるため、ヘッダー構築より前に適用しておく。
+applyTheme(getStoredTheme() === "light" ? "light" : "dark");
 
 // ---------- Navigation ----------
 const NAV_LINKS = [
@@ -53,6 +68,8 @@ function buildChrome() {
       </nav>
       <a href="index.html" class="brand">SATSUMA NOIR</a>
       <div class="header__actions">
+        <button class="icon-btn theme-toggle" id="themeToggle" type="button" aria-label="ダーク／ライト切替"><span class="theme-toggle__sun">${ICON_SUN}</span><span class="theme-toggle__moon">${ICON_MOON}</span></button>
+        <a class="icon-btn wish-btn" href="wishlist.html" aria-label="気になるリスト" hidden>${ICON_HEART_HDR}</a>
         <a class="icon-btn cart-btn" href="cart.html" aria-label="カート">${ICON_CART}<span class="cart-count" id="cartCount">0</span></a>
         <a class="login-btn" href="login.html">LOGIN</a>
       </div>
@@ -232,13 +249,15 @@ function observeCards() {
 // ============================================================
 function cardHtml(p) {
   return `
-    <article class="card" data-id="${p.id}">
+    <article class="card is-clickable" data-id="${p.id}" data-href="product.html?id=${p.id}">
       <div class="card__media">
         ${p.img ? `<img class="card__img" src="${p.img}" alt="${p.name}" loading="lazy" />` : `<span class="card__glyph">${p.glyph}</span>`}
       </div>
       <div class="card__body">
-        ${p.tag ? `<span class="card__tag">${p.tag}</span>` : ""}
-        <h3 class="card__name">${p.name}</h3>
+        <div class="card__head">
+          <h3 class="card__name">${p.name}</h3>
+          ${p.tag ? `<span class="card__tag">${p.tag}</span>` : ""}
+        </div>
         <div class="card__foot">
           <span class="card__price">${yen(p.price)}</span>
           <button class="card__add" data-add="${p.id}" aria-label="カートに追加">${ICON_CART_SM}</button>
@@ -293,7 +312,7 @@ function renderRanking() {
       ? `<img src="${p.img}" alt="${p.name}" loading="lazy" />`
       : `<span class="rank-row__glyph">${p.glyph}</span>`;
     return `
-    <article class="rank-row" data-id="${p.id}">
+    <article class="rank-row is-clickable" data-id="${p.id}" data-href="product.html?id=${p.id}">
       <div class="rank-row__media">
         ${media}
       </div>
@@ -306,6 +325,263 @@ function renderRanking() {
       </div>
     </article>`;
   }).join("");
+}
+
+// ============================================================
+//  Product detail (PRODUCT page / product.html)
+// ============================================================
+// 商品ごとの固定の詳細文（アレルゲン・賞味期限など）。
+// 個別指定がなければ、SATSUMA NOIR 共通のスイーツ向け既定値を使う。
+const PDP_DEFAULTS = {
+  allergen: "卵・乳成分・小麦（一部に大豆を含む）",
+  shelflife:
+    "冷凍で約30日。解凍後は冷蔵で2日以内にお召し上がりください。一度解凍したものの再冷凍はお避けください。",
+  seller: "SATSUMA NOIR（株式会社サツマノワール）／鹿児島県",
+};
+
+// 商品紹介の本文を、商品データから SATSUMA NOIR の文脈で組み立てる。
+function pdpIntro(p) {
+  const base =
+    p.desc ||
+    "素材と静かに向き合い、ひとつひとつ手仕事で仕上げました。";
+  return `${base}<br />独自の“熟成冷凍”加工で、解凍後がいちばんの食べごろになるように製造しています。室温で1時間ほど解凍し、小分けにカットして、食べる分だけお楽しみください。残りは冷凍庫へ。毎日のご褒美に、少しずつ。`;
+}
+
+// メイン画像＋他商品の写真を数枚並べたギャラリー（参考デザインのサムネ列を再現）。
+function pdpGallery(p) {
+  const others = PRODUCTS.filter((x) => x.id !== p.id && x.img).map((x) => x.img);
+  const seen = new Set();
+  return [p.img, ...others]
+    .filter((src) => src && !seen.has(src) && seen.add(src))
+    .slice(0, 4);
+}
+
+const ICON_HEART = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20.5 4.4 13a4.6 4.6 0 0 1 6.5-6.5l1.1 1.1 1.1-1.1A4.6 4.6 0 0 1 19.6 13z"/></svg>`;
+
+function renderProductDetail() {
+  const root = document.getElementById("pdp");
+  if (!root) return;
+
+  const id = Number(new URLSearchParams(location.search).get("id"));
+  const p = PRODUCTS.find((x) => x.id === id);
+
+  if (!p) {
+    root.innerHTML = `
+      <div class="pdp__notfound">
+        <p class="cart-page__empty">お探しの商品が見つかりませんでした。</p>
+        <div class="section-more"><a href="item.html" class="btn btn--ghost">商品一覧へ</a></div>
+      </div>`;
+    return;
+  }
+
+  const stock = Number(p.stock) || 0;
+  const soldOut = stock <= 0;
+  const low = !soldOut && stock <= ProductStore.LOW_STOCK_THRESHOLD;
+  const gallery = pdpGallery(p);
+
+  const thumbs = gallery
+    .map(
+      (src, i) =>
+        `<button class="pdp__thumb${i === 0 ? " is-active" : ""}" data-thumb="${src}" aria-label="画像${i + 1}"><img src="${src}" alt="${p.name} 写真${i + 1}" loading="lazy" /></button>`
+    )
+    .join("");
+
+  const stockNote = soldOut
+    ? `<p class="pdp__stock pdp__stock--out">在庫切れ</p>`
+    : low
+    ? `<p class="pdp__stock pdp__stock--low">残りわずか（あと${stock}点）</p>`
+    : `<p class="pdp__stock">在庫あり</p>`;
+
+  root.innerHTML = `
+    <nav class="pdp__crumbs">
+      <a href="index.html">HOME</a><span>/</span>
+      <a href="item.html">COLLECTION</a><span>/</span>
+      <span class="pdp__crumbs-current">${p.name}</span>
+    </nav>
+
+    <div class="pdp__main">
+      <div class="pdp__gallery">
+        <div class="pdp__stage">
+          ${p.img ? `<img id="pdpMainImg" src="${p.img}" alt="${p.name}" />` : `<span class="pdp__stage-glyph">${p.glyph || "🍰"}</span>`}
+          ${gallery.length > 1 ? `
+          <button type="button" class="pdp__nav pdp__nav--prev" id="pdpPrev" aria-label="前の画像">‹</button>
+          <button type="button" class="pdp__nav pdp__nav--next" id="pdpNext" aria-label="次の画像">›</button>` : ""}
+        </div>
+        ${gallery.length > 1 ? `<div class="pdp__thumbs">${thumbs}</div>` : ""}
+      </div>
+
+      <div class="pdp__info">
+        ${p.catLabel ? `<p class="pdp__cat">${p.catLabel}</p>` : ""}
+        <h1 class="pdp__name">${p.name}</h1>
+        <div class="pdp__price">
+          <span class="pdp__price-num">${yen(p.price)}</span>
+          <span class="pdp__tax">税込</span>
+        </div>
+        ${stockNote}
+
+        <div class="pdp__buy">
+          <div class="pdp__qty">
+            <span class="pdp__qty-label">数量</span>
+            <div class="pdp__stepper" ${soldOut ? "aria-disabled='true'" : ""}>
+              <button type="button" class="pdp__step" data-qstep="-1" aria-label="減らす">−</button>
+              <span class="pdp__qty-num" id="pdpQty">1</span>
+              <button type="button" class="pdp__step" data-qstep="1" aria-label="増やす">＋</button>
+            </div>
+          </div>
+          <button class="btn btn--primary btn--full pdp__add" id="pdpAdd" ${soldOut ? "disabled" : ""}>
+            ${ICON_CART_SM}<span>${soldOut ? "在庫切れ" : "カートに入れる"}</span>
+          </button>
+          <button class="pdp__wish${isWished(p.id) ? " is-active" : ""}" id="pdpWish" type="button">${ICON_HEART}<span>${isWished(p.id) ? "気になるリストに追加済み" : "気になるリストに追加"}</span></button>
+        </div>
+
+        <div class="pdp__share">
+          <span class="pdp__share-label">SHARE</span>
+          <a href="#" class="pdp__share-icon" data-share="x" aria-label="X でシェア">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href="#" class="pdp__share-icon" data-share="line" aria-label="LINE でシェア">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 3C6.9 3 2.75 6.36 2.75 10.5c0 3.71 3.3 6.82 7.76 7.41.3.06.71.2.82.46.1.24.06.6.03.85l-.13.79c-.04.24-.18.93.82.5 1-.42 5.4-3.18 7.37-5.45 1.36-1.49 2.01-3 2.01-4.56C21.25 6.36 17.1 3 12 3z"/></svg>
+          </a>
+          <a href="#" class="pdp__share-icon" data-share="facebook" aria-label="Facebook でシェア">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M14 9h2.5V6H14c-2 0-3.2 1.2-3.2 3.3V11H8.5v3h2.3v7h3v-7h2.4l.4-3h-2.8V9.6c0-.4.2-.6.7-.6z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <section class="pdp__feature">
+      <h2 class="pdp__feature-head">解凍したての、いちばん澄んだ甘さを。</h2>
+      <div class="pdp__feature-media">
+        ${p.img ? `<img src="${p.img}" alt="${p.name}" loading="lazy" />` : `<span class="pdp__feature-glyph">${p.glyph || "🍰"}</span>`}
+      </div>
+      <p class="pdp__feature-body">室温で1時間ほど解凍すると、外はしっとり、中はとろりとほどける食べごろに。ひと口運べば、濃厚なコクのあとに、すっと澄んだ余韻が広がります。小分けにカットして、食べる分だけ解凍し、残りは冷凍庫へ。慌ただしい毎日の中の、静かなご褒美のひとときに。</p>
+    </section>
+
+    <section class="pdp__overview">
+      <h2 class="pdp__overview-title">商品概要</h2>
+      <dl class="pdp__spec">
+        <div class="pdp__spec-row">
+          <dt>サイズ</dt>
+          <dd>約15cm（4〜6名様分）</dd>
+        </div>
+        <div class="pdp__spec-row">
+          <dt>賞味期限</dt>
+          <dd>冷凍（−18℃以下）で約30日<br />※解凍後は冷蔵で2日以内にお召し上がりください<br />※詳しくは商品ラベルの日付をご確認ください</dd>
+        </div>
+        <div class="pdp__spec-row">
+          <dt>原材料</dt>
+          <dd>クリームチーズ、生クリーム（国内製造）、卵、グラニュー糖、薄力粉、バター、レモン果汁／（一部に乳成分・卵・小麦・大豆を含む）<br />※仕入れ状況により原材料の一部が変わる場合がありますが、味・品質に影響はありません。</dd>
+        </div>
+      </dl>
+
+      <div class="pdp__note">
+        <h3 class="pdp__note-title">お取り扱いについて</h3>
+        <ul class="pdp__note-list">
+          <li>本商品は冷凍でのお届けとなります。</li>
+          <li>独自の“熟成冷凍”加工により、解凍後がいちばんの食べごろです。室温で1時間ほど解凍してお楽しみください。</li>
+          <li>ひとつひとつ手作業で製造しているため、形状や焼き色に個体差がございます。</li>
+          <li>表面の濃い焼き色はバスク特有の香ばしさで、品質に問題はございません。安心してお召し上がりください。</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="section-more"><a href="item.html" class="btn btn--ghost">他の商品を見る</a></div>`;
+
+  // ---- ギャラリー：サムネイル＋矢印ボタンで画像切り替え ----
+  if (gallery.length > 1) {
+    let gi = 0;
+    const mainImg = document.getElementById("pdpMainImg");
+    const thumbBtns = Array.from(root.querySelectorAll(".pdp__thumb"));
+    const showImage = (i) => {
+      gi = (i + gallery.length) % gallery.length; // 端でループ
+      if (mainImg) mainImg.src = gallery[gi];
+      thumbBtns.forEach((t, idx) => t.classList.toggle("is-active", idx === gi));
+    };
+    thumbBtns.forEach((btn, idx) => btn.addEventListener("click", () => showImage(idx)));
+    document.getElementById("pdpPrev")?.addEventListener("click", () => showImage(gi - 1));
+    document.getElementById("pdpNext")?.addEventListener("click", () => showImage(gi + 1));
+  }
+
+  if (soldOut) return;
+
+  // ---- 数量ステッパー ----
+  let qty = 1;
+  const qtyEl = document.getElementById("pdpQty");
+  root.querySelectorAll("[data-qstep]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      qty = Math.min(Math.max(1, qty + Number(btn.dataset.qstep)), Math.max(1, stock));
+      qtyEl.textContent = qty;
+    });
+  });
+
+  // ---- カートに入れる（数量ぶん） ----
+  document.getElementById("pdpAdd").addEventListener("click", () => addToCart(p.id, qty));
+
+  // ---- 気になるリスト ----
+  //  未ログイン: リストに保存しつつ、ログイン誘導モーダルを表示。
+  //  ログイン済み: 追加／削除をトグルし、ボタン表示を更新。
+  const wishBtn = document.getElementById("pdpWish");
+  const syncWishBtn = () => {
+    const on = isWished(p.id);
+    wishBtn.classList.toggle("is-active", on);
+    wishBtn.querySelector("span").textContent = on ? "気になるリストに追加済み" : "気になるリストに追加";
+  };
+  wishBtn.addEventListener("click", () => {
+    if (!UserAuth.isLoggedIn()) {
+      addToWishlist(p.id);
+      openWishModal(p);
+      return;
+    }
+    if (isWished(p.id)) {
+      removeFromWishlist(p.id);
+      showToast(`「${p.name}」を気になるリストから削除しました`);
+    } else {
+      addToWishlist(p.id);
+      showToast(`「${p.name}」を気になるリストに追加しました`);
+    }
+    syncWishBtn();
+  });
+}
+
+// 未ログインで「気になるリストに追加」したときのモーダル。
+// 追加完了を伝えつつ、ログイン／会員登録へ誘導する。
+function openWishModal(p) {
+  document.getElementById("wishModal")?.remove();
+
+  // ログイン後に元のページ（この商品ページ）へ戻すための redirect 値
+  const back = encodeURIComponent(currentPage() + location.search);
+  const media = p.img
+    ? `<img src="${p.img}" alt="${p.name}" />`
+    : `<span class="wish-modal__glyph">${p.glyph || "🍰"}</span>`;
+
+  const modal = document.createElement("div");
+  modal.className = "wish-modal";
+  modal.id = "wishModal";
+  modal.innerHTML = `
+    <div class="wish-modal__overlay" data-wish-close></div>
+    <div class="wish-modal__panel" role="dialog" aria-modal="true" aria-labelledby="wishModalTitle">
+      <button class="wish-modal__close" data-wish-close aria-label="閉じる">${ICON_CLOSE}</button>
+      <h2 class="wish-modal__title" id="wishModalTitle">気になるリストに追加しました</h2>
+      <div class="wish-modal__media">${media}</div>
+      <p class="wish-modal__text">「${p.name}」を気になるリストに追加しました</p>
+      <p class="wish-modal__note">※気になるリストを確認するには、ログインが必要です。</p>
+      <a class="wish-modal__btn wish-modal__btn--primary" href="login.html?redirect=${back}">ログイン</a>
+      <p class="wish-modal__sub">会員登録がまだのお客様はこちら</p>
+      <a class="wish-modal__btn wish-modal__btn--ghost" href="login.html?tab=signup&redirect=${back}">会員登録</a>
+    </div>`;
+  document.body.appendChild(modal);
+  document.body.style.overflow = "hidden";
+
+  const close = () => {
+    modal.remove();
+    document.body.style.overflow = "";
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e) => {
+    if (e.key === "Escape") close();
+  };
+  modal.querySelectorAll("[data-wish-close]").forEach((el) => el.addEventListener("click", close));
+  document.addEventListener("keydown", onKey);
 }
 
 // ============================================================
@@ -329,6 +605,10 @@ function applyAuthButtons() {
     if (loggedIn) el.removeAttribute("href");
     else el.setAttribute("href", "login.html");
   });
+  // 気になるリストボタンはログイン中だけ表示（カートボタンの左横）
+  document.querySelectorAll(".wish-btn").forEach((el) => {
+    el.hidden = !loggedIn;
+  });
 }
 
 // ============================================================
@@ -349,6 +629,88 @@ function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
 }
 
+// ============================================================
+//  Wishlist / 気になるリスト (persisted in localStorage)
+// ============================================================
+const WISHLIST_KEY = "satsuma_wishlist";
+let wishlist = loadWishlist();
+
+function loadWishlist() {
+  try {
+    const data = JSON.parse(localStorage.getItem(WISHLIST_KEY));
+    return Array.isArray(data) ? data.map(Number) : [];
+  } catch {
+    return [];
+  }
+}
+function saveWishlist() {
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
+}
+function isWished(id) {
+  return wishlist.includes(Number(id));
+}
+function addToWishlist(id) {
+  id = Number(id);
+  if (!wishlist.includes(id)) wishlist.push(id);
+  saveWishlist();
+}
+function removeFromWishlist(id) {
+  id = Number(id);
+  wishlist = wishlist.filter((x) => x !== id);
+  saveWishlist();
+  renderWishlistPage();
+}
+
+// 気になるリストページ（wishlist.html）。カートと同じくログイン必須。
+function renderWishlistPage() {
+  const root = document.getElementById("wishlistPage");
+  if (!root) return;
+
+  // 未ログインで直接来た場合はログイン画面へ
+  if (!UserAuth.isLoggedIn()) {
+    window.location.href = "login.html?redirect=wishlist.html";
+    return;
+  }
+
+  // 既に削除された商品IDは除外して表示
+  const items = wishlist
+    .map((id) => PRODUCTS.find((x) => x.id === id))
+    .filter(Boolean);
+
+  if (items.length === 0) {
+    root.innerHTML = `
+      <p class="cart-page__empty">気になるリストはまだ空です。<br />お気に入りのスイーツを見つけてください。</p>
+      <div class="section-more"><a href="item.html" class="btn btn--ghost">商品一覧へ</a></div>`;
+    return;
+  }
+
+  const rows = items
+    .map((p) => {
+      const media = p.img ? `<img src="${p.img}" alt="${p.name}" />` : `<span>${p.glyph}</span>`;
+      const soldOut = (Number(p.stock) || 0) <= 0;
+      return `
+      <div class="cart-row wish-row">
+        <a class="cart-row__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
+        <div class="cart-row__info">
+          ${p.catLabel ? `<span class="wish-row__cat">${p.catLabel}</span>` : ""}
+          <h3 class="cart-row__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+          <span class="cart-row__price">${yen(p.price)}</span>
+        </div>
+        <div class="wish-row__actions">
+          <button class="btn btn--primary wish-row__cart" data-add="${p.id}" ${soldOut ? "disabled" : ""}>
+            ${soldOut ? "在庫切れ" : "カートに入れる"}
+          </button>
+          <button class="cart-row__remove" data-wishremove="${p.id}" aria-label="気になるリストから削除">削除</button>
+        </div>
+      </div>`;
+    })
+    .join("");
+
+  root.innerHTML = `
+    <div class="cart-page__list">${rows}</div>
+    <div class="section-more"><a href="item.html" class="btn btn--ghost">買い物を続ける</a></div>`;
+}
+
 let toastTimer = null;
 function showToast(msg) {
   const t = document.getElementById("toast");
@@ -367,10 +729,11 @@ function updateCartBadge() {
   countEl.classList.toggle("is-visible", count > 0);
 }
 
-function addToCart(id) {
+function addToCart(id, amount = 1) {
+  const qty = Math.max(1, Number(amount) || 1);
   const line = cart.find((l) => l.id === id);
-  if (line) line.qty += 1;
-  else cart.push({ id, qty: 1 });
+  if (line) line.qty += qty;
+  else cart.push({ id, qty });
   saveCart();
   updateCartBadge();
   renderCartPage();
@@ -710,8 +1073,16 @@ function wire() {
     if (qty) return changeQty(Number(qty.dataset.qty), Number(qty.dataset.delta));
     const rm = e.target.closest("[data-remove]");
     if (rm) return removeFromCart(Number(rm.dataset.remove));
+    const wishRm = e.target.closest("[data-wishremove]");
+    if (wishRm) return removeFromWishlist(Number(wishRm.dataset.wishremove));
     const goto = e.target.closest("[data-goto]");
     if (goto) return setAuthTab(goto.dataset.goto);
+    // 商品カード / ベストセラー行クリックで詳細ページへ（カート追加ボタンは上で return 済み）
+    const nav = e.target.closest("[data-href]");
+    if (nav) {
+      window.location.href = nav.dataset.href;
+      return;
+    }
   });
 
   // Filters (ITEM page)
@@ -735,6 +1106,7 @@ function wire() {
     }
   });
 
+
   // LOGIN/LOGOUT ボタン: ログイン中はクリックでログアウト
   document.addEventListener("click", (e) => {
     const authBtn = e.target.closest(".login-btn, .nav__login");
@@ -748,6 +1120,9 @@ function wire() {
 
   // Auth tabs + form submit (login.html)
   document.querySelectorAll(".auth-tab").forEach((t) => t.addEventListener("click", () => setAuthTab(t.dataset.tab)));
+  // ?tab=signup / ?tab=login で初期表示タブを切り替え（モーダルの「会員登録」導線用）
+  const initTab = new URLSearchParams(location.search).get("tab");
+  if (initTab === "signup" || initTab === "login") setAuthTab(initTab);
   document.querySelectorAll(".auth-form").forEach((form) => {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -794,6 +1169,16 @@ function wire() {
     nav.classList.contains("is-open") ? closeNav() : openNav();
   });
   document.getElementById("navOverlay").addEventListener("click", closeNav);
+
+  // テーマ切替（ダーク / ライト）
+  const themeToggle = document.getElementById("themeToggle");
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const next = document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light";
+      applyTheme(next);
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+    });
+  }
 
   // Escape closes nav drawer
   document.addEventListener("keydown", (e) => {
@@ -970,7 +1355,9 @@ ProductStore.findAll()
     renderRanking();
     renderFilters();
     renderProducts();
+    renderProductDetail();
     renderCartPage();
+    renderWishlistPage();
     renderCheckoutPage();
   })
   .catch((err) => {
