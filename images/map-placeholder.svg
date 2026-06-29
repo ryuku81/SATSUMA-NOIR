@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 480" role="img" aria-label="地図（仮）">
+  <rect width="1200" height="480" fill="#16161a"/>
+  <g stroke="#26262c" stroke-width="2">
+    <path d="M0 120 H1200 M0 240 H1200 M0 360 H1200"/>
+    <path d="M200 0 V480 M450 0 V480 M700 0 V480 M950 0 V480"/>
+  </g>
+  <g stroke="#2f2f36" stroke-width="10" fill="none" stroke-linecap="round">
+    <path d="M120 60 L520 300 L1080 180"/>
+    <path d="M80 400 L520 300 L900 440"/>
+  </g>
+  <g transform="translate(600 230)">
+    <path d="M0 -34 C19 -34 34 -19 34 0 C34 24 0 54 0 54 C0 54 -34 24 -34 0 C-34 -19 -19 -34 0 -34 Z" fill="#c9a25f"/>
+    <circle cx="0" cy="0" r="12" fill="#16161a"/>
+  </g>
+  <text x="600" y="330" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="22" letter-spacing="3" fill="#5c5a55">MAP — 照国本店</text>
+</svg>

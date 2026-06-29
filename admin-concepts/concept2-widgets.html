@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ADMIN 案2 Widgets — SATSUMA NOIR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#0a0a0b;--soft:#121214;--surface:#16161a;--s2:#1d1d22;--line:rgba(255,255,255,.08);--ls:rgba(255,255,255,.16);--text:#f4f1ea;--dim:#9a978f;--faint:#5c5a55;--gold:#c9a25f;--gold2:#e3c98c;--green:#7bbf86;--red:#e07a7a;--radius:12px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans JP",sans-serif;display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
+  .side{width:72px;flex-shrink:0;background:var(--soft);border-right:1px solid var(--line);padding:1.4rem 0;display:flex;flex-direction:column;align-items:center;gap:.4rem}
+  .side__logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#7a5e2e);display:grid;place-items:center;font-family:"Inter";font-weight:800;color:#0a0a0b;margin-bottom:1rem}
+  .ico{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;color:var(--dim);cursor:pointer;font-size:1.05rem}
+  .ico.is-active{background:var(--s2);color:var(--gold2)}
+  .ico:hover:not(.is-active){color:var(--text)}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:1.4rem 2rem 0}
+  .top h1{font-size:1.4rem;font-weight:700;letter-spacing:.02em}
+  .top p{color:var(--dim);font-size:.8rem;margin-top:.3rem}
+  .top__actions{display:flex;gap:.6rem}
+  .btn{font-family:inherit;font-size:.78rem;border-radius:8px;padding:.6rem 1.1rem;cursor:pointer;border:1px solid var(--ls);background:transparent;color:var(--text)}
+  .btn--g{background:var(--gold);border-color:var(--gold);color:#0a0a0b;font-weight:600}
+  .board{padding:1.6rem 2rem 2.4rem;display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem;grid-auto-rows:minmax(10px,auto)}
+  .w{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.3rem 1.4rem}
+  .w h3{font-size:.78rem;color:var(--dim);font-weight:500;letter-spacing:.04em;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center}
+  .w h3 .dot{font-family:"Inter";font-size:.68rem;color:var(--gold2)}
+  .num{font-family:"Inter";font-weight:700;font-size:2rem;line-height:1}
+  .delta{font-family:"Inter";font-size:.72rem;font-weight:600;margin-top:.5rem}
+  .up{color:var(--green)}.down{color:var(--red)}
+  .w--chart{grid-column:span 2;grid-row:span 2}
+  .w--tall{grid-row:span 2}
+  .chart{display:flex;align-items:flex-end;gap:8px;height:170px;margin-top:.6rem}
+  .bar{flex:1;background:linear-gradient(var(--gold2),var(--gold));border-radius:4px 4px 0 0;position:relative;min-height:6px;opacity:.9;transition:opacity .2s}
+  .bar:hover{opacity:1}
+  .bar.is-peak{background:linear-gradient(#fff,var(--gold2))}
+  .chart__x{display:flex;gap:8px;margin-top:.5rem}
+  .chart__x span{flex:1;text-align:center;font-family:"Inter";font-size:.6rem;color:var(--faint)}
+  .qa{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+  .qa button{font-family:inherit;font-size:.74rem;color:var(--text);background:var(--s2);border:1px solid var(--line);border-radius:9px;padding:.85rem .5rem;cursor:pointer;display:flex;flex-direction:column;gap:.3rem;align-items:center}
+  .qa button:hover{border-color:var(--gold);color:var(--gold2)}
+  .qa b{font-size:1.1rem}
+  .mini{display:flex;flex-direction:column;gap:.7rem}
+  .mini__row{display:flex;align-items:center;gap:.7rem;font-size:.8rem}
+  .mini__row img{width:34px;height:34px;border-radius:7px;object-fit:cover;border:1px solid var(--line)}
+  .mini__row .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini__row .v{font-family:"Inter";color:var(--dim);font-size:.74rem}
+  .rank{font-family:"Inter";font-weight:700;color:var(--gold);width:16px}
+  .progress{height:6px;background:var(--s2);border-radius:99px;overflow:hidden;margin-top:.5rem}
+  .progress i{display:block;height:100%;background:var(--gold)}
+  @media(max-width:1100px){.board{grid-template-columns:1fr 1fr}.w--chart{grid-column:span 2}}
+  @media(max-width:680px){.board{grid-template-columns:1fr}.w--chart,.w--tall{grid-column:auto;grid-row:auto}.side{display:none}}
+</style>
+</head>
+<body>
+  <aside class="side">
+    <div class="side__logo">S</div>
+    <div class="ico is-active">▢</div><div class="ico">▤</div><div class="ico">◍</div><div class="ico">▣</div><div class="ico">✉</div><div class="ico">◰</div><div class="ico">⚙</div>
+  </aside>
+  <div class="main">
+    <header class="top">
+      <div><h1>おかえりなさい、SATSUMA NOIR</h1><p>2026年6月29日（日）— 本日の概況</p></div>
+      <div class="top__actions"><button class="btn">期間を変更</button><button class="btn btn--g">＋ 新規商品</button></div>
+    </header>
+
+    <div class="board">
+      <div class="w"><h3>今月の売上 <span class="dot">JUN</span></h3><div class="num">¥1.28M</div><div class="delta up">▲ 12.4% 前月比</div></div>
+      <div class="w"><h3>注文件数</h3><div class="num">342</div><div class="delta up">▲ 8.1%</div></div>
+      <div class="w w--chart">
+        <h3>売上推移（直近14日）<span class="dot">¥ / 日</span></h3>
+        <div class="chart">
+          <div class="bar" style="height:42%"></div><div class="bar" style="height:55%"></div><div class="bar" style="height:38%"></div><div class="bar" style="height:64%"></div><div class="bar" style="height:50%"></div><div class="bar" style="height:72%"></div><div class="bar is-peak" style="height:96%"></div><div class="bar" style="height:60%"></div><div class="bar" style="height:48%"></div><div class="bar" style="height:70%"></div><div class="bar" style="height:58%"></div><div class="bar" style="height:80%"></div><div class="bar" style="height:66%"></div><div class="bar" style="height:88%"></div>
+        </div>
+        <div class="chart__x"><span>16</span><span>18</span><span>20</span><span>22</span><span>24</span><span>26</span><span>28</span></div>
+      </div>
+      <div class="w w--tall">
+        <h3>人気商品 TOP5</h3>
+        <div class="mini">
+          <div class="mini__row"><span class="rank">1</span><img src="../images/basque-cheesecake.png" alt=""><span class="n">バスクチーズケーキ</span><span class="v">128</span></div>
+          <div class="mini__row"><span class="rank">2</span><img src="../images/newyork-cheesecake.png" alt=""><span class="n">ニューヨークチーズ</span><span class="v">94</span></div>
+          <div class="mini__row"><span class="rank">3</span><img src="../images/rare-cheesecake.png" alt=""><span class="n">レアチーズケーキ</span><span class="v">81</span></div>
+          <div class="mini__row"><span class="rank">4</span><img src="../images/italian-tiramisu.png" alt=""><span class="n">ティラミス</span><span class="v">60</span></div>
+          <div class="mini__row"><span class="rank">5</span><img src="../images/souffle-cheesecake.png" alt=""><span class="n">スフレチーズケーキ</span><span class="v">47</span></div>
+        </div>
+      </div>
+      <div class="w"><h3>未発送</h3><div class="num" style="color:var(--gold2)">7</div><div class="delta down">要対応</div></div>
+      <div class="w"><h3>在庫切れ</h3><div class="num" style="color:var(--red)">3</div><div class="delta down">残りわずか含む</div></div>
+      <div class="w">
+        <h3>会員登録</h3><div class="num">1,204</div>
+        <div class="progress"><i style="width:68%"></i></div>
+        <div class="delta up" style="margin-top:.4rem">今月 +84人</div>
+      </div>
+      <div class="w">
+        <h3>クイック操作</h3>
+        <div class="qa"><button><b>＋</b>商品追加</button><button><b>◰</b>NEWS投稿</button><button><b>▤</b>注文確認</button><button><b>✉</b>問い合わせ</button></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

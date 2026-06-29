@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ADMIN 案1 KPI — SATSUMA NOIR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{--bg:#0a0a0b;--soft:#121214;--surface:#16161a;--s2:#1d1d22;--line:rgba(255,255,255,.08);--ls:rgba(255,255,255,.16);--text:#f4f1ea;--dim:#9a978f;--faint:#5c5a55;--gold:#c9a25f;--gold2:#e3c98c;--green:#7bbf86;--red:#e07a7a;--radius:10px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans JP",sans-serif;display:flex;min-height:100vh;-webkit-font-smoothing:antialiased}
+  /* sidebar */
+  .side{width:236px;flex-shrink:0;background:var(--soft);border-right:1px solid var(--line);padding:1.6rem 0;display:flex;flex-direction:column;gap:.2rem}
+  .side__brand{font-family:"Inter",sans-serif;font-weight:700;letter-spacing:.14em;font-size:.86rem;padding:0 1.6rem 1.4rem;border-bottom:1px solid var(--line);margin-bottom:1rem}
+  .side__brand small{display:block;color:var(--gold);font-weight:500;letter-spacing:.3em;font-size:.56rem;margin-top:.4rem}
+  .nav{padding:.2rem .8rem;font-size:.82rem;color:var(--dim);border-radius:8px;margin:0 .6rem;display:flex;align-items:center;gap:.7rem;height:38px;cursor:pointer}
+  .nav.is-active{background:var(--s2);color:var(--text)}
+  .nav.is-active::before{content:"";width:3px;height:16px;background:var(--gold);border-radius:2px;margin-left:-.5rem}
+  .nav:hover:not(.is-active){color:var(--text)}
+  /* main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.8rem;border-bottom:1px solid var(--line);background:var(--soft);position:sticky;top:0;z-index:5}
+  .top h1{font-size:1.05rem;font-weight:600;letter-spacing:.03em}
+  .top__right{display:flex;align-items:center;gap:1rem}
+  .pill{font-family:"Inter";font-size:.7rem;letter-spacing:.08em;color:var(--dim);border:1px solid var(--line);border-radius:999px;padding:.35rem .9rem}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#7a5e2e);display:grid;place-items:center;font-family:"Inter";font-weight:700;font-size:.74rem;color:#0a0a0b}
+  .wrap{padding:1.6rem 1.8rem;display:flex;flex-direction:column;gap:1.2rem}
+  /* KPI tiles */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:1.2rem 1.3rem;position:relative;overflow:hidden}
+  .kpi__label{font-size:.74rem;color:var(--dim);letter-spacing:.04em;display:flex;align-items:center;gap:.5rem;margin-bottom:.7rem}
+  .kpi__val{font-family:"Inter";font-size:1.85rem;font-weight:700;letter-spacing:.01em;line-height:1}
+  .kpi__delta{font-family:"Inter";font-size:.72rem;font-weight:600;margin-top:.6rem;display:inline-flex;gap:.3rem}
+  .up{color:var(--green)}.down{color:var(--red)}
+  .spark{position:absolute;right:1rem;bottom:1rem;display:flex;align-items:flex-end;gap:2px;height:30px;opacity:.85}
+  .spark span{width:5px;background:var(--gold);border-radius:1px;opacity:.5}
+  .spark span:last-child{opacity:1}
+  /* lower grid */
+  .grid{display:grid;grid-template-columns:1.7fr 1fr;gap:1.2rem}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .panel__head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--line)}
+  .panel__head h2{font-size:.9rem;font-weight:600;letter-spacing:.03em}
+  .panel__head a{font-family:"Inter";font-size:.7rem;color:var(--gold);letter-spacing:.06em;text-decoration:none}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  th{text-align:left;color:var(--faint);font-weight:500;font-size:.7rem;letter-spacing:.06em;padding:.7rem 1.3rem;border-bottom:1px solid var(--line)}
+  td{padding:.78rem 1.3rem;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  .mono{font-family:"Inter"}
+  .tag{font-size:.66rem;padding:.2rem .55rem;border-radius:5px;font-weight:600;letter-spacing:.03em}
+  .tag--wait{background:rgba(224,122,122,.14);color:var(--red)}
+  .tag--done{background:rgba(123,191,134,.14);color:var(--green)}
+  .tag--proc{background:rgba(201,162,95,.16);color:var(--gold2)}
+  .alist{padding:.4rem 0}
+  .arow{display:flex;align-items:center;gap:.8rem;padding:.7rem 1.3rem;border-bottom:1px solid var(--line)}
+  .arow:last-child{border-bottom:none}
+  .arow__thumb{width:38px;height:38px;border-radius:7px;object-fit:cover;border:1px solid var(--line);flex-shrink:0}
+  .arow__main{flex:1;min-width:0}
+  .arow__main b{font-weight:500;font-size:.82rem}
+  .arow__main span{display:block;color:var(--faint);font-size:.7rem;margin-top:.15rem}
+  .stockpill{font-family:"Inter";font-size:.68rem;padding:.18rem .5rem;border-radius:999px;border:1px solid var(--ls);color:var(--dim);flex-shrink:0}
+  .stockpill--out{color:var(--red);border-color:rgba(224,122,122,.5)}
+  .stockpill--low{color:#d9a441;border-color:rgba(217,164,65,.5)}
+  @media(max-width:1000px){.kpis{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.side{display:none}}
+</style>
+</head>
+<body>
+  <aside class="side">
+    <div class="side__brand">SATSUMA NOIR<small>ADMIN</small></div>
+    <div class="nav is-active">▢ ダッシュボード</div>
+    <div class="nav">▤ 注文管理</div>
+    <div class="nav">◍ 顧客管理</div>
+    <div class="nav">☆ 会員管理</div>
+    <div class="nav">▣ 商品管理</div>
+    <div class="nav">✉ お問い合わせ</div>
+    <div class="nav">◰ NEWS管理</div>
+    <div class="nav">? FAQ管理</div>
+    <div class="nav">⚲ 採用情報</div>
+    <div class="nav">⚙ 設定</div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <h1>ダッシュボード</h1>
+      <div class="top__right"><span class="pill">2026.06.29</span><div class="avatar">SN</div></div>
+    </header>
+
+    <div class="wrap">
+      <section class="kpis">
+        <div class="kpi"><div class="kpi__label">今月の売上</div><div class="kpi__val">¥1,284,500</div><div class="kpi__delta up">▲ 12.4%</div><div class="spark"><span style="height:40%"></span><span style="height:55%"></span><span style="height:48%"></span><span style="height:70%"></span><span style="height:62%"></span><span style="height:90%"></span></div></div>
+        <div class="kpi"><div class="kpi__label">注文件数</div><div class="kpi__val">342</div><div class="kpi__delta up">▲ 8.1%</div><div class="spark"><span style="height:50%"></span><span style="height:45%"></span><span style="height:65%"></span><span style="height:60%"></span><span style="height:75%"></span><span style="height:85%"></span></div></div>
+        <div class="kpi"><div class="kpi__label">未発送の注文</div><div class="kpi__val">7</div><div class="kpi__delta down">要対応</div></div>
+        <div class="kpi"><div class="kpi__label">在庫アラート</div><div class="kpi__val" style="color:var(--red)">3</div><div class="kpi__delta down">在庫切れ・残りわずか</div></div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel__head"><h2>最近の注文</h2><a href="#">すべて見る →</a></div>
+          <table>
+            <thead><tr><th>注文番号</th><th>顧客</th><th>金額</th><th>状態</th><th>日時</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">#10342</td><td>田中 美咲</td><td class="mono">¥5,200</td><td><span class="tag tag--wait">未発送</span></td><td class="mono" style="color:var(--faint)">06.29 14:02</td></tr>
+              <tr><td class="mono">#10341</td><td>佐藤 健</td><td class="mono">¥2,600</td><td><span class="tag tag--proc">入金待ち</span></td><td class="mono" style="color:var(--faint)">06.29 11:38</td></tr>
+              <tr><td class="mono">#10340</td><td>鈴木 葵</td><td class="mono">¥8,800</td><td><span class="tag tag--done">発送済み</span></td><td class="mono" style="color:var(--faint)">06.28 19:15</td></tr>
+              <tr><td class="mono">#10339</td><td>高橋 諒</td><td class="mono">¥3,200</td><td><span class="tag tag--done">発送済み</span></td><td class="mono" style="color:var(--faint)">06.28 16:40</td></tr>
+              <tr><td class="mono">#10338</td><td>伊藤 さくら</td><td class="mono">¥6,400</td><td><span class="tag tag--wait">未発送</span></td><td class="mono" style="color:var(--faint)">06.28 10:02</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head"><h2>在庫アラート</h2><a href="#">商品管理 →</a></div>
+          <div class="alist">
+            <div class="arow"><img class="arow__thumb" src="../images/berry-rare-cheesecake.png" alt=""><div class="arow__main"><b>ベリーレアチーズケーキ</b><span>RARE</span></div><span class="stockpill stockpill--out">在庫切れ</span></div>
+            <div class="arow"><img class="arow__thumb" src="../images/souffle-cheesecake.png" alt=""><div class="arow__main"><b>スフレチーズケーキ</b><span>BAKED</span></div><span class="stockpill stockpill--low">残り3</span></div>
+            <div class="arow"><img class="arow__thumb" src="../images/italian-tiramisu.png" alt=""><div class="arow__main"><b>イタリアンティラミス</b><span>SPECIAL</span></div><span class="stockpill stockpill--low">残り6</span></div>
+            <div class="arow"><img class="arow__thumb" src="../images/basque-cheese-tart.png" alt=""><div class="arow__main"><b>バスクチーズタルト</b><span>SPECIAL</span></div><span class="stockpill stockpill--low">残り8</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

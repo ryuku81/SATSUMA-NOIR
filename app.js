@@ -37,6 +37,7 @@ const NAV_LINKS = [
   { label: "ABOUT", href: "index.html", sub: "ブランドについて" },
   { label: "ITEM", href: "item.html", sub: "商品について" },
   { label: "NEWS", href: "news.html", sub: "ニュース" },
+  { label: "JOURNAL", href: "journal.html", sub: "読みもの" },
 ];
 
 function currentPage() {

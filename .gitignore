@@ -1,3 +1,16 @@
 .DS_Store
 images_original/
 _*.html
+
+# 開発中の確認用アーティファクト（リポジトリには含めない）
+.playwright-mcp/
+/header-mobile-*.png
+/nav-journal.png
+/store-desktop.png
+/store-mobile.png
+/store-newimg.png
+/store-hero.png
+/store-hero2.png
+/store-detail.png
+/store-detail-top.png
+/store-detail-desktop.png

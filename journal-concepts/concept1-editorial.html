@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JOURNAL 案1 Editorial — SATSUMA NOIR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0a0a0b; --surface:#16161a; --text:#f4f1ea; --dim:#9a978f; --faint:#5c5a55;
+    --gold:#c9a25f; --line:rgba(255,255,255,.10); --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans JP",sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px;margin:0 auto;padding:5rem 2rem 7rem;}
+  .mast{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:1.4rem;margin-bottom:4rem;}
+  .mast__brand{font-family:"Inter",sans-serif;font-weight:700;letter-spacing:.16em;font-size:.92rem;}
+  .mast__title{font-family:"Cormorant Garamond",serif;font-style:italic;font-weight:500;font-size:clamp(2.4rem,7vw,5rem);line-height:.9;}
+  .mast__meta{font-family:"Inter",sans-serif;font-size:.72rem;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;}
+
+  /* feature */
+  .feature{display:grid;grid-template-columns:1.4fr 1fr;gap:2.6rem;align-items:center;margin-bottom:5rem;}
+  .feature__media{position:relative;overflow:hidden;aspect-ratio:5/4;background:var(--surface);}
+  .feature__media img{width:100%;height:100%;object-fit:cover;transition:transform 1s var(--ease);}
+  .feature:hover .feature__media img{transform:scale(1.05);}
+  .feature__num{position:absolute;top:-.3em;left:-.06em;font-family:"Cormorant Garamond",serif;font-size:clamp(5rem,16vw,12rem);line-height:1;color:rgba(244,241,234,.0);-webkit-text-stroke:1px rgba(244,241,234,.5);pointer-events:none;}
+  .feature__kicker{font-family:"Inter",sans-serif;font-size:.7rem;letter-spacing:.32em;color:var(--gold);text-transform:uppercase;margin-bottom:1.2rem;}
+  .feature__title{font-size:clamp(1.4rem,2.8vw,2rem);line-height:1.5;font-weight:700;margin-bottom:1.4rem;}
+  .feature__excerpt{color:var(--dim);font-size:.92rem;line-height:2;margin-bottom:1.8rem;max-width:42ch;}
+  .feature__date{font-family:"Inter",sans-serif;font-size:.78rem;letter-spacing:.1em;color:var(--faint);}
+
+  /* grid list */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2.6rem 2rem;}
+  .post{cursor:pointer;}
+  .post__media{position:relative;overflow:hidden;aspect-ratio:4/5;background:var(--surface);margin-bottom:1.1rem;}
+  .post__media img{width:100%;height:100%;object-fit:cover;transition:transform .9s var(--ease),filter .6s var(--ease);filter:saturate(.85) brightness(.92);}
+  .post:hover .post__media img{transform:scale(1.06);filter:saturate(1) brightness(1);}
+  .post__idx{position:absolute;top:1rem;left:1rem;font-family:"Inter",sans-serif;font-weight:800;font-size:.74rem;letter-spacing:.1em;color:var(--text);mix-blend-mode:difference;}
+  .post__cat{font-family:"Inter",sans-serif;font-size:.66rem;letter-spacing:.24em;color:var(--gold);text-transform:uppercase;margin-bottom:.6rem;display:block;}
+  .post__title{font-size:.96rem;line-height:1.65;font-weight:500;margin-bottom:.7rem;transition:color .3s var(--ease);}
+  .post:hover .post__title{color:var(--gold);}
+  .post__date{font-family:"Inter",sans-serif;font-size:.74rem;letter-spacing:.08em;color:var(--faint);}
+  @media(max-width:860px){
+    .feature{grid-template-columns:1fr;gap:1.6rem;}
+    .grid{grid-template-columns:1fr 1fr;gap:2rem 1.2rem;}
+    .wrap{padding:3rem 1.4rem 5rem;}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="mast">
+      <span class="mast__brand">SATSUMA NOIR</span>
+      <h1 class="mast__title">Journal</h1>
+      <span class="mast__meta">Vol. 12 — 2026</span>
+    </header>
+
+    <article class="feature">
+      <div class="feature__media">
+        <span class="feature__num">01</span>
+        <img src="../images/rare-cheesecake.png" alt="" />
+      </div>
+      <div class="feature__body">
+        <p class="feature__kicker">Season's Plate</p>
+        <h2 class="feature__title">初夏のひと皿。軽やかに溶ける、レアチーズの季節がやってきた。</h2>
+        <p class="feature__excerpt">濃厚なのに、すっと消える。気温が上がるこの季節、私たちが提案したいのは、冷たくひんやりと味わうレアチーズの愉しみ方です。解凍の塩梅ひとつで表情を変える一皿を。</p>
+        <span class="feature__date">2026.06.24</span>
+      </div>
+    </article>
+
+    <section class="grid">
+      <a class="post"><div class="post__media"><span class="post__idx">02</span><img src="../images/terukuni-store.jpg" alt=""></div><span class="post__cat">Store</span><h3 class="post__title">照国本店、はじまりの話。“目が届く範囲”で、ひとつひとつ手仕事で。</h3><time class="post__date">2026.05.25</time></a>
+      <a class="post"><div class="post__media"><span class="post__idx">03</span><img src="../images/basque-cheesecake.png" alt=""></div><span class="post__cat">Craft</span><h3 class="post__title">熟成冷凍という選択。解凍後がいちばんの食べごろになる理由。</h3><time class="post__date">2026.05.01</time></a>
+      <a class="post"><div class="post__media"><span class="post__idx">04</span><img src="../images/noir-tablette.png" alt=""></div><span class="post__cat">Philosophy</span><h3 class="post__title">週末のための、深い甘さ。SATSUMA NOIR が大切にしていること。</h3><time class="post__date">2026.04.15</time></a>
+      <a class="post"><div class="post__media"><span class="post__idx">05</span><img src="../images/souffle-cheesecake.png" alt=""></div><span class="post__cat">Craft</span><h3 class="post__title">口どけを設計する。空気を含ませた、やわらかなスフレのこと。</h3><time class="post__date">2026.03.28</time></a>
+      <a class="post"><div class="post__media"><span class="post__idx">06</span><img src="../images/italian-tiramisu.png" alt=""></div><span class="post__cat">Recipe</span><h3 class="post__title">コーヒーと余韻。大人のためのティラミスの、静かな楽しみ方。</h3><time class="post__date">2026.03.02</time></a>
+      <a class="post"><div class="post__media"><span class="post__idx">07</span><img src="../images/berry-rare-cheesecake.png" alt=""></div><span class="post__cat">Season's Plate</span><h3 class="post__title">甘酸っぱさを重ねて。ベリーレアチーズに込めた、春の華やぎ。</h3><time class="post__date">2026.02.14</time></a>
+    </section>
+  </div>
+</body>
+</html>

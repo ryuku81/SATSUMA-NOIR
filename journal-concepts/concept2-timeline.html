@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JOURNAL 案2 Timeline — SATSUMA NOIR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0a0a0b; --surface:#16161a; --text:#f4f1ea; --dim:#9a978f; --faint:#5c5a55;
+    --gold:#c9a25f; --line:rgba(255,255,255,.12); --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:"Noto Sans JP",sans-serif;-webkit-font-smoothing:antialiased;}
+  .head{text-align:center;padding:5rem 1.5rem 3.5rem;}
+  .head__brand{font-family:"Inter",sans-serif;font-weight:700;letter-spacing:.18em;font-size:.95rem;margin-bottom:.5rem;}
+  .head__title{font-family:"Cormorant Garamond",serif;font-weight:500;letter-spacing:.34em;font-size:1rem;color:var(--dim);text-transform:uppercase;}
+  .head__rule{width:1px;height:54px;background:linear-gradient(var(--gold),transparent);margin:2rem auto 0;}
+
+  .tl{max-width:880px;margin:0 auto;padding:0 1.5rem 7rem;position:relative;}
+  .tl::before{content:"";position:absolute;left:120px;top:0;bottom:120px;width:1px;background:var(--line);}
+  .entry{position:relative;display:grid;grid-template-columns:120px 1fr;gap:0;padding:0 0 3.6rem;}
+  .entry__when{text-align:right;padding-right:2.2rem;position:relative;}
+  .entry__year{font-family:"Inter",sans-serif;font-weight:800;font-size:.78rem;letter-spacing:.06em;color:var(--text);}
+  .entry__day{font-family:"Inter",sans-serif;font-size:.72rem;letter-spacing:.06em;color:var(--faint);margin-top:.2rem;}
+  .entry__when::after{content:"";position:absolute;right:-5px;top:.35rem;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px var(--bg);}
+  .entry__card{padding-left:2.4rem;display:grid;grid-template-columns:130px 1fr;gap:1.4rem;align-items:center;cursor:pointer;}
+  .entry__media{overflow:hidden;aspect-ratio:1/1;background:var(--surface);}
+  .entry__media img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease);filter:grayscale(.2);}
+  .entry:hover .entry__media img{transform:scale(1.07);filter:grayscale(0);}
+  .entry__cat{font-family:"Inter",sans-serif;font-size:.64rem;letter-spacing:.24em;color:var(--gold);text-transform:uppercase;display:block;margin-bottom:.5rem;}
+  .entry__title{font-size:.96rem;line-height:1.7;font-weight:500;transition:color .3s var(--ease);}
+  .entry:hover .entry__title{color:var(--gold);}
+  .entry--lg .entry__card{grid-template-columns:1fr;gap:1rem;}
+  .entry--lg .entry__media{aspect-ratio:16/7;}
+  .entry--lg .entry__title{font-size:1.3rem;line-height:1.55;font-weight:700;}
+  @media(max-width:760px){
+    .tl::before{left:14px;}
+    .entry{grid-template-columns:1fr;}
+    .entry__when{text-align:left;padding-left:36px;padding-right:0;margin-bottom:1rem;}
+    .entry__when::after{left:10px;right:auto;}
+    .entry__card{padding-left:36px;grid-template-columns:90px 1fr;}
+    .entry--lg .entry__card{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+  <header class="head">
+    <div class="head__brand">SATSUMA NOIR</div>
+    <div class="head__title">Journal — Archive</div>
+    <div class="head__rule"></div>
+  </header>
+
+  <main class="tl">
+    <article class="entry entry--lg">
+      <div class="entry__when"><div class="entry__year">2026.06</div><div class="entry__day">24 WED</div></div>
+      <div class="entry__card">
+        <div class="entry__media"><img src="../images/rare-cheesecake.png" alt=""></div>
+        <div><span class="entry__cat">Season's Plate</span><h2 class="entry__title">初夏のひと皿。軽やかに溶ける、レアチーズの季節がやってきた。</h2></div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry__when"><div class="entry__year">2026.05</div><div class="entry__day">25 SUN</div></div>
+      <div class="entry__card">
+        <div class="entry__media"><img src="../images/terukuni-store.jpg" alt=""></div>
+        <div><span class="entry__cat">Store</span><h2 class="entry__title">照国本店、はじまりの話。“目が届く範囲”で、ひとつひとつ手仕事で。</h2></div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry__when"><div class="entry__year">2026.05</div><div class="entry__day">01 FRI</div></div>
+      <div class="entry__card">
+        <div class="entry__media"><img src="../images/basque-cheesecake.png" alt=""></div>
+        <div><span class="entry__cat">Craft</span><h2 class="entry__title">熟成冷凍という選択。解凍後がいちばんの食べごろになる理由。</h2></div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry__when"><div class="entry__year">2026.04</div><div class="entry__day">15 WED</div></div>
+      <div class="entry__card">
+        <div class="entry__media"><img src="../images/noir-tablette.png" alt=""></div>
+        <div><span class="entry__cat">Philosophy</span><h2 class="entry__title">週末のための、深い甘さ。SATSUMA NOIR が大切にしていること。</h2></div>
+      </div>
+    </article>
+
+    <article class="entry">
+      <div class="entry__when"><div class="entry__year">2026.03</div><div class="entry__day">28 SAT</div></div>
+      <div class="entry__card">
+        <div class="entry__media"><img src="../images/souffle-cheesecake.png" alt=""></div>
+        <div><span class="entry__cat">Craft</span><h2 class="entry__title">口どけを設計する。空気を含ませた、やわらかなスフレのこと。</h2></div>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
