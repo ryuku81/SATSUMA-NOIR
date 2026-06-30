@@ -324,8 +324,10 @@ function renderRanking() {
         ${p.catLabel ? `<p class="rank-row__cat">${p.catLabel}</p>` : ""}
         <h3 class="rank-row__name">${p.name}</h3>
         ${p.desc ? `<p class="rank-row__desc">${p.desc}</p>` : ""}
-        <p class="rank-row__price">${yen(p.price)}</p>
-        <button class="rank-row__add" data-add="${p.id}">カートに追加</button>
+        <div class="rank-row__buy">
+          <p class="rank-row__price">${yen(p.price)}</p>
+          <button class="rank-row__add" data-add="${p.id}">カートに追加</button>
+        </div>
       </div>
     </article>`;
   }).join("");
@@ -353,8 +355,14 @@ function pdpIntro(p) {
 
 // メイン画像＋他商品の写真を数枚並べたギャラリー（参考デザインのサムネ列を再現）。
 function pdpGallery(p) {
-  const others = PRODUCTS.filter((x) => x.id !== p.id && x.img).map((x) => x.img);
   const seen = new Set();
+  // 商品ごとに追加画像（p.gallery）があればそれを使う
+  const own = Array.isArray(p.gallery) ? p.gallery.filter(Boolean) : [];
+  if (own.length) {
+    return [p.img, ...own].filter((src) => src && !seen.has(src) && seen.add(src)).slice(0, 8);
+  }
+  // 追加画像が無ければ従来どおり（他商品の画像で枠を埋める）
+  const others = PRODUCTS.filter((x) => x.id !== p.id && x.img).map((x) => x.img);
   return [p.img, ...others]
     .filter((src) => src && !seen.has(src) && seen.add(src))
     .slice(0, 4);
@@ -367,7 +375,9 @@ function renderProductDetail() {
   if (!root) return;
 
   const id = Number(new URLSearchParams(location.search).get("id"));
-  const p = PRODUCTS.find((x) => x.id === id);
+  const base = PRODUCTS.find((x) => x.id === id);
+  // 商品詳細ページの編集フィールド（localStorage 保存）を重ねて反映
+  const p = base ? { ...base, ...(ProductStore.detailOverrides ? ProductStore.detailOverrides(id) : {}) } : base;
 
   if (!p) {
     root.innerHTML = `
@@ -382,6 +392,29 @@ function renderProductDetail() {
   const soldOut = stock <= 0;
   const low = !soldOut && stock <= ProductStore.LOW_STOCK_THRESHOLD;
   const gallery = pdpGallery(p);
+
+  // 商品詳細ページの編集可能フィールド（管理画面で設定。空欄なら既定文）
+  const escD = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const nl2br = (s) => escD(s).replace(/\n/g, "<br />");
+  const dFeatureHead = "解凍したての、いちばん澄んだ甘さを。";
+  const dFeatureBody = "室温で1時間ほど解凍すると、外はしっとり、中はとろりとほどける食べごろに。ひと口運べば、濃厚なコクのあとに、すっと澄んだ余韻が広がります。小分けにカットして、食べる分だけ解凍し、残りは冷凍庫へ。慌ただしい毎日の中の、静かなご褒美のひとときに。";
+  const dSpecSize = "約15cm（4〜6名様分）";
+  const dSpecExpiry = "冷凍（−18℃以下）で約30日<br />※解凍後は冷蔵で2日以内にお召し上がりください<br />※詳しくは商品ラベルの日付をご確認ください";
+  const dSpecIngredients = "クリームチーズ、生クリーム（国内製造）、卵、グラニュー糖、薄力粉、バター、レモン果汁／（一部に乳成分・卵・小麦・大豆を含む）<br />※仕入れ状況により原材料の一部が変わる場合がありますが、味・品質に影響はありません。";
+  const dNotes = [
+    "本商品は冷凍でのお届けとなります。",
+    "独自の“熟成冷凍”加工により、解凍後がいちばんの食べごろです。室温で1時間ほど解凍してお楽しみください。",
+    "ひとつひとつ手作業で製造しているため、形状や焼き色に個体差がございます。",
+    "表面の濃い焼き色はバスク特有の香ばしさで、品質に問題はございません。安心してお召し上がりください。",
+  ];
+  const featureHead = p.featureHead ? escD(p.featureHead) : dFeatureHead;
+  const featureBody = p.featureBody ? nl2br(p.featureBody) : dFeatureBody;
+  const specSize = p.specSize ? escD(p.specSize) : dSpecSize;
+  const specExpiry = p.specExpiry ? nl2br(p.specExpiry) : dSpecExpiry;
+  const specIngredients = p.specIngredients ? nl2br(p.specIngredients) : dSpecIngredients;
+  const notesHtml = (p.notes ? p.notes.split("\n").map((s) => s.trim()).filter(Boolean) : dNotes)
+    .map((li) => `<li>${escD(li)}</li>`)
+    .join("");
 
   const thumbs = gallery
     .map(
@@ -454,11 +487,11 @@ function renderProductDetail() {
     </div>
 
     <section class="pdp__feature">
-      <h2 class="pdp__feature-head">解凍したての、いちばん澄んだ甘さを。</h2>
+      <h2 class="pdp__feature-head">${featureHead}</h2>
       <div class="pdp__feature-media">
-        ${p.img ? `<img src="${p.img}" alt="${p.name}" loading="lazy" />` : `<span class="pdp__feature-glyph">${p.glyph || "🍰"}</span>`}
+        ${(p.featureImage || p.img) ? `<img src="${p.featureImage || p.img}" alt="${p.name}" loading="lazy" />` : `<span class="pdp__feature-glyph">${p.glyph || "🍰"}</span>`}
       </div>
-      <p class="pdp__feature-body">室温で1時間ほど解凍すると、外はしっとり、中はとろりとほどける食べごろに。ひと口運べば、濃厚なコクのあとに、すっと澄んだ余韻が広がります。小分けにカットして、食べる分だけ解凍し、残りは冷凍庫へ。慌ただしい毎日の中の、静かなご褒美のひとときに。</p>
+      <p class="pdp__feature-body">${featureBody}</p>
     </section>
 
     <section class="pdp__overview">
@@ -466,26 +499,21 @@ function renderProductDetail() {
       <dl class="pdp__spec">
         <div class="pdp__spec-row">
           <dt>サイズ</dt>
-          <dd>約15cm（4〜6名様分）</dd>
+          <dd>${specSize}</dd>
         </div>
         <div class="pdp__spec-row">
           <dt>賞味期限</dt>
-          <dd>冷凍（−18℃以下）で約30日<br />※解凍後は冷蔵で2日以内にお召し上がりください<br />※詳しくは商品ラベルの日付をご確認ください</dd>
+          <dd>${specExpiry}</dd>
         </div>
         <div class="pdp__spec-row">
           <dt>原材料</dt>
-          <dd>クリームチーズ、生クリーム（国内製造）、卵、グラニュー糖、薄力粉、バター、レモン果汁／（一部に乳成分・卵・小麦・大豆を含む）<br />※仕入れ状況により原材料の一部が変わる場合がありますが、味・品質に影響はありません。</dd>
+          <dd>${specIngredients}</dd>
         </div>
       </dl>
 
       <div class="pdp__note">
         <h3 class="pdp__note-title">お取り扱いについて</h3>
-        <ul class="pdp__note-list">
-          <li>本商品は冷凍でのお届けとなります。</li>
-          <li>独自の“熟成冷凍”加工により、解凍後がいちばんの食べごろです。室温で1時間ほど解凍してお楽しみください。</li>
-          <li>ひとつひとつ手作業で製造しているため、形状や焼き色に個体差がございます。</li>
-          <li>表面の濃い焼き色はバスク特有の香ばしさで、品質に問題はございません。安心してお召し上がりください。</li>
-        </ul>
+        <ul class="pdp__note-list">${notesHtml}</ul>
       </div>
     </section>
 

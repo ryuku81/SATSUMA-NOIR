@@ -150,6 +150,19 @@
       write(read().filter((p) => p.id !== target));
     },
 
+    // 商品詳細ページ用の編集フィールド（管理画面で localStorage に保存）を同期取得。
+    //  公開側の PRODUCTS は Supabase 由来のため、ここで上書き用の値だけ取り出す。
+    detailOverrides(id) {
+      const found = read().find((p) => p.id === Number(id));
+      if (!found) return {};
+      const out = {};
+      ["featureHead", "featureBody", "featureImage", "specSize", "specExpiry", "specIngredients", "notes"].forEach((k) => {
+        if (found[k]) out[k] = found[k];
+      });
+      if (Array.isArray(found.gallery) && found.gallery.length) out.gallery = found.gallery;
+      return out;
+    },
+
     // 開発用: シード状態に戻す
     async resetToSeed() {
       write(SEED);

@@ -416,10 +416,17 @@ img { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   z-index: 1;
+  /* オーバーレイがタッチ/スワイプを奪わないよう、イベントは下のトラックへ通す */
+  pointer-events: none;
   background:
     radial-gradient(ellipse at center, rgba(10,10,11,0.28) 0%, rgba(10,10,11,0.6) 100%),
     linear-gradient(to bottom, rgba(10,10,11,0.42) 0%, rgba(10,10,11,0.12) 35%, rgba(10,10,11,0.46) 100%);
 }
+/* 文字・装飾もスワイプを妨げない（ドットだけはクリック可能に戻す） */
+.hero__center,
+.hero-concept,
+.hero__scroll { pointer-events: none; }
+.hero__dots { pointer-events: auto; }
 .hero__center {
   position: relative;
   z-index: 2;
@@ -1600,7 +1607,7 @@ img { display: block; max-width: 100%; }
   direction: ltr;
   border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.28);
   transition: box-shadow 0.5s var(--ease);
 }
 .rank-row__media img {
@@ -1621,7 +1628,7 @@ img { display: block; max-width: 100%; }
   pointer-events: none;
 }
 .rank-row:hover { transform: translateY(-8px); }
-.rank-row:hover .rank-row__media { box-shadow: 0 38px 72px rgba(0, 0, 0, 0.6); }
+.rank-row:hover .rank-row__media { box-shadow: 0 22px 40px rgba(0, 0, 0, 0.32); }
 .rank-row:hover .rank-row__media img { transform: scale(1.05); }
 .rank-row:hover .rank-row__media::after { opacity: 1; }
 .rank-row__glyph {
@@ -1680,6 +1687,9 @@ img { display: block; max-width: 100%; }
   cursor: pointer; transition: all 0.3s var(--ease);
 }
 .rank-row__add:hover { background: #fff; color: #000; }
+/* ライトモード：白背景で見えるよう枠・文字を黒系に */
+[data-theme="light"] .rank-row__add { border-color: var(--text); color: var(--text); }
+[data-theme="light"] .rank-row__add:hover { background: var(--text); color: #fff; }
 
 @media (max-width: 760px) {
   .rank-row, .rank-row:nth-child(even) { grid-template-columns: 1fr; direction: ltr; gap: 1rem; min-height: 0; }
@@ -1687,6 +1697,16 @@ img { display: block; max-width: 100%; }
   .rank-row__info { padding: 0.5rem 0.3rem 0; }
   /* スマホでは2段目も1・3段目と同じ左揃えに */
   .rank-row:nth-child(2) .rank-row__info { align-items: flex-start; text-align: left; }
+  /* スマホ：ボタンを中央に固定し、その左に価格を配置（右セルは空きでバランス） */
+  .rank-row__buy {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+  }
+  .rank-row__price { justify-self: end; }
+  .rank-row__add { margin-top: 0; }
 }
 
 /* ---------- Shop ---------- */
@@ -2708,7 +2728,7 @@ img { display: block; max-width: 100%; }
     padding: 0.4rem;
   }
 
-  .howto { padding: 5rem 1.4rem; }
+  .howto { padding: 3.5rem 1.4rem; }
   /* スマホでは「HOW TO EAT」を1行に収める（折り返さない） */
   .howto__eyebrow {
     white-space: nowrap;
@@ -2746,13 +2766,15 @@ img { display: block; max-width: 100%; }
   .footer__cols { gap: 1.5rem; }
   .footer__bottom { flex-direction: column; gap: 1.2rem; }
   .shop { padding: 5rem 1.4rem; }
-  .ranking { padding: 5rem 1.4rem 0; }
+  .ranking { padding: 3rem 1.4rem 0; }
+  .ranking .section-head { margin-bottom: 2.4rem; }
+  .ranking .section-more { margin-top: 3.5rem; }
   .news { padding: 1rem 1.4rem 5rem; }
   .about { min-height: 52vh; }
   .about__inner { padding: 2.5rem 1.6rem; }
   .recruit { padding: 5rem 1.4rem; }
   .contact { padding: 5rem 1.4rem; }
-  .statement { min-height: 60vh; }
+  .statement { min-height: 60vh; margin-top: 3rem; }
   .statement__inner { padding: 2rem 1.6rem; }
 
   .cart-page { padding: 2rem 1.4rem 5rem; }
@@ -3237,6 +3259,18 @@ img { display: block; max-width: 100%; }
 .admin__tab.is-active svg { opacity: 1; color: var(--gold); }
 
 /* --- Admin: ダッシュボード --- */
+/* === Admin: 商品詳細ページの追加画像ギャラリー === */
+.gallery-editor { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 0.7rem; }
+.gallery-thumb { position: relative; width: 72px; height: 72px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); }
+.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-thumb__del {
+  position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border-radius: 50%;
+  border: none; cursor: pointer; line-height: 1; font-size: 0.9rem;
+  background: rgba(0, 0, 0, 0.6); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.gallery-add { display: inline-flex; }
+
 /* === Admin: ベストセラー管理 === */
 .bestseller-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
 .bestseller-rank {

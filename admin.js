@@ -66,6 +66,13 @@ const F = {
   tag: document.getElementById("fieldTag"),
   img: document.getElementById("fieldImg"),
   desc: document.getElementById("fieldDesc"),
+  featureHead: document.getElementById("fieldFeatureHead"),
+  featureBody: document.getElementById("fieldFeatureBody"),
+  featureImage: document.getElementById("fieldFeatureImg"),
+  specSize: document.getElementById("fieldSpecSize"),
+  specExpiry: document.getElementById("fieldSpecExpiry"),
+  specIngredients: document.getElementById("fieldSpecIngredients"),
+  notes: document.getElementById("fieldNotes"),
 };
 
 const tabs = document.querySelectorAll(".admin__tab");
@@ -90,7 +97,7 @@ function showPanel() {
 // ------------------------------------------------------------
 //  タブ切り替え
 // ------------------------------------------------------------
-const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", members: "会員管理", products: "商品管理", bestseller: "ベストセラー管理", inquiries: "お問い合わせ", news: "NEWS管理", journal: "JOURNAL管理", faq: "FAQ管理", recruit: "採用情報管理", applicants: "応募者管理", topics: "TOPICS管理", settings: "設定" };
+const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", members: "会員管理", products: "商品管理", bestseller: "ベストセラー管理", store: "ストア管理", inquiries: "お問い合わせ", news: "NEWS管理", journal: "JOURNAL管理", faq: "FAQ管理", recruit: "採用情報管理", applicants: "応募者管理", topics: "TOPICS管理", settings: "設定" };
 function switchTab(name) {
   tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === name));
   views.forEach((v) => (v.hidden = v.dataset.view !== name));
@@ -108,6 +115,7 @@ function switchTab(name) {
   if (name === "applicants") renderApplicants();
   if (name === "topics") renderTopics();
   if (name === "bestseller") renderBestseller();
+  if (name === "store") renderStore();
   if (name === "settings") renderSettings();
 }
 tabs.forEach((t) => t.addEventListener("click", () => {
@@ -1858,6 +1866,154 @@ if (bestsellerEditor) {
   });
 }
 
+// ------------------------------------------------------------
+//  ストア管理（複数店舗）
+// ------------------------------------------------------------
+const storeRows = document.getElementById("storeRows");
+const storeModal = document.getElementById("storeModal");
+const storeForm = document.getElementById("storeForm");
+const STF = {
+  id: document.getElementById("storeFieldId"),
+  name: document.getElementById("storeName"),
+  lead: document.getElementById("storeLead"),
+  openDate: document.getElementById("storeOpenDate"),
+  hours: document.getElementById("storeHours"),
+  address: document.getElementById("storeAddress"),
+};
+let storeMapImage = "";
+const storeMapPreview = document.getElementById("storeMapPreview");
+
+function renderStoreMapPreview() {
+  if (!storeMapPreview) return;
+  storeMapPreview.innerHTML = storeMapImage
+    ? `<img src="${storeMapImage}" alt="プレビュー" />`
+    : `<span class="img-upload__empty">初期画像</span>`;
+}
+
+const firstLine = (s) => String(s || "").split("\n")[0] || "—";
+
+async function renderStore() {
+  if (typeof StoreStore === "undefined" || !storeRows) return;
+  const stores = await StoreStore.getAll();
+  if (stores.length === 0) {
+    storeRows.innerHTML = `<tr><td colspan="4" class="admin-table__empty">店舗がありません。「＋ 店舗を追加」から登録してください。</td></tr>`;
+    return;
+  }
+  storeRows.innerHTML = stores
+    .map((s) => {
+      const primary = Number(s.id) === StoreStore.PRIMARY_ID;
+      return `
+      <tr>
+        <td data-label="店名">${escapeHtml(s.name)}${primary ? ` <span class="admin-badge">主店舗</span>` : ""}</td>
+        <td data-label="住所">${escapeHtml(s.address || "—")}</td>
+        <td data-label="営業時間">${escapeHtml(truncate(firstLine(s.hours), 18))}</td>
+        <td class="admin-table__ops">
+          <button class="admin-op" data-sedit="${s.id}">編集</button>
+          ${primary ? "" : `<button class="admin-op admin-op--danger" data-sdel="${s.id}">削除</button>`}
+        </td>
+      </tr>`;
+    })
+    .join("");
+}
+
+function openStoreModal(item) {
+  document.getElementById("storeModalTitle").textContent = item ? "店舗を編集" : "店舗を追加";
+  STF.id.value = item?.id ?? "";
+  STF.name.value = item?.name ?? "";
+  STF.lead.value = item?.lead ?? "";
+  STF.openDate.value = item?.openDate ?? "";
+  STF.hours.value = item?.hours ?? "";
+  STF.address.value = item?.address ?? "";
+  storeMapImage = item?.mapImage ?? "";
+  document.getElementById("storeMapFile").value = "";
+  renderStoreMapPreview();
+  storeModal.hidden = false;
+}
+function closeStoreModal() {
+  storeModal.hidden = true;
+  storeForm.reset();
+}
+
+if (storeForm) {
+  document.getElementById("addStoreBtn").addEventListener("click", () => openStoreModal(null));
+  document.getElementById("storeCancelBtn").addEventListener("click", closeStoreModal);
+  document.getElementById("storeModalOverlay").addEventListener("click", closeStoreModal);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !storeModal.hidden) closeStoreModal();
+  });
+
+  const mapFile = document.getElementById("storeMapFile");
+  document.getElementById("storeMapClear").addEventListener("click", () => {
+    storeMapImage = "";
+    mapFile.value = "";
+    renderStoreMapPreview();
+  });
+  mapFile.addEventListener("change", async () => {
+    const f = mapFile.files[0];
+    if (!f) return;
+    if (!f.type.startsWith("image/")) {
+      showToast("画像ファイルを選択してください。");
+      return;
+    }
+    try {
+      storeMapImage = await compressImage(f, 1400, 0.82);
+      renderStoreMapPreview();
+    } catch (err) {
+      console.error("画像の処理に失敗しました:", err);
+      showToast("画像の処理に失敗しました。");
+    }
+  });
+
+  storeForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = {
+      name: STF.name.value.trim(),
+      lead: STF.lead.value.trim(),
+      openDate: STF.openDate.value.trim(),
+      hours: STF.hours.value,
+      address: STF.address.value.trim(),
+      mapImage: storeMapImage,
+    };
+    if (!data.name) {
+      showToast("店名は必須です。");
+      return;
+    }
+    try {
+      const id = STF.id.value;
+      if (id) {
+        await StoreStore.update(id, data);
+        showToast("店舗を更新しました。");
+      } else {
+        await StoreStore.create(data);
+        showToast("店舗を追加しました。");
+      }
+      closeStoreModal();
+      renderStore();
+    } catch (err) {
+      console.error("店舗の保存に失敗しました:", err);
+      const quota = err && (err.name === "QuotaExceededError" || /quota/i.test(err.message || ""));
+      showToast(quota ? "保存容量が上限です。画像サイズを小さくしてください。" : "保存に失敗しました。");
+    }
+  });
+
+  storeRows.addEventListener("click", async (e) => {
+    const editBtn = e.target.closest("[data-sedit]");
+    const delBtn = e.target.closest("[data-sdel]");
+    if (editBtn) {
+      const item = await StoreStore.findById(editBtn.dataset.sedit);
+      if (item) openStoreModal(item);
+    }
+    if (delBtn) {
+      const item = await StoreStore.findById(delBtn.dataset.sdel);
+      if (item && confirm(`「${item.name}」を削除しますか？`)) {
+        await StoreStore.remove(item.id);
+        showToast("店舗を削除しました。");
+        renderStore();
+      }
+    }
+  });
+}
+
 settingsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
@@ -2043,7 +2199,17 @@ function openModal(product) {
   F.tag.value = product?.tag ?? "";
   F.img.value = product?.img ?? "";
   F.desc.value = product?.desc ?? "";
+  F.featureHead.value = product?.featureHead ?? "";
+  F.featureBody.value = product?.featureBody ?? "";
+  F.featureImage.value = product?.featureImage ?? "";
+  F.specSize.value = product?.specSize ?? "";
+  F.specExpiry.value = product?.specExpiry ?? "";
+  F.specIngredients.value = product?.specIngredients ?? "";
+  F.notes.value = product?.notes ?? "";
+  productGallery = Array.isArray(product?.gallery) ? [...product.gallery] : [];
   renderImgPreview();
+  renderFeatureImgPreview();
+  renderGalleryEditor();
   modal.hidden = false;
 }
 function closeModal() {
@@ -2116,6 +2282,86 @@ imgClearBtn.addEventListener("click", () => {
   renderImgPreview();
 });
 
+// ---- 特集セクションの画像（商品詳細ページ用）----
+const featureImgPreview = document.getElementById("featureImgPreview");
+const featureImgFile = document.getElementById("fieldFeatureImgFile");
+const featureImgClear = document.getElementById("featureImgClear");
+
+function renderFeatureImgPreview() {
+  if (!featureImgPreview) return;
+  const src = F.featureImage.value;
+  featureImgPreview.innerHTML = src
+    ? `<img src="${src}" alt="プレビュー" />`
+    : `<span class="img-upload__empty">メイン画像</span>`;
+}
+
+if (featureImgFile) {
+  featureImgFile.addEventListener("change", async () => {
+    const file = featureImgFile.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      showToast("画像ファイルを選択してください。");
+      return;
+    }
+    try {
+      F.featureImage.value = await compressImage(file, 1400, 0.82);
+      renderFeatureImgPreview();
+    } catch (err) {
+      console.error("画像の処理に失敗しました:", err);
+      showToast("画像の処理に失敗しました。");
+    }
+  });
+  featureImgClear.addEventListener("click", () => {
+    F.featureImage.value = "";
+    featureImgFile.value = "";
+    renderFeatureImgPreview();
+  });
+}
+
+// ---- 追加画像ギャラリー（商品詳細ページ用）----
+let productGallery = [];
+const galleryEditor = document.getElementById("galleryEditor");
+const galleryFileInput = document.getElementById("fieldGalleryFile");
+
+function renderGalleryEditor() {
+  if (!galleryEditor) return;
+  galleryEditor.innerHTML = productGallery.length
+    ? productGallery
+        .map(
+          (src, i) => `
+        <div class="gallery-thumb">
+          <img src="${src}" alt="追加画像${i + 1}" />
+          <button type="button" class="gallery-thumb__del" data-gdel="${i}" aria-label="削除">×</button>
+        </div>`
+        )
+        .join("")
+    : `<p class="img-upload__hint">追加画像はありません。</p>`;
+}
+
+if (galleryEditor) {
+  galleryFileInput.addEventListener("change", async () => {
+    const files = Array.from(galleryFileInput.files || []).filter((f) => f.type.startsWith("image/"));
+    if (!files.length) return;
+    try {
+      for (const f of files) {
+        productGallery.push(await compressImage(f, 1200, 0.82));
+      }
+      renderGalleryEditor();
+    } catch (err) {
+      console.error("画像の処理に失敗しました:", err);
+      showToast("画像の処理に失敗しました。");
+    }
+    galleryFileInput.value = "";
+  });
+
+  galleryEditor.addEventListener("click", (e) => {
+    const del = e.target.closest("[data-gdel]");
+    if (!del) return;
+    productGallery.splice(Number(del.dataset.gdel), 1);
+    renderGalleryEditor();
+  });
+}
+
 addBtn.addEventListener("click", () => openModal(null));
 cancelBtn.addEventListener("click", closeModal);
 modalOverlay.addEventListener("click", closeModal);
@@ -2133,6 +2379,14 @@ form.addEventListener("submit", async (e) => {
     tag: F.tag.value.trim(),
     img: F.img.value.trim(),
     desc: F.desc.value.trim(),
+    featureHead: F.featureHead.value.trim(),
+    featureBody: F.featureBody.value.trim(),
+    specSize: F.specSize.value.trim(),
+    specExpiry: F.specExpiry.value.trim(),
+    specIngredients: F.specIngredients.value.trim(),
+    notes: F.notes.value.trim(),
+    featureImage: F.featureImage.value.trim(),
+    gallery: [...productGallery],
   };
   if (!data.name || Number.isNaN(data.price) || Number.isNaN(data.stock)) {
     showToast("商品名・価格・在庫数は必須です。");

@@ -23,8 +23,8 @@
     </section>
 
     <section class="store-detail" id="storeDetail">
-      <h1 class="store-detail__name">照国本店</h1>
-      <p class="store-detail__lead">照国神社のほど近く、静かな路地にひっそりと佇む工房兼ショップ。もちろん、店頭でのご購入もいただけますが、ここではエスプレッソやお茶とともに、焼きたて・解凍したての一皿をその場で味わえる小さなカフェスペースを設えています。職人がひとつひとつ手仕事で仕上げる“熟成冷凍”チーズケーキを、いちばんの食べごろでお楽しみいただける場所です。</p>
+      <h1 class="store-detail__name" data-store="name">照国本店</h1>
+      <p class="store-detail__lead" data-store="lead">照国神社のほど近く、静かな路地にひっそりと佇む工房兼ショップ。もちろん、店頭でのご購入もいただけますが、ここではエスプレッソやお茶とともに、焼きたて・解凍したての一皿をその場で味わえる小さなカフェスペースを設えています。職人がひとつひとつ手仕事で仕上げる“熟成冷凍”チーズケーキを、いちばんの食べごろでお楽しみいただける場所です。</p>
       <figure class="store-detail__media">
         <img src="images/terukuni-store.jpg" alt="照国本店の店内とデザート" loading="lazy" />
       </figure>
@@ -95,11 +95,11 @@
       <dl class="store-info__list">
         <div class="store-info__row">
           <dt class="store-info__label">開店日</dt>
-          <dd class="store-info__value">2025年4月1日（火）</dd>
+          <dd class="store-info__value" data-store="openDate">2025年4月1日（火）</dd>
         </div>
         <div class="store-info__row">
           <dt class="store-info__label">時間</dt>
-          <dd class="store-info__value">
+          <dd class="store-info__value" data-store="hours">
             11:00〜19:00<br />
             ※カフェ営業時間<br />
             平日 11:30〜18:30（L.O.18:00）<br />
@@ -109,11 +109,11 @@
         </div>
         <div class="store-info__row">
           <dt class="store-info__label">住所</dt>
-          <dd class="store-info__value">〒892-0841 鹿児島県鹿児島市照国町14-15</dd>
+          <dd class="store-info__value" data-store="address">〒892-0841 鹿児島県鹿児島市照国町14-15</dd>
         </div>
       </dl>
       <div class="store-info__map">
-        <img src="images/map-terukuni.png" alt="照国本店の地図" loading="lazy" />
+        <img src="images/map-terukuni.png" alt="照国本店の地図" loading="lazy" data-store-img="map" />
       </div>
     </section>
   </main>
@@ -124,6 +124,8 @@
   <script src="settings.js?v=4"></script>
 
   <script src="store.js?v=5"></script>
+
+  <script src="storeinfo.js?v=2"></script>
 
   <script src="app.js?v=15"></script>
 

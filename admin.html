@@ -76,6 +76,10 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 15 8.5 22 9.3l-5 4.6L18.5 21 12 17.3 5.5 21 7 13.9l-5-4.6 7-0.8L12 2Z"/></svg>
           <span>ベストセラー管理</span>
         </button>
+        <button class="admin__tab" data-tab="store">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9 4 4h16l1 5M4 9v11h16V9M4 9h16M9 20v-6h6v6"/></svg>
+          <span>ストア管理</span>
+        </button>
         <button class="admin__tab" data-tab="news">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6Z"/></svg>
           <span>NEWS管理</span>
@@ -505,6 +509,25 @@
         </section>
       </section>
 
+      <!-- ストア管理（複数店舗） -->
+      <section class="admin__view" data-view="store" hidden>
+        <section class="admin__panel">
+          <div class="admin__panel-head">
+            <h2 class="admin__panel-title">ストア管理</h2>
+            <button class="btn btn--primary btn--sm" id="addStoreBtn">＋ 店舗を追加</button>
+          </div>
+          <p class="settings-form__note">店舗を追加・編集・削除できます。「照国本店（主店舗）」は店舗ページ（store-terukuni.html）に、追加した店舗は店舗詳細ページ（store-detail.html?id=◯）に反映されます。</p>
+          <div class="admin__table-wrap">
+            <table class="admin-table admin-table--stack" id="storeTable">
+              <thead>
+                <tr><th>店名</th><th>住所</th><th>営業時間</th><th></th></tr>
+              </thead>
+              <tbody id="storeRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
       <!-- TOPICS管理 -->
       <section class="admin__view" data-view="topics" hidden>
         <section class="admin__panel">
@@ -685,6 +708,37 @@
         <input type="hidden" id="fieldImg" />
       </div>
       <label class="field"><span>説明（任意）</span><textarea id="fieldDesc" rows="3"></textarea></label>
+
+      <h3 class="settings-section__title">商品詳細ページ</h3>
+      <p class="settings-form__note">商品詳細ページ（product.html）の各セクション文面を商品ごとに編集できます。空欄の項目は既定の共通文が表示されます。</p>
+      <label class="field"><span>特集 見出し</span><input type="text" id="fieldFeatureHead" placeholder="解凍したての、いちばん澄んだ甘さを。" /></label>
+      <label class="field"><span>特集 本文</span><textarea id="fieldFeatureBody" rows="3"></textarea></label>
+      <div class="field">
+        <span>特集セクションの画像（任意）</span>
+        <div class="img-upload">
+          <div class="img-upload__preview" id="featureImgPreview"></div>
+          <div class="img-upload__side">
+            <label class="img-upload__btn">画像を選択<input type="file" id="fieldFeatureImgFile" accept="image/*" hidden /></label>
+            <button type="button" class="img-upload__clear" id="featureImgClear">クリア</button>
+            <p class="img-upload__hint">未設定の場合はメイン画像が表示されます。</p>
+          </div>
+        </div>
+        <input type="hidden" id="fieldFeatureImg" />
+      </div>
+      <div class="admin-modal__row">
+        <label class="field"><span>サイズ</span><input type="text" id="fieldSpecSize" placeholder="約15cm（4〜6名様分）" /></label>
+        <label class="field"><span>賞味期限</span><input type="text" id="fieldSpecExpiry" placeholder="冷凍で約30日 など" /></label>
+      </div>
+      <label class="field"><span>原材料</span><textarea id="fieldSpecIngredients" rows="2"></textarea></label>
+      <label class="field"><span>お取り扱いについて（1行＝1項目）</span><textarea id="fieldNotes" rows="4" placeholder="本商品は冷凍でのお届けとなります。&#10;室温で1時間ほど解凍してお楽しみください。"></textarea></label>
+
+      <div class="field">
+        <span>追加画像（詳細ページのギャラリー）</span>
+        <div id="galleryEditor" class="gallery-editor"></div>
+        <label class="img-upload__btn gallery-add">＋ 画像を追加<input type="file" id="fieldGalleryFile" accept="image/*" multiple hidden /></label>
+        <p class="img-upload__hint">メイン画像に加えて、詳細ページのギャラリーに表示されます（自動で縮小して保存）。</p>
+      </div>
+
       <div class="admin-modal__actions">
         <button type="button" class="btn btn--ghost btn--sm" id="cancelBtn">キャンセル</button>
         <button type="submit" class="btn btn--primary btn--sm">保存する</button>
@@ -833,6 +887,34 @@
     </form>
   </div>
 
+  <!-- 店舗の追加/編集（モーダル） -->
+  <div class="admin-modal" id="storeModal" hidden>
+    <div class="admin-modal__overlay" id="storeModalOverlay"></div>
+    <form class="admin-modal__box" id="storeForm">
+      <h3 class="admin-modal__title" id="storeModalTitle">店舗を追加</h3>
+      <input type="hidden" id="storeFieldId" />
+      <label class="field"><span>店名 *</span><input type="text" id="storeName" required placeholder="例：照国本店" /></label>
+      <label class="field"><span>リード文（紹介文）</span><textarea id="storeLead" rows="3" placeholder="店舗の紹介文"></textarea></label>
+      <label class="field"><span>開店日</span><input type="text" id="storeOpenDate" placeholder="2025年4月1日（火）" /></label>
+      <label class="field"><span>営業時間（改行で行分け）</span><textarea id="storeHours" rows="4"></textarea></label>
+      <label class="field"><span>住所</span><input type="text" id="storeAddress" placeholder="〒892-0841 鹿児島県鹿児島市照国町14-15" /></label>
+      <div class="field">
+        <span>地図画像</span>
+        <div class="img-upload">
+          <div class="img-upload__preview" id="storeMapPreview"></div>
+          <div class="img-upload__side">
+            <label class="img-upload__btn">画像を選択<input type="file" id="storeMapFile" accept="image/*" hidden /></label>
+            <button type="button" class="img-upload__clear" id="storeMapClear">クリア</button>
+          </div>
+        </div>
+      </div>
+      <div class="admin-modal__actions">
+        <button type="button" class="btn btn--ghost btn--sm" id="storeCancelBtn">キャンセル</button>
+        <button type="submit" class="btn btn--primary btn--sm">保存する</button>
+      </div>
+    </form>
+  </div>
+
   <div class="toast" id="toast"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -853,6 +935,7 @@
   <script src="topics.js?v=3"></script>
   <script src="subscribers.js?v=1"></script>
   <script src="bestseller.js?v=1"></script>
+  <script src="storeinfo.js?v=2"></script>
   <script src="admin.js?v=15"></script>
 </body>
 </html>
