@@ -8,13 +8,16 @@
 (function (global) {
   const STORAGE_KEY = "satsuma_topics";
   const VERSION_KEY = "satsuma_topics_version";
-  const SEED_VERSION = "1";
+  // SEED を変更したら必ずバンプする（既存 localStorage を再シード）。
+  const SEED_VERSION = "2";
 
+  // ニュース（お知らせ）と内容が被らないよう、トピックスは
+  //  「店舗・食べ方・こだわり・贈り物」など読みもの寄りの訴求にする。
   const SEED = [
-    { image: "images/basque-cheesecake.png", title: "人気No.1「バスクチーズケーキ」数量限定で再入荷", desc: "高温で焼き上げた表面のほろ苦さと、とろける中心。数量限定で再入荷しました。", url: "news.html" },
-    { image: "images/italian-tiramisu.png", title: "新作「イタリアンティラミス」がコレクションに登場", desc: "マスカルポーネとエスプレッソが織りなす、大人の余韻をぜひ。", url: "news.html" },
-    { image: "images/berry-rare-cheesecake.png", title: "季節限定ギフトボックスの受付を開始しました", desc: "大切な方への贈り物に。華やかな季節限定ボックスをご用意しました。", url: "news.html" },
-    { image: "images/newyork-cheesecake.png", title: "大型連休期間中の配送スケジュールについて", desc: "ご注文・お届けの目安をご案内します。詳しくはNEWSをご覧ください。", url: "news.html" },
+    { image: "images/terukuni-store.jpg", title: "照国本店、カフェスペースのご案内", desc: "焼きたて・解凍したての一皿をその場で。エスプレッソやお茶とともにお楽しみいただけます。", url: "#" },
+    { image: "images/souffle-cheesecake.png", title: "“熟成冷凍”のおいしい解凍ガイド", desc: "室温で約1時間。半解凍とフル解凍で変わる、口どけの違いをご紹介します。", url: "#" },
+    { image: "images/basque-cheesecake.png", title: "バスクチーズケーキ専門店としてのこだわり", desc: "高温で焼き上げる表面のほろ苦さと、とろける中心。私たちの原点の一台です。", url: "#" },
+    { image: "images/truffle-collection.png", title: "ご褒美に、トリュフチョコレートの詰め合わせ", desc: "ひと粒に込めた濃密なひととき。大切な方への贈り物にもおすすめです。", url: "#" },
   ];
 
   function read() {
@@ -93,11 +96,10 @@
       return;
     }
     row.innerHTML = items
-      .map((t) => {
-        const url = t.url && t.url.trim() ? t.url.trim() : "#";
-        const external = /^https?:\/\//.test(url);
+      .map((t, i) => {
+        // ニュースを経由せず、直接トピックス詳細へ（配列インデックスを ID に使用）
         return `
-        <a class="topic-card" href="${escapeHtml(url)}"${external ? ' target="_blank" rel="noopener"' : ""}>
+        <a class="topic-card" href="topic-detail.html?id=${i}">
           <img class="topic-card__img" src="${escapeHtml(t.image)}" alt="" loading="lazy" />
           <div class="topic-card__body">
             <h3 class="topic-card__title">${escapeHtml(t.title)}</h3>
@@ -108,9 +110,62 @@
       .join("");
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", renderPublicTopics);
-  } else {
+  // ------------------------------------------------------------
+  //  トピックス詳細（topic-detail.html）の描画
+  //  デザインはニュース詳細（news-article 系）と共通。
+  //  #topicDetail が存在するページでのみ動作する。
+  // ------------------------------------------------------------
+  async function renderTopicDetail() {
+    const root = document.getElementById("topicDetail");
+    if (!root) return;
+
+    const id = Number(new URLSearchParams(location.search).get("id"));
+    const items = await TopicStore.getAll();
+    const t = Number.isInteger(id) ? items[id] : null;
+
+    if (!t) {
+      root.innerHTML = `
+        <div class="section-head">
+          <h2 class="section-head__title">TOPICS</h2>
+        </div>
+        <p class="cart-page__empty">お探しのトピックスが見つかりませんでした。</p>
+        <div class="section-more"><a href="index.html" class="btn btn--ghost">トップへもどる</a></div>`;
+      return;
+    }
+
+    const title = escapeHtml(t.title);
+    document.title = `${t.title} — TOPICS — SATSUMA NOIR`;
+
+    root.innerHTML = `
+      <div class="section-head">
+        <h2 class="section-head__title">TOPICS</h2>
+      </div>
+      <div class="news-article__meta">
+        <span class="news-article__cat">TOPICS</span>
+      </div>
+      <h1 class="news-article__title">${title}</h1>
+
+      <div class="news-article__body">
+        <p>${escapeHtml(t.desc)}</p>
+
+        <figure class="news-article__figure">
+          <img class="news-article__img" src="${escapeHtml(t.image)}" alt="${title}" loading="lazy" />
+        </figure>
+
+        <p>SATSUMA NOIR では、独自の“熟成冷凍”加工により、解凍後がいちばんの食べごろとなるよう、ひとつひとつ手仕事で丁寧に仕上げております。室温で1時間ほど解凍していただくと、外側はしっとり、中心はとろりとほどけるような口どけに変わります。最新のお知らせやご注文については、NEWS ページもあわせてご覧ください。</p>
+      </div>
+
+      <div class="section-more"><a href="news.html" class="btn btn--ghost">お知らせ一覧へ</a></div>`;
+  }
+
+  function renderTopicsPages() {
     renderPublicTopics();
+    renderTopicDetail();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderTopicsPages);
+  } else {
+    renderTopicsPages();
   }
 })(window);

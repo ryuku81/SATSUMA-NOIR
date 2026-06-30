@@ -90,7 +90,7 @@ function showPanel() {
 // ------------------------------------------------------------
 //  タブ切り替え
 // ------------------------------------------------------------
-const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", members: "会員管理", products: "商品管理", inquiries: "お問い合わせ", news: "NEWS管理", faq: "FAQ管理", recruit: "採用情報管理", applicants: "応募者管理", settings: "設定" };
+const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", members: "会員管理", products: "商品管理", bestseller: "ベストセラー管理", inquiries: "お問い合わせ", news: "NEWS管理", journal: "JOURNAL管理", faq: "FAQ管理", recruit: "採用情報管理", applicants: "応募者管理", topics: "TOPICS管理", settings: "設定" };
 function switchTab(name) {
   tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === name));
   views.forEach((v) => (v.hidden = v.dataset.view !== name));
@@ -102,9 +102,12 @@ function switchTab(name) {
   if (name === "members") renderMembers();
   if (name === "inquiries") renderInquiries();
   if (name === "news") renderNews();
+  if (name === "journal") renderJournal();
   if (name === "faq") renderFaqs();
   if (name === "recruit") renderRecruit();
   if (name === "applicants") renderApplicants();
+  if (name === "topics") renderTopics();
+  if (name === "bestseller") renderBestseller();
   if (name === "settings") renderSettings();
 }
 tabs.forEach((t) => t.addEventListener("click", () => {
@@ -173,89 +176,322 @@ const fmtDateTime = (iso) => {
 // ------------------------------------------------------------
 //  ダッシュボード
 // ------------------------------------------------------------
-const salesFrom = document.getElementById("salesFrom");
-const salesTo = document.getElementById("salesTo");
+// 管理画面アクセント＝オレンジ（白基調に合わせた配色）
+const GOLD = "#ec6a1a";
+const GOLD_SOFT = "#c0530c";
+// 売上内訳ドーナツの配色（オレンジを軸に調和する暖色の多色＋その他はグレー）
+const DONUT_COLORS = ["#e0641a", "#c79235", "#a85d4e", "rgba(0,0,0,0.13)"];
 
-const todayStr = () => {
-  const d = new Date();
-  const pad = (x) => String(x).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+// 日付ヘルパー
+const ymd = (d) => {
+  const x = new Date(d);
+  const p = (n) => String(n).padStart(2, "0");
+  return `${x.getFullYear()}-${p(x.getMonth() + 1)}-${p(x.getDate())}`;
 };
+const isSameDay = (a, b) => ymd(a) === ymd(b);
+const isSameMonth = (a, b) => {
+  const x = new Date(a), y = new Date(b);
+  return x.getFullYear() === y.getFullYear() && x.getMonth() === y.getMonth();
+};
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const pct = (cur, prev) => {
+  if (!prev) return cur > 0 ? 100 : 0;
+  return ((cur - prev) / prev) * 100;
+};
+const signPct = (v) => `${v >= 0 ? "+" : ""}${v.toFixed(1)}%`;
 
-// 売上カードを指定された日付範囲で更新
-async function renderSalesCard() {
-  // 初回は当月初〜今日を既定にする
-  if (!salesFrom.value && !salesTo.value) {
-    salesTo.value = todayStr();
-    const d = new Date();
-    salesFrom.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-  }
-  const { sales, count } = await OrderStore.getSalesByDateRange(salesFrom.value, salesTo.value);
-  document.getElementById("statSales").textContent = yen(sales);
-  document.getElementById("statSalesSub").textContent = `${count} 件`;
+// ---- 棒グラフ（売上サマリー）----
+function barChart(entries) {
+  // entries: [{ date: Date, value: number }]
+  if (!entries.length) return `<p class="dash-list__empty">データがありません。</p>`;
+  const max = Math.max(...entries.map((e) => e.value), 1);
+  let maxIdx = 0;
+  entries.forEach((e, i) => { if (e.value > entries[maxIdx].value) maxIdx = i; });
+  const n = entries.length;
+  // x 軸ラベルは概ね 5 等分で表示
+  const labelEvery = Math.max(1, Math.round(n / 6));
+  const bars = entries
+    .map((e, i) => {
+      const hp = Math.max(2, (e.value / max) * 100);
+      const hot = i === maxIdx && e.value > 0;
+      const d = new Date(e.date);
+      const tip = `${d.getMonth() + 1}/${d.getDate()} ・ ${yen(e.value)}`;
+      const showLabel = i % labelEvery === 0 || i === n - 1;
+      const label = showLabel ? `${d.getMonth() + 1}/${d.getDate()}` : "";
+      return `<div class="dash-bar${hot ? " is-hot" : ""}" title="${tip}">
+        <div class="dash-bar__fill" style="height:${hp}%"></div>
+        <span class="dash-bar__x">${label}</span>
+      </div>`;
+    })
+    .join("");
+  return `<div class="dash-bars">${bars}</div>`;
 }
 
-salesFrom.addEventListener("change", renderSalesCard);
-salesTo.addEventListener("change", renderSalesCard);
+// ---- ドーナツ（売上内訳）----
+function donutChart(segments, total) {
+  const r = 46, cx = 60, cy = 60, sw = 16;
+  const c = 2 * Math.PI * r;
+  let offset = 0;
+  const safeTotal = total || 1;
+  const arcs = segments
+    .map((s, i) => {
+      const len = (s.value / safeTotal) * c;
+      const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}"
+        stroke-dasharray="${len.toFixed(2)} ${(c - len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}"
+        transform="rotate(-90 ${cx} ${cy})"/>`;
+      offset += len;
+      return arc;
+    })
+    .join("");
+  return `<svg viewBox="0 0 120 120" width="100%" height="100%" aria-hidden="true">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="${sw}"/>
+    ${arcs}
+    <text x="${cx}" y="56" text-anchor="middle" class="dash-donut__cap">合計</text>
+    <text x="${cx}" y="74" text-anchor="middle" class="dash-donut__total">${yen(total)}</text>
+  </svg>`;
+}
+
+// 期間ごとの開始/終了/前期間を返す
+function resolvePeriod(key) {
+  const now = new Date();
+  if (key === "custom") {
+    const fromEl = document.getElementById("salesFrom");
+    const toEl = document.getElementById("salesTo");
+    // 既定（未入力時）は当月初〜今日
+    let from = fromEl.value ? new Date(`${fromEl.value}T00:00:00`) : new Date(now.getFullYear(), now.getMonth(), 1);
+    let to = toEl.value ? new Date(`${toEl.value}T23:59:59.999`) : new Date(now);
+    // 開始が終了より後なら入れ替える
+    if (from > to) { const t = from; from = new Date(to); from.setHours(0, 0, 0, 0); to = new Date(t); to.setHours(23, 59, 59, 999); }
+    // 前期間：同じ日数だけ手前の窓
+    const spanDays = Math.max(1, Math.round((to - from) / 86400000) + 1);
+    const prevEnd = addDays(from, -1); prevEnd.setHours(23, 59, 59, 999);
+    const prevStart = addDays(prevEnd, -(spanDays - 1)); prevStart.setHours(0, 0, 0, 0);
+    const fmt = (d) => `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+    return { start: from, end: to, prevStart, prevEnd, label: `（${fmt(from)}〜${fmt(to)}）` };
+  }
+  if (key === "lastMonth") {
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    const prevStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const prevEnd = new Date(now.getFullYear(), now.getMonth() - 1, 0, 23, 59, 59, 999);
+    return { start, end, prevStart, prevEnd, label: "（先月）" };
+  }
+  if (key === "last30") {
+    const end = new Date(now); end.setHours(23, 59, 59, 999);
+    const start = addDays(end, -29); start.setHours(0, 0, 0, 0);
+    const prevEnd = addDays(start, -1); prevEnd.setHours(23, 59, 59, 999);
+    const prevStart = addDays(prevEnd, -29); prevStart.setHours(0, 0, 0, 0);
+    return { start, end, prevStart, prevEnd, label: "（直近30日）" };
+  }
+  // thisMonth（既定）
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  const prevStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const prevEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+  return { start, end, prevStart, prevEnd, label: "（今月）" };
+}
+
+const sumTotals = (orders) => orders.reduce((s, o) => s + (Number(o.total) || 0), 0);
+const inRange = (orders, start, end) =>
+  orders.filter((o) => { const t = new Date(o.createdAt); return t >= start && t <= end; });
+
+// ダッシュ全体で使い回すデータ
+let dashOrders = [];
+let dashCustomers = [];
+
+// 売上サマリー＆内訳を選択中の期間（カレンダー指定）で描画
+function renderSalesSummary() {
+  const { start, end, prevStart, prevEnd, label } = resolvePeriod("custom");
+
+  const cur = inRange(dashOrders, start, end);
+  const prev = inRange(dashOrders, prevStart, prevEnd);
+  const curTotal = sumTotals(cur);
+  const prevTotal = sumTotals(prev);
+
+  document.getElementById("kpiSummaryValue").textContent = yen(curTotal);
+  const deltaEl = document.getElementById("kpiSummaryDelta");
+  const dp = pct(curTotal, prevTotal);
+  deltaEl.textContent = `前期比 ${signPct(dp)}`;
+  deltaEl.className = "dash-summary__delta " + (dp >= 0 ? "is-up" : "is-down");
+
+  // 日別の棒グラフ
+  const byDay = {};
+  cur.forEach((o) => { const k = ymd(o.createdAt); byDay[k] = (byDay[k] || 0) + (Number(o.total) || 0); });
+  const entries = [];
+  for (let d = new Date(start); d <= end; d = addDays(d, 1)) {
+    entries.push({ date: new Date(d), value: byDay[ymd(d)] || 0 });
+  }
+  document.getElementById("salesChart").innerHTML = barChart(entries);
+
+  // 売上内訳（商品別 上位3＋その他）
+  document.getElementById("breakdownPeriodLabel").textContent = label;
+  const rev = {};
+  cur.forEach((o) => (o.items || []).forEach((it) => {
+    const amt = (Number(it.price) || 0) * (Number(it.qty) || 0);
+    rev[it.name] = (rev[it.name] || 0) + amt;
+  }));
+  const ranked = Object.entries(rev).map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+  const top = ranked.slice(0, 3);
+  const restVal = ranked.slice(3).reduce((s, x) => s + x.value, 0);
+  const segs = top.map((t, i) => ({ ...t, color: DONUT_COLORS[i] }));
+  if (restVal > 0) segs.push({ name: "その他", value: restVal, color: DONUT_COLORS[3] });
+  const total = segs.reduce((s, x) => s + x.value, 0);
+
+  document.getElementById("breakdownDonut").innerHTML = total > 0
+    ? donutChart(segs, total)
+    : `<p class="dash-list__empty">データがありません。</p>`;
+  document.getElementById("breakdownLegend").innerHTML = total > 0
+    ? segs.map((s) => `
+        <li class="dash-legend__item">
+          <span class="dash-legend__dot" style="background:${s.color}"></span>
+          <span class="dash-legend__name">${escapeHtml(s.name)}</span>
+          <span class="dash-legend__val">${yen(s.value)}<span class="dash-legend__pct">${Math.round((s.value / total) * 100)}%</span></span>
+        </li>`).join("")
+    : "";
+}
+
+// 売上サマリーの期間（カレンダー指定）
+const salesFromEl = document.getElementById("salesFrom");
+const salesToEl = document.getElementById("salesTo");
+
+// 既定値：当月初〜今日
+(function initSalesDateRange() {
+  const now = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  if (!salesFromEl.value) salesFromEl.value = `${now.getFullYear()}-${p(now.getMonth() + 1)}-01`;
+  if (!salesToEl.value) salesToEl.value = `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+})();
+
+salesFromEl.addEventListener("change", renderSalesSummary);
+salesToEl.addEventListener("change", renderSalesSummary);
 
 async function renderDashboard() {
-  const [stats, alerts, orders] = await Promise.all([
-    OrderStore.getDashboardStats(),
+  const [alerts, orders, customers] = await Promise.all([
     ProductStore.findStockAlerts(),
     OrderStore.findAll(),
+    CustomerStore.findAll().catch(() => []),
   ]);
+  dashOrders = orders;
+  dashCustomers = customers;
 
-  // 売上カード（期間選択に対応）
-  renderSalesCard();
+  const now = new Date();
+  const yesterday = addDays(now, -1);
 
-  // 統計カード
-  document.getElementById("statUnshipped").textContent = stats.unshippedCount;
-  document.getElementById("statAlerts").textContent = alerts.length;
-  document.getElementById("alertCard").classList.toggle("is-warn", alerts.length > 0);
+  // --- KPI: 本日の売上（前日比）---
+  const todaySales = sumTotals(orders.filter((o) => isSameDay(o.createdAt, now)));
+  const ydaySales = sumTotals(orders.filter((o) => isSameDay(o.createdAt, yesterday)));
+  document.getElementById("kpiTodaySales").textContent = yen(todaySales);
+  setDelta("kpiTodaySalesDelta", `前日比 ${signPct(pct(todaySales, ydaySales))}`, pct(todaySales, ydaySales) >= 0);
 
-  // 在庫アラート一覧
-  const stockList = document.getElementById("stockAlertList");
-  if (alerts.length === 0) {
-    stockList.innerHTML = `<p class="dash-list__empty">在庫切れ・残りわずかの商品はありません。</p>`;
-  } else {
-    stockList.innerHTML = alerts
-      .map(
-        (p) => `
-      <div class="dash-row">
-        <span class="dash-row__main">${escapeHtml(p.name)}</span>
-        <span>${stockCell(p.stock)}</span>
-      </div>`
-      )
-      .join("");
-  }
+  // --- KPI: 今月の売上（前月比）---
+  const thisMonthSales = sumTotals(orders.filter((o) => isSameMonth(o.createdAt, now)));
+  const lastMonthRef = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+  const lastMonthSales = sumTotals(orders.filter((o) => isSameMonth(o.createdAt, lastMonthRef)));
+  document.getElementById("kpiMonthSales").textContent = yen(thisMonthSales);
+  setDelta("kpiMonthSalesDelta", `前月比 ${signPct(pct(thisMonthSales, lastMonthSales))}`, pct(thisMonthSales, lastMonthSales) >= 0);
 
-  // 未発送の注文一覧
+  // --- KPI: 本日の注文数（前日比）---
+  const todayCount = orders.filter((o) => isSameDay(o.createdAt, now)).length;
+  const ydayCount = orders.filter((o) => isSameDay(o.createdAt, yesterday)).length;
+  document.getElementById("kpiTodayOrders").textContent = `${todayCount}件`;
+  setDelta("kpiTodayOrdersDelta", `前日比 ${todayCount - ydayCount >= 0 ? "+" : ""}${todayCount - ydayCount}件`, todayCount - ydayCount >= 0);
+
+  // --- KPI: 会員数（今月の新規）---
+  const newThisMonth = customers.filter((c) => c.createdAt && isSameMonth(c.createdAt, now)).length;
+  document.getElementById("kpiMembers").textContent = `${customers.length}人`;
+  setDelta("kpiMembersDelta", `今月 +${newThisMonth}人`, true);
+
+  // --- 要対応バナー（未発送の注文）---
   const unshipped = orders.filter((o) => o.status === "unshipped");
-  const list = document.getElementById("unshippedList");
+  const nowMs = now.getTime();
+  const overdue = unshipped.filter((o) => nowMs - new Date(o.createdAt).getTime() > 48 * 3600 * 1000).length;
+  const action = document.getElementById("dashAction");
   if (unshipped.length === 0) {
-    list.innerHTML = `<p class="dash-list__empty">未発送の注文はありません。</p>`;
+    action.className = "dash-action is-clear";
+    action.innerHTML = `
+      <span class="dash-action__icon">✓</span>
+      <span class="dash-action__text">未発送の注文はありません。すべて発送済みです。</span>`;
   } else {
-    list.innerHTML = unshipped
-      .map(
-        (o) => `
-      <div class="dash-row">
-        <span class="dash-row__main">#${o.id} ${escapeHtml(o.customer)}</span>
-        <span class="dash-row__meta">${fmtDateTime(o.createdAt)} ・ ${yen(o.total)}</span>
-        <button class="admin-op" data-ship="${o.id}">発送済みにする</button>
-      </div>`
-      )
-      .join("");
+    action.className = "dash-action is-warn";
+    action.innerHTML = `
+      <span class="dash-action__icon">!</span>
+      <span class="dash-action__text"><strong>${unshipped.length}件</strong> の未発送注文があります${overdue ? `（うち <strong>${overdue}件</strong> は受注から48時間以上経過）` : ""}。冷凍商品のため、早めの発送をおすすめします。</span>
+      <button class="btn btn--primary btn--sm" type="button" data-goto-tab="orders">注文管理へ</button>`;
   }
+
+  // --- 客単価（今月）---
+  const monthOrders = orders.filter((o) => isSameMonth(o.createdAt, now));
+  const aov = monthOrders.length ? Math.round(thisMonthSales / monthOrders.length) : 0;
+  document.getElementById("kpiAov").textContent = yen(aov);
+  document.getElementById("kpiAovNote").textContent = `今月 ${monthOrders.length} 件の注文`;
+
+  // --- 新規 / リピーター（今月の購入者）---
+  // 顧客ごとの初回購入日（全期間）を求め、今月の購入者を新規/リピーターに分類
+  const firstOrderAt = {};
+  orders.forEach((o) => {
+    const t = new Date(o.createdAt).getTime();
+    if (firstOrderAt[o.customer] === undefined || t < firstOrderAt[o.customer]) firstOrderAt[o.customer] = t;
+  });
+  const buyersThisMonth = [...new Set(monthOrders.map((o) => o.customer))];
+  let newBuyers = 0, repeatBuyers = 0;
+  buyersThisMonth.forEach((name) => {
+    isSameMonth(firstOrderAt[name], now) ? newBuyers++ : repeatBuyers++;
+  });
+  const repeatRate = buyersThisMonth.length ? Math.round((repeatBuyers / buyersThisMonth.length) * 100) : 0;
+  document.getElementById("kpiNewBuyers").textContent = newBuyers;
+  document.getElementById("kpiRepeatBuyers").textContent = repeatBuyers;
+  document.getElementById("kpiRepeatRate").textContent = `${repeatRate}%`;
+
+  // --- 売上サマリー＆内訳 ---
+  renderSalesSummary();
+
+  // --- 最新の注文（直近5件）---
+  const latest = orders
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5);
+  const latestRows = document.getElementById("latestOrdersRows");
+  latestRows.innerHTML = latest.length === 0
+    ? `<tr><td colspan="5" class="admin-table__empty">注文はまだありません。</td></tr>`
+    : latest.map((o) => `
+        <tr>
+          <td data-label="注文ID">#${o.id}</td>
+          <td class="admin-nowrap" data-label="注文日時">${fmtDateTime(o.createdAt)}</td>
+          <td data-label="顧客名">${escapeHtml(o.customer)}</td>
+          <td data-label="合計金額">${yen(o.total)}</td>
+          <td data-label="ステータス">${statusBadge(o.status)}</td>
+        </tr>`).join("");
+
+  // --- 在庫アラート ---
+  const stockList = document.getElementById("stockAlertList");
+  stockList.innerHTML = alerts.length === 0
+    ? `<p class="dash-list__empty">在庫切れ・残りわずかの商品はありません。</p>`
+    : alerts.map((p) => `
+        <div class="dash-stock">
+          <span class="dash-stock__thumb">${
+            p.img
+              ? `<img src="${escapeHtml(p.img)}" alt="${escapeHtml(p.name)}" loading="lazy" />`
+              : `<span class="dash-stock__glyph">${escapeHtml(p.glyph || "🍰")}</span>`
+          }</span>
+          <span class="dash-stock__name">${escapeHtml(p.name)}</span>
+          <span class="dash-stock__count">現在在庫 ${Number(p.stock) || 0}個</span>
+          <span>${stockCell(p.stock)}</span>
+        </div>`).join("");
 }
 
-// 未発送注文の「発送済みにする」
-document.getElementById("unshippedList").addEventListener("click", async (e) => {
-  const btn = e.target.closest("[data-ship]");
+// 小ヘルパー：差分テキストの色分け
+function setDelta(id, text, up) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = "kpi-card__delta " + (up ? "is-up" : "is-down");
+}
+
+// ダッシュボードの「〜へ」リンクで対象タブへ移動
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-goto-tab]");
   if (!btn) return;
-  if (!confirm(`注文 #${btn.dataset.ship} を発送済みにしますか？`)) return;
-  await OrderStore.updateStatus(btn.dataset.ship, "shipped");
-  showToast("発送済みにしました。");
-  renderDashboard();
+  switchTab(btn.dataset.gotoTab);
 });
 
 // ------------------------------------------------------------
@@ -904,6 +1140,114 @@ newsRows.addEventListener("click", async (e) => {
 });
 
 // ------------------------------------------------------------
+//  JOURNAL管理
+// ------------------------------------------------------------
+const journalRows = document.getElementById("journalRows");
+const journalModal = document.getElementById("journalModal");
+const journalForm = document.getElementById("journalForm");
+const JF = {
+  id: document.getElementById("journalFieldId"),
+  date: document.getElementById("journalFieldDate"),
+  cat: document.getElementById("journalFieldCat"),
+  title: document.getElementById("journalFieldTitle"),
+  image: document.getElementById("journalFieldImage"),
+  body: document.getElementById("journalFieldBody"),
+};
+
+async function renderJournal() {
+  const items = await JournalStore.findAll();
+  if (items.length === 0) {
+    journalRows.innerHTML = `<tr><td colspan="5" class="admin-table__empty">記事がありません。「＋ 記事を追加」から登録してください。</td></tr>`;
+    return;
+  }
+  journalRows.innerHTML = items
+    .map(
+      (n) => `
+    <tr>
+      <td class="admin-nowrap" data-label="日付">${escapeHtml(dotDate(n.date))}</td>
+      <td data-label="カテゴリ">${n.cat ? `<span class="admin-badge">${escapeHtml(n.cat)}</span>` : "—"}</td>
+      <td data-label="画像">${n.image ? `<img src="${escapeHtml(n.image)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;display:block;" />` : "—"}</td>
+      <td data-label="タイトル">${escapeHtml(n.title)}</td>
+      <td class="admin-table__ops">
+        <button class="admin-op" data-jedit="${n.id}">編集</button>
+        <button class="admin-op admin-op--danger" data-jdel="${n.id}">削除</button>
+      </td>
+    </tr>`
+    )
+    .join("");
+}
+
+function openJournalModal(item) {
+  document.getElementById("journalModalTitle").textContent = item ? "記事を編集" : "記事を追加";
+  JF.id.value = item?.id ?? "";
+  JF.date.value = item?.date ?? "";
+  JF.cat.value = item?.cat ?? "";
+  JF.title.value = item?.title ?? "";
+  JF.image.value = item?.image ?? "";
+  JF.body.value = item?.body ?? "";
+  journalModal.hidden = false;
+}
+function closeJournalModal() {
+  journalModal.hidden = true;
+  journalForm.reset();
+}
+
+document.getElementById("addJournalBtn").addEventListener("click", () => openJournalModal(null));
+document.getElementById("journalCancelBtn").addEventListener("click", closeJournalModal);
+document.getElementById("journalModalOverlay").addEventListener("click", closeJournalModal);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !journalModal.hidden) closeJournalModal();
+});
+
+journalForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = {
+    date: JF.date.value,
+    cat: JF.cat.value.trim(),
+    title: JF.title.value.trim(),
+    image: JF.image.value.trim(),
+    body: JF.body.value.trim(),
+  };
+  if (!data.date || !data.cat || !data.title) {
+    showToast("日付・カテゴリ・タイトルは必須です。");
+    return;
+  }
+  try {
+    const id = JF.id.value;
+    if (id) {
+      await JournalStore.update(id, data);
+      showToast("記事を更新しました。");
+    } else {
+      await JournalStore.create(data);
+      showToast("記事を追加しました。");
+    }
+    closeJournalModal();
+    renderJournal();
+  } catch (err) {
+    console.error("記事の保存に失敗しました:", err);
+    showToast("保存に失敗しました。");
+  }
+});
+
+journalRows.addEventListener("click", async (e) => {
+  const editBtn = e.target.closest("[data-jedit]");
+  const delBtn = e.target.closest("[data-jdel]");
+
+  if (editBtn) {
+    const item = await JournalStore.findById(editBtn.dataset.jedit);
+    if (item) openJournalModal(item);
+  }
+  if (delBtn) {
+    const item = await JournalStore.findById(delBtn.dataset.jdel);
+    if (item && confirm(`「${item.title}」を削除しますか？`)) {
+      await JournalStore.remove(item.id);
+      showToast("記事を削除しました。");
+      renderJournal();
+    }
+  }
+});
+
+// ------------------------------------------------------------
 //  FAQ管理
 // ------------------------------------------------------------
 const faqRows = document.getElementById("faqRows");
@@ -1247,7 +1591,7 @@ const SITE_TEXT_KEYS = [
 ];
 
 // メインビジュアル画像の編集状態（data URL。空なら既定画像）
-const siteImages = { heroImage: "", statementImage: "", howtoImage1: "", howtoImage2: "", howtoImage3: "" };
+const siteImages = { heroImage: "", statementImage: "", howtoImage1: "", howtoImage2: "", howtoImage3: "", aboutImage: "" };
 
 // 画像アップロード欄を 1 セット分セットアップする汎用ヘルパー
 function setupImageField(key, previewId, fileId, clearId) {
@@ -1292,6 +1636,7 @@ const renderStmtPreview = setupImageField("statementImage", "stmtPreview", "stmt
 const renderHowto1Preview = setupImageField("howtoImage1", "howto1Preview", "howto1File", "howto1Clear");
 const renderHowto2Preview = setupImageField("howtoImage2", "howto2Preview", "howto2File", "howto2Clear");
 const renderHowto3Preview = setupImageField("howtoImage3", "howto3Preview", "howto3File", "howto3Clear");
+const renderAboutPreview = setupImageField("aboutImage", "aboutPreview", "aboutFile", "aboutClear");
 
 async function renderSettings() {
   const settings = await SettingsStore.get();
@@ -1309,20 +1654,26 @@ async function renderSettings() {
   siteImages.howtoImage1 = settings.howtoImage1 || "";
   siteImages.howtoImage2 = settings.howtoImage2 || "";
   siteImages.howtoImage3 = settings.howtoImage3 || "";
+  siteImages.aboutImage = settings.aboutImage || "";
   renderHeroPreview();
   renderStmtPreview();
   renderHowto1Preview();
   renderHowto2Preview();
   renderHowto3Preview();
-  topicsState = await TopicStore.getAll();
-  renderTopicsEditor();
+  renderAboutPreview();
 }
 
 // ------------------------------------------------------------
-//  TOPICS カード編集（設定タブ内）
+//  TOPICS 管理（コンテンツ：独立タブ）
 // ------------------------------------------------------------
 let topicsState = [];
 const topicsEditor = document.getElementById("topicsEditor");
+
+// タブ表示時に読み込んで描画
+async function renderTopics() {
+  topicsState = await TopicStore.getAll();
+  renderTopicsEditor();
+}
 
 function renderTopicsEditor() {
   if (!topicsEditor) return;
@@ -1368,6 +1719,18 @@ if (topicsEditor) {
     renderTopicsEditor();
   });
 
+  document.getElementById("saveTopicsBtn").addEventListener("click", async () => {
+    try {
+      syncTopicsFromDOM();
+      await TopicStore.saveAll(topicsState);
+      showToast("TOPICS を保存しました。");
+    } catch (err) {
+      console.error("TOPICS の保存に失敗しました:", err);
+      const quota = err && (err.name === "QuotaExceededError" || /quota/i.test(err.message || ""));
+      showToast(quota ? "保存容量が上限です。画像サイズを小さくしてください。" : "保存に失敗しました。");
+    }
+  });
+
   topicsEditor.addEventListener("click", (e) => {
     const del = e.target.closest(".topic-edit__del");
     if (!del) return;
@@ -1395,6 +1758,106 @@ if (topicsEditor) {
   });
 }
 
+// ------------------------------------------------------------
+//  ベストセラー管理（コンテンツ：トップの Best Seller を選ぶ）
+// ------------------------------------------------------------
+const bestsellerEditor = document.getElementById("bestsellerEditor");
+let bestsellerProducts = [];
+let bestsellerIds = [];
+
+async function renderBestseller() {
+  bestsellerProducts = await ProductStore.findAll();
+  // 既存の選択（削除済み商品は除外）
+  const valid = new Set(bestsellerProducts.map((p) => p.id));
+  bestsellerIds = (window.BestSellerStore ? BestSellerStore.getIds() : [])
+    .map(Number)
+    .filter((id) => valid.has(id));
+  renderBestsellerEditor();
+}
+
+function renderBestsellerEditor() {
+  if (!bestsellerEditor) return;
+  const MAX = window.BestSellerStore ? BestSellerStore.MAX : 3;
+  const byId = (id) => bestsellerProducts.find((p) => p.id === Number(id));
+
+  // 選択済み（順位順）
+  const selectedHtml = bestsellerIds.length
+    ? bestsellerIds
+        .map((id, i) => {
+          const p = byId(id);
+          if (!p) return "";
+          const media = p.img
+            ? `<img src="${escapeHtml(p.img)}" alt="" />`
+            : `<span class="bestseller-rank__glyph">${escapeHtml(p.glyph || "🍰")}</span>`;
+          return `
+          <div class="bestseller-rank" data-id="${p.id}">
+            <span class="bestseller-rank__no">${i + 1}</span>
+            <span class="bestseller-rank__thumb">${media}</span>
+            <span class="bestseller-rank__name">${escapeHtml(p.name)}</span>
+            <span class="bestseller-rank__ops">
+              <button type="button" class="admin-op" data-bs-up="${p.id}" ${i === 0 ? "disabled" : ""}>↑</button>
+              <button type="button" class="admin-op" data-bs-down="${p.id}" ${i === bestsellerIds.length - 1 ? "disabled" : ""}>↓</button>
+              <button type="button" class="admin-op admin-op--danger" data-bs-del="${p.id}">外す</button>
+            </span>
+          </div>`;
+        })
+        .join("")
+    : `<p class="dash-list__empty">まだ選択されていません。下から商品を追加してください（未選択でも空き枠は自動補充されます）。</p>`;
+
+  // 追加用セレクト（未選択の商品）
+  const remaining = bestsellerProducts.filter((p) => !bestsellerIds.includes(p.id));
+  const canAdd = bestsellerIds.length < MAX && remaining.length > 0;
+  const options = remaining.map((p) => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join("");
+  const addHtml = canAdd
+    ? `<div class="bestseller-add">
+         <select class="dash-select" id="bestsellerAddSelect">${options}</select>
+         <button type="button" class="btn btn--ghost btn--sm" id="bestsellerAddBtn">＋ 追加</button>
+       </div>`
+    : bestsellerIds.length >= MAX
+      ? `<p class="settings-form__note">最大 ${MAX} 件まで選べます。入れ替えるには、いずれかを「外す」してください。</p>`
+      : "";
+
+  bestsellerEditor.innerHTML = `<div class="bestseller-list">${selectedHtml}</div>${addHtml}`;
+}
+
+if (bestsellerEditor) {
+  bestsellerEditor.addEventListener("click", (e) => {
+    const up = e.target.closest("[data-bs-up]");
+    const down = e.target.closest("[data-bs-down]");
+    const del = e.target.closest("[data-bs-del]");
+    const add = e.target.closest("#bestsellerAddBtn");
+
+    if (up) {
+      const i = bestsellerIds.indexOf(Number(up.dataset.bsUp));
+      if (i > 0) { [bestsellerIds[i - 1], bestsellerIds[i]] = [bestsellerIds[i], bestsellerIds[i - 1]]; renderBestsellerEditor(); }
+    } else if (down) {
+      const i = bestsellerIds.indexOf(Number(down.dataset.bsDown));
+      if (i >= 0 && i < bestsellerIds.length - 1) { [bestsellerIds[i + 1], bestsellerIds[i]] = [bestsellerIds[i], bestsellerIds[i + 1]]; renderBestsellerEditor(); }
+    } else if (del) {
+      bestsellerIds = bestsellerIds.filter((id) => id !== Number(del.dataset.bsDel));
+      renderBestsellerEditor();
+    } else if (add) {
+      const sel = document.getElementById("bestsellerAddSelect");
+      const id = Number(sel && sel.value);
+      const MAX = window.BestSellerStore ? BestSellerStore.MAX : 3;
+      if (id && !bestsellerIds.includes(id) && bestsellerIds.length < MAX) {
+        bestsellerIds.push(id);
+        renderBestsellerEditor();
+      }
+    }
+  });
+
+  document.getElementById("saveBestsellerBtn").addEventListener("click", () => {
+    try {
+      BestSellerStore.saveIds(bestsellerIds);
+      showToast("ベストセラーを保存しました。");
+    } catch (err) {
+      console.error("ベストセラーの保存に失敗しました:", err);
+      showToast("保存に失敗しました。");
+    }
+  });
+}
+
 settingsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   try {
@@ -1412,12 +1875,11 @@ settingsForm.addEventListener("submit", async (e) => {
       howtoImage1: siteImages.howtoImage1,
       howtoImage2: siteImages.howtoImage2,
       howtoImage3: siteImages.howtoImage3,
+      aboutImage: siteImages.aboutImage,
       aboutHeading: SF.aboutHeading.value.trim(),
       aboutBody: SF.aboutBody.value,
       ...siteText,
     });
-    syncTopicsFromDOM();
-    await TopicStore.saveAll(topicsState);
     showToast("設定を保存しました。");
   } catch (err) {
     console.error("設定の保存に失敗しました:", err);

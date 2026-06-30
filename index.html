@@ -11,13 +11,19 @@
   <link rel="stylesheet" href="styles.css?v=72" />
 </head>
 <body class="home">
-  <!-- Hero -->
+  <!-- Hero（横スクロール/スワイプで画像が切り替わるカルーセル） -->
   <section class="hero">
-    <img class="hero__img" src="images/basque-cheesecake.png" alt="バスクチーズケーキ" data-site-img="hero" />
+    <div class="hero__track" id="heroTrack">
+      <img class="hero__img" src="images/basque-cheesecake.png" alt="バスクチーズケーキ" data-site-img="hero" />
+      <img class="hero__img" src="images/berry-rare-cheesecake.png" alt="ベリーレアチーズケーキ" loading="lazy" />
+      <img class="hero__img" src="images/noir-tablette.png" alt="NOIR タブレット" loading="lazy" />
+      <img class="hero__img" src="images/souffle-cheesecake.png" alt="スフレチーズケーキ" loading="lazy" />
+    </div>
     <div class="hero__overlay"></div>
     <div class="hero__center">
       <h1 class="hero__brand">SATSUMA NOIR</h1>
     </div>
+    <div class="hero__dots" id="heroDots" aria-label="メインビジュアルの切り替え"></div>
     <div class="hero-concept">
       <p class="hero-concept__label" data-site-text="heroConceptLabel">CONCEPT：WEEKEND_BASQUE</p>
       <p class="hero-concept__head" data-site-text="heroConceptHead">『ひと口食べた瞬間、週末気分に』</p>
@@ -79,7 +85,7 @@
 
   <!-- About（センターバナー：背景写真＋中央に見出しと文章） -->
   <section class="about" id="about">
-    <img class="about__bg" src="images/noir-tablette.png" alt="" loading="lazy" />
+    <img class="about__bg" src="images/noir-tablette.png" alt="" loading="lazy" data-site-img="about" />
     <div class="about__inner">
       <h2 class="about__head" data-site-about="head">SOUL CAKE SHOPへようこそ</h2>
       <div data-site-about="body">
@@ -132,10 +138,49 @@
 
   <script src="store.js?v=5"></script>
 
-  <script src="topics.js?v=2"></script>
+  <script src="topics.js?v=3"></script>
 
   <script src="subscribers.js?v=1"></script>
 
+  <script src="bestseller.js?v=1"></script>
+
   <script src="app.js?v=15"></script>
+
+  <!-- メインビジュアル：横スクロール/スワイプで画像切り替え＋ドット連動 -->
+  <script>
+    (function () {
+      const track = document.getElementById("heroTrack");
+      const dotsWrap = document.getElementById("heroDots");
+      if (!track || !dotsWrap) return;
+      const slides = Array.from(track.querySelectorAll(".hero__img"));
+      if (slides.length <= 1) return;
+
+      slides.forEach((_, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "hero__dot" + (i === 0 ? " is-active" : "");
+        b.setAttribute("aria-label", i + 1 + "枚目を表示");
+        b.addEventListener("click", () => {
+          track.scrollTo({ left: track.clientWidth * i, behavior: "smooth" });
+        });
+        dotsWrap.appendChild(b);
+      });
+      const dots = Array.from(dotsWrap.children);
+
+      let raf = null;
+      track.addEventListener(
+        "scroll",
+        () => {
+          if (raf) return;
+          raf = requestAnimationFrame(() => {
+            raf = null;
+            const idx = Math.round(track.scrollLeft / track.clientWidth);
+            dots.forEach((d, i) => d.classList.toggle("is-active", i === idx));
+          });
+        },
+        { passive: true }
+      );
+    })();
+  </script>
 </body>
 </html>

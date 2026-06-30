@@ -25,6 +25,8 @@
     howtoImage1: "",
     howtoImage2: "",
     howtoImage3: "",
+    // About セクションの背景画像（空なら HTML 既定の画像を使う）
+    aboutImage: "",
     // About セクションの文章（トップページ）。改行で段落が分かれる。
     aboutHeading: "SOUL CAKE SHOPへようこそ",
     aboutBody:

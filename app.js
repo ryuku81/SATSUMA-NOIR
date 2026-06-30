@@ -131,6 +131,7 @@ function applySiteImages() {
         howto1: settings.howtoImage1,
         howto2: settings.howtoImage2,
         howto3: settings.howtoImage3,
+        about: settings.aboutImage,
       };
       Object.entries(map).forEach(([key, src]) => {
         if (!src) return;
@@ -297,8 +298,10 @@ function renderProducts(filter = "all") {
 // TOP3 を返す。RANKING_IDS の商品が削除されていたら、
 // ランキング外の商品で繰り上げ補充して常に3枠埋める。
 function getRankingProducts(count = 3) {
-  const ranked = RANKING_IDS
-    .map((id) => PRODUCTS.find((x) => x.id === id))
+  // 管理画面で選んだ並び（BestSellerStore）を優先。無ければ既定の RANKING_IDS。
+  const ids = (window.BestSellerStore ? window.BestSellerStore.getIds() : RANKING_IDS) || RANKING_IDS;
+  const ranked = ids
+    .map((id) => PRODUCTS.find((x) => x.id === Number(id)))
     .filter(Boolean);
   const usedIds = new Set(ranked.map((p) => p.id));
   const fillers = PRODUCTS.filter((p) => !usedIds.has(p.id));
@@ -396,7 +399,7 @@ function renderProductDetail() {
   root.innerHTML = `
     <nav class="pdp__crumbs">
       <a href="index.html">HOME</a><span>/</span>
-      <a href="item.html">COLLECTION</a><span>/</span>
+      <a href="item.html">商品一覧</a><span>/</span>
       <span class="pdp__crumbs-current">${p.name}</span>
     </nav>
 
