@@ -70,8 +70,8 @@ function buildChrome() {
       <a href="index.html" class="brand">SATSUMA NOIR</a>
       <div class="header__actions">
         <button class="icon-btn theme-toggle" id="themeToggle" type="button" aria-label="ダーク／ライト切替"><span class="theme-toggle__sun">${ICON_SUN}</span><span class="theme-toggle__moon">${ICON_MOON}</span></button>
-        <a class="icon-btn wish-btn" href="wishlist.html" aria-label="気になるリスト" hidden>${ICON_HEART_HDR}</a>
-        <a class="icon-btn cart-btn" href="cart.html" aria-label="カート">${ICON_CART}<span class="cart-count" id="cartCount">0</span></a>
+        <a class="icon-btn wish-btn" href="wishlist.html" aria-label="気になるリスト">${ICON_HEART_HDR}<span class="icon-count wish-count" id="wishCount">0</span></a>
+        <a class="icon-btn cart-btn" href="cart.html" aria-label="カート">${ICON_CART}<span class="icon-count cart-count" id="cartCount">0</span></a>
         <a class="login-btn" href="login.html">LOGIN</a>
       </div>
     </div>`;
@@ -547,11 +547,10 @@ function renderProductDetail() {
   });
 
   // ---- カートに入れる（数量ぶん） ----
-  document.getElementById("pdpAdd").addEventListener("click", () => addToCart(p.id, qty));
+  document.getElementById("pdpAdd").addEventListener("click", () => addToCart(p.id, qty, { redirect: "cart.html" }));
 
   // ---- 気になるリスト ----
-  //  未ログイン: リストに保存しつつ、ログイン誘導モーダルを表示。
-  //  ログイン済み: 追加／削除をトグルし、ボタン表示を更新。
+  //  ログイン状態に関係なく localStorage のリストへ追加／削除する。
   const wishBtn = document.getElementById("pdpWish");
   const syncWishBtn = () => {
     const on = isWished(p.id);
@@ -559,61 +558,16 @@ function renderProductDetail() {
     wishBtn.querySelector("span").textContent = on ? "気になるリストに追加済み" : "気になるリストに追加";
   };
   wishBtn.addEventListener("click", () => {
-    if (!UserAuth.isLoggedIn()) {
-      addToWishlist(p.id);
-      openWishModal(p);
-      return;
-    }
     if (isWished(p.id)) {
       removeFromWishlist(p.id);
       showToast(`「${p.name}」を気になるリストから削除しました`);
     } else {
       addToWishlist(p.id);
       showToast(`「${p.name}」を気になるリストに追加しました`);
+      window.location.href = "wishlist.html";
     }
     syncWishBtn();
   });
-}
-
-// 未ログインで「気になるリストに追加」したときのモーダル。
-// 追加完了を伝えつつ、ログイン／会員登録へ誘導する。
-function openWishModal(p) {
-  document.getElementById("wishModal")?.remove();
-
-  // ログイン後に元のページ（この商品ページ）へ戻すための redirect 値
-  const back = encodeURIComponent(currentPage() + location.search);
-  const media = p.img
-    ? `<img src="${p.img}" alt="${p.name}" />`
-    : `<span class="wish-modal__glyph">${p.glyph || "🍰"}</span>`;
-
-  const modal = document.createElement("div");
-  modal.className = "wish-modal";
-  modal.id = "wishModal";
-  modal.innerHTML = `
-    <div class="wish-modal__overlay" data-wish-close></div>
-    <div class="wish-modal__panel" role="dialog" aria-modal="true" aria-labelledby="wishModalTitle">
-      <button class="wish-modal__close" data-wish-close aria-label="閉じる">${ICON_CLOSE}</button>
-      <h2 class="wish-modal__title" id="wishModalTitle">気になるリストに追加しました</h2>
-      <div class="wish-modal__media">${media}</div>
-      <p class="wish-modal__text">「${p.name}」を気になるリストに追加しました</p>
-      <p class="wish-modal__note">※気になるリストを確認するには、ログインが必要です。</p>
-      <a class="wish-modal__btn wish-modal__btn--primary" href="login.html?redirect=${back}">ログイン</a>
-      <p class="wish-modal__sub">会員登録がまだのお客様はこちら</p>
-      <a class="wish-modal__btn wish-modal__btn--ghost" href="login.html?tab=signup&redirect=${back}">会員登録</a>
-    </div>`;
-  document.body.appendChild(modal);
-  document.body.style.overflow = "hidden";
-
-  const close = () => {
-    modal.remove();
-    document.body.style.overflow = "";
-    document.removeEventListener("keydown", onKey);
-  };
-  const onKey = (e) => {
-    if (e.key === "Escape") close();
-  };
-  modal.querySelectorAll("[data-wish-close]").forEach((el) => el.addEventListener("click", close));
-  document.addEventListener("keydown", onKey);
 }
 
 // ============================================================
@@ -637,9 +591,9 @@ function applyAuthButtons() {
     if (loggedIn) el.removeAttribute("href");
     else el.setAttribute("href", "login.html");
   });
-  // 気になるリストボタンはログイン中だけ表示（カートボタンの左横）
+  // 気になるリストは未ログインでも確認できるため常に表示する。
   document.querySelectorAll(".wish-btn").forEach((el) => {
-    el.hidden = !loggedIn;
+    el.hidden = false;
   });
 }
 
@@ -685,24 +639,20 @@ function addToWishlist(id) {
   id = Number(id);
   if (!wishlist.includes(id)) wishlist.push(id);
   saveWishlist();
+  updateWishlistBadge();
 }
 function removeFromWishlist(id) {
   id = Number(id);
   wishlist = wishlist.filter((x) => x !== id);
   saveWishlist();
+  updateWishlistBadge();
   renderWishlistPage();
 }
 
-// 気になるリストページ（wishlist.html）。カートと同じくログイン必須。
+// 気になるリストページ（wishlist.html）
 function renderWishlistPage() {
   const root = document.getElementById("wishlistPage");
   if (!root) return;
-
-  // 未ログインで直接来た場合はログイン画面へ
-  if (!UserAuth.isLoggedIn()) {
-    window.location.href = "login.html?redirect=wishlist.html";
-    return;
-  }
 
   // 既に削除された商品IDは除外して表示
   const items = wishlist
@@ -721,25 +671,30 @@ function renderWishlistPage() {
       const media = p.img ? `<img src="${p.img}" alt="${p.name}" />` : `<span>${p.glyph}</span>`;
       const soldOut = (Number(p.stock) || 0) <= 0;
       return `
-      <div class="cart-row wish-row">
-        <a class="cart-row__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
-        <div class="cart-row__info">
-          ${p.catLabel ? `<span class="wish-row__cat">${p.catLabel}</span>` : ""}
-          <h3 class="cart-row__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-          <span class="cart-row__price">${yen(p.price)}</span>
+      <article class="wish-card">
+        <a class="wish-card__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
+        <div class="wish-card__body">
+          <div class="wish-card__head">
+            <h3 class="wish-card__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+            ${p.catLabel ? `<span class="wish-card__tag">${p.catLabel}</span>` : ""}
+          </div>
+          <div class="wish-card__foot">
+            <span class="wish-card__price">${yen(p.price)}</span>
+          </div>
+          <div class="wish-row__actions">
+            <button class="btn btn--primary wish-row__cart" data-add="${p.id}" ${soldOut ? "disabled" : ""}>
+              ${soldOut ? "在庫切れ" : "カートに入れる"}
+            </button>
+            <button class="cart-row__remove" data-wishremove="${p.id}" aria-label="気になるリストから削除">削除</button>
+          </div>
         </div>
-        <div class="wish-row__actions">
-          <button class="btn btn--primary wish-row__cart" data-add="${p.id}" ${soldOut ? "disabled" : ""}>
-            ${soldOut ? "在庫切れ" : "カートに入れる"}
-          </button>
-          <button class="cart-row__remove" data-wishremove="${p.id}" aria-label="気になるリストから削除">削除</button>
-        </div>
-      </div>`;
+      </article>`;
     })
     .join("");
 
   root.innerHTML = `
-    <div class="cart-page__list">${rows}</div>
+    <div class="wishlist-total"><span>合計</span><strong>${items.length}</strong></div>
+    <div class="wishlist-list">${rows}</div>
     <div class="section-more"><a href="item.html" class="btn btn--ghost">買い物を続ける</a></div>`;
 }
 
@@ -761,7 +716,15 @@ function updateCartBadge() {
   countEl.classList.toggle("is-visible", count > 0);
 }
 
-function addToCart(id, amount = 1) {
+function updateWishlistBadge() {
+  const countEl = document.getElementById("wishCount");
+  if (!countEl) return;
+  const count = wishlist.length;
+  countEl.textContent = count;
+  countEl.classList.toggle("is-visible", count > 0);
+}
+
+function addToCart(id, amount = 1, options = {}) {
   const qty = Math.max(1, Number(amount) || 1);
   const line = cart.find((l) => l.id === id);
   if (line) line.qty += qty;
@@ -771,6 +734,9 @@ function addToCart(id, amount = 1) {
   renderCartPage();
   const p = PRODUCTS.find((x) => x.id === id);
   showToast(`「${p ? p.name : "商品"}」をカートに追加しました`);
+  if (options.redirect) {
+    window.location.href = options.redirect;
+  }
 }
 function changeQty(id, delta) {
   const line = cart.find((l) => l.id === id);
@@ -788,17 +754,18 @@ function removeFromCart(id) {
   updateCartBadge();
   renderCartPage();
 }
+function clearCart() {
+  cart = [];
+  saveCart();
+  updateCartBadge();
+  renderCartPage();
+  showToast("カゴの中身を空にしました");
+}
 
 // Cart page (cart.html)
 function renderCartPage() {
   const root = document.getElementById("cartPage");
   if (!root) return;
-
-  // 未ログインで直接 cart.html に来た場合もログイン画面へ
-  if (!UserAuth.isLoggedIn()) {
-    window.location.href = "login.html?redirect=cart.html";
-    return;
-  }
 
   if (cart.length === 0) {
     root.innerHTML = `
@@ -816,9 +783,9 @@ function renderCartPage() {
       const media = p.img ? `<img src="${p.img}" alt="${p.name}" />` : `<span>${p.glyph}</span>`;
       return `
       <div class="cart-row">
-        <div class="cart-row__media">${media}</div>
+        <a class="cart-row__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
         <div class="cart-row__info">
-          <h3 class="cart-row__name">${p.name}</h3>
+          <h3 class="cart-row__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
           <span class="cart-row__price">${yen(p.price)}</span>
         </div>
         <div class="cart-row__qty">
@@ -834,8 +801,11 @@ function renderCartPage() {
 
   root.innerHTML = `
     <div class="cart-page__list">${items}</div>
+    <div class="cart-page__summary-row">
+      <button class="cart-page__clear" data-clear-cart type="button">カゴの中身を空にする</button>
+      <div class="cart-page__total"><span>合計金額</span><span>${yen(total)}</span></div>
+    </div>
     <div class="cart-page__summary">
-      <div class="cart-page__total"><span>合計</span><span>${yen(total)}</span></div>
       <a href="checkout.html" class="btn btn--primary btn--full">レジに進む</a>
       <a href="item.html" class="cart-page__continue">買い物を続ける</a>
     </div>`;
@@ -1100,11 +1070,13 @@ function wire() {
   // Global click delegation (add / qty / remove / tab switch)
   document.addEventListener("click", (e) => {
     const add = e.target.closest("[data-add]");
-    if (add) return addToCart(Number(add.dataset.add));
+    if (add) return addToCart(Number(add.dataset.add), 1, { redirect: "cart.html" });
     const qty = e.target.closest("[data-qty]");
     if (qty) return changeQty(Number(qty.dataset.qty), Number(qty.dataset.delta));
     const rm = e.target.closest("[data-remove]");
     if (rm) return removeFromCart(Number(rm.dataset.remove));
+    const clear = e.target.closest("[data-clear-cart]");
+    if (clear) return clearCart();
     const wishRm = e.target.closest("[data-wishremove]");
     if (wishRm) return removeFromWishlist(Number(wishRm.dataset.wishremove));
     const goto = e.target.closest("[data-goto]");
@@ -1128,16 +1100,6 @@ function wire() {
       renderProducts(btn.dataset.filter);
     });
   }
-
-  // カートボタン: 未ログインならログイン画面へ
-  document.addEventListener("click", (e) => {
-    const cartBtn = e.target.closest(".cart-btn");
-    if (cartBtn && !UserAuth.isLoggedIn()) {
-      e.preventDefault();
-      window.location.href = "login.html?redirect=cart.html";
-    }
-  });
-
 
   // LOGIN/LOGOUT ボタン: ログイン中はクリックでログアウト
   document.addEventListener("click", (e) => {
@@ -1376,6 +1338,7 @@ function wire() {
 buildChrome();
 wire();
 updateCartBadge();
+updateWishlistBadge();
 applySiteImages();
 applyAboutText();
 applySiteText();

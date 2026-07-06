@@ -44,7 +44,7 @@
       "濃厚なのに、すっと溶ける。\nひと口ごとに広がる、深い余韻。\n素材と静かに向き合い、手仕事で仕上げた一皿を。\nあなたの週末に、ささやかな贅沢を。",
 
     // HOW TO EAT セクション。見出し・本文は改行で行が分かれる。
-    howtoEyebrow: "HOW TO EAT",
+    howtoEyebrow: "お召し上がり方",
     howtoTitle: "熟成冷凍チーズケーキの\nお召し上がり方",
     howtoRecommendLabel: "STAFF RECOMMEND",
     howtoRecommendText:

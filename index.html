@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=72" />
+  <link rel="stylesheet" href="styles.css?v=170" />
 </head>
 <body class="home">
   <!-- Hero（横スクロール/スワイプで画像が切り替わるカルーセル） -->
@@ -25,9 +25,9 @@
     </div>
     <div class="hero__dots" id="heroDots" aria-label="メインビジュアルの切り替え"></div>
     <div class="hero-concept">
-      <p class="hero-concept__label" data-site-text="heroConceptLabel">CONCEPT：WEEKEND_BASQUE</p>
-      <p class="hero-concept__head" data-site-text="heroConceptHead">『ひと口食べた瞬間、週末気分に』</p>
-      <p class="hero-concept__body" data-site-text="heroConceptBody">その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。</p>
+      <p class="hero-concept__label">CONCEPT：WEEKEND_BASQUE</p>
+      <p class="hero-concept__head">『ひと口食べた瞬間、週末気分に』</p>
+      <p class="hero-concept__body">その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。</p>
     </div>
     <div class="hero__scroll">SCROLL</div>
   </section>
@@ -35,7 +35,7 @@
   <!-- Ranking -->
   <section class="ranking" id="ranking">
     <div class="section-head">
-      <h2 class="section-head__title">Best Seller</h2>
+      <h2 class="section-head__title">人気商品</h2>
     </div>
     <div class="ranking__row" id="rankingRow"></div>
     <div class="section-more"><a href="item.html" class="btn btn--ghost">すべての商品を見る</a></div>
@@ -53,7 +53,7 @@
   <!-- How to eat -->
   <section class="howto" id="howto">
     <div class="howto__head">
-      <p class="howto__eyebrow" data-site-text="howtoEyebrow">HOW TO EAT</p>
+      <p class="howto__eyebrow">熟成冷凍チーズケーキの<br />お召し上がり方</p>
       <div class="howto__strip">
         <img class="howto__strip-img" src="images/basque-cheesecake.png" alt="バスクチーズケーキ" loading="lazy" data-site-img="howto1" />
         <img class="howto__strip-img" src="images/souffle-cheesecake.png" alt="" loading="lazy" data-site-img="howto2" />
@@ -62,9 +62,6 @@
     </div>
 
     <div class="howto__split">
-      <div class="howto__col">
-        <h2 class="howto__title" data-site-text="howtoTitle">熟成冷凍チーズケーキの<br />お召し上がり方</h2>
-      </div>
       <div class="howto__col howto__col--divider">
         <p class="howto__recommend-text" data-site-text="howtoRecommendText">スタッフおすすめは、室温で1時間解凍したら小分けにカットし、食べる分だけ解凍し、残りは冷凍庫へ♪<br />毎日のご褒美に少しずつお楽しみ頂けます。</p>
       </div>
@@ -98,7 +95,7 @@
   <!-- Store -->
   <section class="store" id="store">
     <div class="section-head">
-      <h2 class="section-head__title">STORE</h2>
+      <h2 class="section-head__title">店舗情報</h2>
     </div>
     <div class="store__list">
       <a class="store-card" href="store-terukuni.html">
@@ -134,7 +131,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=1"></script>
 
-  <script src="settings.js?v=4"></script>
+  <script src="settings.js?v=6"></script>
 
   <script src="store.js?v=5"></script>
 
@@ -144,16 +141,34 @@
 
   <script src="bestseller.js?v=1"></script>
 
-  <script src="app.js?v=15"></script>
+  <script src="app.js?v=32"></script>
 
   <!-- メインビジュアル：横スクロール/スワイプで画像切り替え＋ドット連動 -->
   <script>
     (function () {
       const track = document.getElementById("heroTrack");
       const dotsWrap = document.getElementById("heroDots");
+      const hero = document.querySelector(".hero");
+      const heroCenter = document.querySelector(".hero__center");
+      const heroConcept = document.querySelector(".hero-concept");
+      const heroConceptLabel = document.querySelector(".hero-concept__label");
+      const heroConceptHead = document.querySelector(".hero-concept__head");
+      const heroConceptBody = document.querySelector(".hero-concept__body");
       if (!track || !dotsWrap) return;
       const slides = Array.from(track.querySelectorAll(".hero__img"));
       if (slides.length <= 1) return;
+      const heroHeadTexts = [
+        "『ひと口食べた瞬間、週末気分に』",
+        "果実がほどける、静かな余韻。",
+        "深いカカオを、少しずつ。",
+        "軽やかに続く、やさしいコク。"
+      ];
+      const heroTexts = [
+        "その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。",
+        "果実の瑞々しさとレアチーズのなめらかさを、軽やかな酸味でひとつに。甘さの奥に、夜の余白を感じる一品です。",
+        "カカオの深みをまっすぐに味わえる、静かな存在感のタブレット。少しずつ割って楽しむ時間まで、上質に整えました。",
+        "ふわりとほどける口どけに、チーズのやさしいコクを重ねて。日常の終わりに小さな余韻を残す、軽やかなチーズケーキです。"
+      ];
 
       slides.forEach((_, i) => {
         const b = document.createElement("button");
@@ -166,6 +181,30 @@
         dotsWrap.appendChild(b);
       });
       const dots = Array.from(dotsWrap.children);
+      const updateHeroState = () => {
+        const idx = Math.round(track.scrollLeft / track.clientWidth);
+        dots.forEach((d, i) => d.classList.toggle("is-active", i === idx));
+        if (hero) {
+          hero.classList.toggle("is-alt-slide", idx !== 0);
+        }
+        if (heroCenter) {
+          heroCenter.classList.toggle("is-hidden", idx !== 0);
+        }
+        if (heroConcept) {
+          heroConcept.classList.remove("is-hidden");
+          heroConcept.classList.toggle("is-statement-copy", idx !== 0);
+        }
+        if (heroConceptLabel) {
+          heroConceptLabel.hidden = idx !== 0;
+        }
+        if (heroConceptHead) {
+          heroConceptHead.hidden = false;
+          heroConceptHead.textContent = heroHeadTexts[idx] || heroHeadTexts[0];
+        }
+        if (heroConceptBody) {
+          heroConceptBody.textContent = heroTexts[idx] || heroTexts[0];
+        }
+      };
 
       let raf = null;
       track.addEventListener(
@@ -174,12 +213,13 @@
           if (raf) return;
           raf = requestAnimationFrame(() => {
             raf = null;
-            const idx = Math.round(track.scrollLeft / track.clientWidth);
-            dots.forEach((d, i) => d.classList.toggle("is-active", i === idx));
+            updateHeroState();
           });
         },
         { passive: true }
       );
+      window.addEventListener("resize", updateHeroState, { passive: true });
+      updateHeroState();
     })();
   </script>
 </body>
