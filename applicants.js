@@ -55,10 +55,11 @@
     email: a.email,
     phone: a.phone,
     position: a.position,
+    message: a.message,
     status: a.status,
     createdAt: a.created_at,
   });
-  const COLS = "id, name, kana, email, phone, position, status, created_at";
+  const COLS = "id, name, kana, email, phone, position, message, status, created_at";
 
   const ApplicantStore = {
     // 新しい順（応募日時の降順）
@@ -95,6 +96,7 @@
           email: data.email,
           phone: data.phone || "",
           position: data.position || "",
+          message: data.message || "",
         });
         if (error) {
           console.error("[ApplicantStore] 応募の保存に失敗しました:", error);

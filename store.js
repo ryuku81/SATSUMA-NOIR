@@ -77,7 +77,7 @@
     if (!global.sb) return null;
     const { data, error } = await global.sb
       .from("products")
-      .select("id, name, cat, price, stock, tag, img, glyph, description")
+      .select("id, name, category_value, price, stock, tag, image, glyph, description, feature_head, feature_body, feature_image, spec_size, spec_expiry, spec_ingredients, notes, gallery")
       .order("id", { ascending: true });
     if (error) {
       console.error("[ProductStore] Supabase の取得に失敗しました:", error);
@@ -86,15 +86,62 @@
     return (data || []).map((p) => ({
       id: p.id,
       name: p.name,
-      cat: p.cat,
+      cat: p.category_value,
       price: p.price,
       stock: p.stock,
       tag: p.tag,
-      img: p.img,
+      img: p.image,
       glyph: p.glyph,
       desc: p.description,
+      featureHead: p.feature_head,
+      featureBody: p.feature_body,
+      featureImage: p.feature_image,
+      specSize: p.spec_size,
+      specExpiry: p.spec_expiry,
+      specIngredients: p.spec_ingredients,
+      notes: p.notes,
+      gallery: Array.isArray(p.gallery) ? p.gallery : [],
     }));
   }
+
+  const toRow = (data) => ({
+    name: data.name,
+    category_value: data.cat,
+    price: Number(data.price) || 0,
+    stock: Number(data.stock) || 0,
+    tag: data.tag || "",
+    image: data.img || "",
+    glyph: data.glyph || "",
+    description: data.desc || "",
+    feature_head: data.featureHead || "",
+    feature_body: data.featureBody || "",
+    feature_image: data.featureImage || "",
+    spec_size: data.specSize || "",
+    spec_expiry: data.specExpiry || "",
+    spec_ingredients: data.specIngredients || "",
+    notes: data.notes || "",
+    gallery: Array.isArray(data.gallery) ? data.gallery : [],
+  });
+
+  const fromRow = (p) => withLabel({
+    id: p.id,
+    name: p.name,
+    cat: p.category_value,
+    price: p.price,
+    stock: p.stock,
+    tag: p.tag,
+    img: p.image,
+    glyph: p.glyph,
+    desc: p.description,
+    featureHead: p.feature_head,
+    featureBody: p.feature_body,
+    featureImage: p.feature_image,
+    specSize: p.spec_size,
+    specExpiry: p.spec_expiry,
+    specIngredients: p.spec_ingredients,
+    notes: p.notes,
+    gallery: Array.isArray(p.gallery) ? p.gallery : [],
+  });
 
   // ---- 公開 API（async = 将来のバックエンドと同じ形）----
   const ProductStore = {
@@ -113,7 +160,8 @@
 
     // 在庫切れ・残りわずかの商品を返す（ダッシュボードの在庫アラート用）
     async findStockAlerts() {
-      return read()
+      const remote = await fetchFromSupabase();
+      return (remote !== null ? remote : read())
         .map(withLabel)
         .filter((p) => (Number(p.stock) || 0) <= LOW_STOCK_THRESHOLD)
         .map((p) => ({
@@ -125,11 +173,29 @@
     },
 
     async findById(id) {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("products")
+          .select("id, name, category_value, price, stock, tag, image, glyph, description, feature_head, feature_body, feature_image, spec_size, spec_expiry, spec_ingredients, notes, gallery")
+          .eq("id", Number(id))
+          .maybeSingle();
+        if (!error) return data ? fromRow(data) : null;
+        console.error("[ProductStore] Supabase の取得に失敗しました:", error);
+      }
       const found = read().find((p) => p.id === Number(id));
       return found ? withLabel(found) : null;
     },
 
     async create(data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("products")
+          .insert(toRow(data))
+          .select("id, name, category_value, price, stock, tag, image, glyph, description, feature_head, feature_body, feature_image, spec_size, spec_expiry, spec_ingredients, notes, gallery")
+          .single();
+        if (error) throw error;
+        return fromRow(row);
+      }
       const list = read();
       const product = { ...data, id: nextId(list) };
       write([...list, product]);
@@ -137,6 +203,16 @@
     },
 
     async update(id, data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("products")
+          .update(toRow(data))
+          .eq("id", Number(id))
+          .select("id, name, category_value, price, stock, tag, image, glyph, description, feature_head, feature_body, feature_image, spec_size, spec_expiry, spec_ingredients, notes, gallery")
+          .single();
+        if (error) throw error;
+        return fromRow(row);
+      }
       const list = read();
       const target = Number(id);
       const next = list.map((p) => (p.id === target ? { ...p, ...data, id: target } : p));
@@ -146,6 +222,11 @@
     },
 
     async remove(id) {
+      if (global.sb) {
+        const { error } = await global.sb.from("products").delete().eq("id", Number(id));
+        if (error) throw error;
+        return;
+      }
       const target = Number(id);
       write(read().filter((p) => p.id !== target));
     },

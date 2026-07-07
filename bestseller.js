@@ -26,6 +26,16 @@
   function saveIds(ids) {
     const clean = (Array.isArray(ids) ? ids : []).map(Number).filter((n) => !Number.isNaN(n)).slice(0, MAX);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(clean));
+    if (global.sb) {
+      (async () => {
+        const { error: deleteError } = await global.sb.from("bestsellers").delete().neq("rank", 0);
+        if (deleteError) throw deleteError;
+        for (let i = 0; i < clean.length; i += 1) {
+          const { error } = await global.sb.from("bestsellers").insert({ product_id: clean[i], rank: i + 1 });
+          if (error) throw error;
+        }
+      })().catch((err) => console.error("[BestSellerStore] Supabase への保存に失敗しました:", err));
+    }
     return clean;
   }
 
@@ -34,5 +44,20 @@
     return [...DEFAULT_IDS];
   }
 
-  global.BestSellerStore = { DEFAULT_IDS, MAX, getIds, saveIds, reset };
+  async function prime() {
+    if (!global.sb) return;
+    const { data, error } = await global.sb
+      .from("bestsellers")
+      .select("product_id, rank")
+      .order("rank", { ascending: true });
+    if (error) {
+      console.error("[BestSellerStore] Supabase の取得に失敗しました:", error);
+      return;
+    }
+    const ids = (data || []).map((r) => Number(r.product_id)).filter(Boolean);
+    if (ids.length) localStorage.setItem(STORAGE_KEY, JSON.stringify(ids.slice(0, MAX)));
+  }
+
+  global.BestSellerStore = { DEFAULT_IDS, MAX, getIds, saveIds, reset, prime };
+  prime();
 })(window);

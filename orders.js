@@ -7,6 +7,7 @@
 //  注文オブジェクトの形:
 //    {
 //      id: number,
+//      authUserId: string | null,
 //      customer: string,
 //      items: [{ id, name, price, qty }],
 //      total: number,
@@ -74,20 +75,36 @@
   //  テーブル列 created_at をアプリ内部の createdAt に変換する。
   const mapRow = (o) => ({
     id: o.id,
+    authUserId: o.auth_user_id || null,
     customer: o.customer,
+    email: o.email,
     address: o.address,
+    note: o.note,
     items: Array.isArray(o.items) ? o.items : [],
     total: o.total,
     status: o.status,
+    payment: o.payment,
+    paymentStatus: o.payment_status || "",
+    paymentIntentId: o.payment_intent_id || "",
     createdAt: o.created_at,
   });
 
+  const ORDER_COLUMNS = "id, auth_user_id, customer, email, address, note, items, total, status, payment, payment_status, payment_intent_id, created_at";
+  const LEGACY_ORDER_COLUMNS = "id, customer, email, address, note, items, total, status, payment, created_at";
+
   async function fetchAllFromSupabase() {
     if (!global.sb) return null;
-    const { data, error } = await global.sb
+    let result = await global.sb
       .from("orders")
-      .select("id, customer, address, items, total, status, created_at")
+      .select(ORDER_COLUMNS)
       .order("created_at", { ascending: false });
+    if (result.error && result.error.code === "42703") {
+      result = await global.sb
+        .from("orders")
+        .select(LEGACY_ORDER_COLUMNS)
+        .order("created_at", { ascending: false });
+    }
+    const { data, error } = result;
     if (error) {
       console.error("[OrderStore] Supabase の取得に失敗しました:", error);
       return null;
@@ -111,11 +128,19 @@
 
     async findById(id) {
       if (global.sb) {
-        const { data, error } = await global.sb
+        let result = await global.sb
           .from("orders")
-          .select("id, customer, address, items, total, status, created_at")
+          .select(ORDER_COLUMNS)
           .eq("id", Number(id))
           .maybeSingle();
+        if (result.error && result.error.code === "42703") {
+          result = await global.sb
+            .from("orders")
+            .select(LEGACY_ORDER_COLUMNS)
+            .eq("id", Number(id))
+            .maybeSingle();
+        }
+        const { data, error } = result;
         if (!error) return data ? mapRow(data) : null;
         console.error("[OrderStore] Supabase の取得に失敗しました:", error);
         // エラー時のみ localStorage にフォールバック
@@ -125,25 +150,59 @@
 
     async create(data) {
       if (global.sb) {
-        // anon は orders を select できないため、SECURITY DEFINER の RPC で
-        // 新規IDのみ安全に受け取る（customer / items / total のみ保存）。
-        const { data: newId, error } = await global.sb.rpc("create_order", {
+        let result = await global.sb.rpc("create_order", {
           p_customer: data.customer,
+          p_email: data.email || "",
           p_address: data.address || "",
+          p_note: data.note || "",
           p_items: data.items || [],
           p_total: data.total,
+          p_payment: data.payment || "",
+          p_auth_user_id: data.authUserId || null,
+          p_payment_status: data.paymentStatus || "pending",
+          p_payment_intent_id: data.paymentIntentId || "",
         });
+        if (result.error && (result.error.code === "PGRST202" || result.error.code === "42883")) {
+          result = await global.sb.rpc("create_order", {
+            p_customer: data.customer,
+            p_email: data.email || "",
+            p_address: data.address || "",
+            p_note: data.note || "",
+            p_items: data.items || [],
+            p_total: data.total,
+            p_payment: data.payment || "",
+            p_auth_user_id: data.authUserId || null,
+          });
+        }
+        if (result.error && (result.error.code === "PGRST202" || result.error.code === "42883")) {
+          result = await global.sb.rpc("create_order", {
+            p_customer: data.customer,
+            p_email: data.email || "",
+            p_address: data.address || "",
+            p_note: data.note || "",
+            p_items: data.items || [],
+            p_total: data.total,
+            p_payment: data.payment || "",
+          });
+        }
+        const { data: newId, error } = result;
         if (error) {
           console.error("[OrderStore] 注文の保存に失敗しました:", error);
           throw error;
         }
         return {
           id: newId,
+          authUserId: data.authUserId || null,
           customer: data.customer,
+          email: data.email || "",
           address: data.address || "",
+          note: data.note || "",
           items: data.items || [],
           total: data.total,
           status: "unshipped",
+          payment: data.payment || "",
+          paymentStatus: data.paymentStatus || "pending",
+          paymentIntentId: data.paymentIntentId || "",
           createdAt: new Date().toISOString(),
         };
       }

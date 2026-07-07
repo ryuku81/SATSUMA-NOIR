@@ -64,7 +64,7 @@
   async function fetchFromSupabase() {
     if (!global.sb) return null;
     const { data, error } = await global.sb
-      .from("tokushoho")
+      .from("legal_notice")
       .select("lead, rows, date")
       .limit(1)
       .maybeSingle();
@@ -83,6 +83,10 @@
 
     async update(data) {
       const next = { ...read(), ...data };
+      if (global.sb) {
+        const { error } = await global.sb.from("legal_notice").update(next).eq("id", 1);
+        if (error) throw error;
+      }
       write(next);
       return next;
     },

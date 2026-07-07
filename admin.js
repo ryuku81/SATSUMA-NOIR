@@ -6,8 +6,8 @@
 //  本物の認証に差し替えるだけで動く。
 // ============================================================
 
-// ---- 管理者認証（Supabase Auth ＋ role=admin で認可）----
-//  auth.js（window.Auth）を利用。ログイン後に profiles.role が admin か検証し、
+// ---- 管理者認証（バックエンド認証 + role=admin で認可）----
+//  auth.js（window.Auth）を利用。ログイン後に role が admin か検証し、
 //  admin でなければサインアウトして拒否する。
 const AdminAuth = {
   // ログイン済みかつ管理者か
@@ -97,7 +97,7 @@ function showPanel() {
 // ------------------------------------------------------------
 //  タブ切り替え
 // ------------------------------------------------------------
-const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", members: "会員管理", products: "商品管理", bestseller: "ベストセラー管理", store: "ストア管理", inquiries: "お問い合わせ", news: "NEWS管理", journal: "JOURNAL管理", faq: "FAQ管理", recruit: "採用情報管理", applicants: "応募者管理", topics: "TOPICS管理", settings: "設定" };
+const TAB_TITLES = { dashboard: "ダッシュボード", orders: "注文管理", customers: "顧客管理", members: "会員管理", products: "商品管理", bestseller: "人気商品管理", store: "店舗情報管理", inquiries: "お問い合わせ", news: "NEWS管理", journal: "JOURNAL管理", faq: "FAQ管理", recruit: "採用情報管理", applicants: "応募者管理", topics: "TOPICS管理", settings: "設定" };
 function switchTab(name) {
   tabs.forEach((t) => t.classList.toggle("is-active", t.dataset.tab === name));
   views.forEach((v) => (v.hidden = v.dataset.view !== name));
@@ -719,22 +719,18 @@ customerForm.addEventListener("submit", async (e) => {
 });
 
 // ------------------------------------------------------------
-//  会員管理（Supabase Auth ユーザーの role 変更）
-//  profiles を一覧し、admin/member を切り替える。
-//  RLS の「Profiles admin all」により管理者のみ更新可。
+//  会員管理（バックエンド認証ユーザーの role 変更）
+//  新しいバックエンド接続後にユーザー一覧を取得し、admin/member を切り替える。
 // ------------------------------------------------------------
 const memberRows = document.getElementById("memberRows");
 
 async function renderMembers() {
   if (!memberRows) return;
-  if (!window.sb) {
-    memberRows.innerHTML = `<tr><td colspan="5" class="admin-table__empty">Supabase に接続していません。</td></tr>`;
+  if (!window.Auth) {
+    memberRows.innerHTML = `<tr><td colspan="5" class="admin-table__empty">バックエンド認証APIは未接続です。</td></tr>`;
     return;
   }
-  const [{ data: rows, error }, me] = await Promise.all([
-    sb.from("profiles").select("id, email, name, role, created_at").order("created_at", { ascending: false }),
-    window.Auth ? Auth.getUser() : Promise.resolve(null),
-  ]);
+  const [{ data: rows, error }, me] = await Promise.all([Auth.listUsers(), Auth.getUser()]);
   if (error) {
     console.error("会員の取得に失敗しました:", error);
     memberRows.innerHTML = `<tr><td colspan="5" class="admin-table__empty">取得に失敗しました。</td></tr>`;
@@ -748,7 +744,7 @@ async function renderMembers() {
   const myId = me ? me.id : null;
   memberRows.innerHTML = list
     .map((m) => {
-      const isSelf = m.id === myId;
+      const isSelf = m.auth_user_id === myId;
       const badge = m.role === "admin" ? `<span class="admin-badge">管理者</span>` : `<span class="count-pill">会員</span>`;
       const next = m.role === "admin" ? "member" : "admin";
       const label = m.role === "admin" ? "会員に戻す" : "管理者にする";
@@ -772,7 +768,7 @@ if (memberRows) {
     const btn = e.target.closest("[data-mrole]");
     if (!btn) return;
     const next = btn.dataset.next;
-    const { error } = await sb.from("profiles").update({ role: next }).eq("id", btn.dataset.mrole);
+    const { error } = await Auth.updateUserRole(btn.dataset.mrole, next);
     if (error) {
       console.error("権限の変更に失敗しました:", error);
       showToast("権限の変更に失敗しました。");
@@ -1622,7 +1618,7 @@ function setupImageField(key, previewId, fileId, clearId) {
       return;
     }
     try {
-      siteImages[key] = await compressImage(file, 1600, 0.82);
+      siteImages[key] = await uploadImageToStorage(file, "site-images", key, 1600, 0.82);
       render();
     } catch (err) {
       console.error("画像の処理に失敗しました:", err);
@@ -1767,7 +1763,7 @@ if (topicsEditor) {
 }
 
 // ------------------------------------------------------------
-//  ベストセラー管理（コンテンツ：トップの Best Seller を選ぶ）
+//  人気商品管理（コンテンツ：トップの Best Seller を選ぶ）
 // ------------------------------------------------------------
 const bestsellerEditor = document.getElementById("bestsellerEditor");
 let bestsellerProducts = [];
@@ -1858,16 +1854,16 @@ if (bestsellerEditor) {
   document.getElementById("saveBestsellerBtn").addEventListener("click", () => {
     try {
       BestSellerStore.saveIds(bestsellerIds);
-      showToast("ベストセラーを保存しました。");
+      showToast("人気商品を保存しました。");
     } catch (err) {
-      console.error("ベストセラーの保存に失敗しました:", err);
+      console.error("人気商品の保存に失敗しました:", err);
       showToast("保存に失敗しました。");
     }
   });
 }
 
 // ------------------------------------------------------------
-//  ストア管理（複数店舗）
+//  店舗情報管理（複数店舗）
 // ------------------------------------------------------------
 const storeRows = document.getElementById("storeRows");
 const storeModal = document.getElementById("storeModal");
@@ -1956,7 +1952,7 @@ if (storeForm) {
       return;
     }
     try {
-      storeMapImage = await compressImage(f, 1400, 0.82);
+      storeMapImage = await uploadImageToStorage(f, "site-images", "stores", 1400, 0.82);
       renderStoreMapPreview();
     } catch (err) {
       console.error("画像の処理に失敗しました:", err);
@@ -2260,6 +2256,30 @@ function compressImage(file, maxSize = 900, quality = 0.82) {
   });
 }
 
+function dataUrlToBlob(dataUrl) {
+  const [meta, body] = dataUrl.split(",");
+  const mime = (meta.match(/data:([^;]+)/) || [])[1] || "image/jpeg";
+  const bin = atob(body);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+async function uploadImageToStorage(file, bucket, folder, maxSize = 1200, quality = 0.82) {
+  const dataUrl = await compressImage(file, maxSize, quality);
+  if (!window.sb || !sb.storage) return dataUrl;
+  const blob = dataUrlToBlob(dataUrl);
+  const safeName = String(file.name || "image").replace(/[^a-zA-Z0-9._-]+/g, "-").toLowerCase();
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}-${safeName.replace(/\.[^.]+$/, "")}.jpg`;
+  const { error } = await sb.storage.from(bucket).upload(path, blob, {
+    contentType: "image/jpeg",
+    upsert: false,
+  });
+  if (error) throw error;
+  const { data } = sb.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+}
+
 imgFileInput.addEventListener("change", async () => {
   const file = imgFileInput.files[0];
   if (!file) return;
@@ -2268,7 +2288,7 @@ imgFileInput.addEventListener("change", async () => {
     return;
   }
   try {
-    F.img.value = await compressImage(file);
+    F.img.value = await uploadImageToStorage(file, "product-images", "products", 900, 0.82);
     renderImgPreview();
   } catch (err) {
     console.error("画像の処理に失敗しました:", err);
@@ -2304,7 +2324,7 @@ if (featureImgFile) {
       return;
     }
     try {
-      F.featureImage.value = await compressImage(file, 1400, 0.82);
+      F.featureImage.value = await uploadImageToStorage(file, "product-images", "features", 1400, 0.82);
       renderFeatureImgPreview();
     } catch (err) {
       console.error("画像の処理に失敗しました:", err);
@@ -2344,7 +2364,7 @@ if (galleryEditor) {
     if (!files.length) return;
     try {
       for (const f of files) {
-        productGallery.push(await compressImage(f, 1200, 0.82));
+        productGallery.push(await uploadImageToStorage(f, "product-images", "gallery", 1200, 0.82));
       }
       renderGalleryEditor();
     } catch (err) {

@@ -10,6 +10,16 @@ let PRODUCTS = [];
 const RANKING_IDS = [7, 3, 1]; // 人気順 TOP3
 
 const yen = (n) => "¥" + n.toLocaleString("ja-JP");
+const escapeHtml = (s) =>
+  String(s ?? "").replace(/[&<>"']/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+  );
+const formatDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+};
 
 // SVG icons
 const ICON_SEARCH = `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.5"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="1.5"/></svg>`;
@@ -62,17 +72,21 @@ function buildChrome() {
   header.id = "header";
   header.innerHTML = `
     <div class="header__inner">
-      <button class="nav-toggle" id="navToggle" aria-label="メニュー"><span></span><span></span><span></span></button>
+      <div class="header__left">
+        <button class="nav-toggle" id="navToggle" aria-label="メニュー"><span></span><span></span><span></span></button>
+        <a class="login-btn header__mypage" href="login.html">LOGIN</a>
+      </div>
       <nav class="nav" id="nav">
         ${navLinks}
         <a class="nav__login" href="login.html">LOGIN</a>
+        <button class="nav__logout logout-btn" type="button" hidden>LOGOUT</button>
       </nav>
       <a href="index.html" class="brand">SATSUMA NOIR</a>
       <div class="header__actions">
         <button class="icon-btn theme-toggle" id="themeToggle" type="button" aria-label="ダーク／ライト切替"><span class="theme-toggle__sun">${ICON_SUN}</span><span class="theme-toggle__moon">${ICON_MOON}</span></button>
         <a class="icon-btn wish-btn" href="wishlist.html" aria-label="気になるリスト">${ICON_HEART_HDR}<span class="icon-count wish-count" id="wishCount">0</span></a>
         <a class="icon-btn cart-btn" href="cart.html" aria-label="カート">${ICON_CART}<span class="icon-count cart-count" id="cartCount">0</span></a>
-        <a class="login-btn" href="login.html">LOGIN</a>
+        <button class="logout-btn header__logout" type="button" hidden>LOGOUT</button>
       </div>
     </div>`;
   document.body.prepend(header);
@@ -577,19 +591,26 @@ function renderProductDetail() {
 const TEST_MEMBER = { email: "member@test.com", password: "member123" };
 
 const USER_AUTH_KEY = "satsuma_user_authed";
+let currentUser = null;
 const UserAuth = {
-  isLoggedIn: () => localStorage.getItem(USER_AUTH_KEY) === "1",
+  isLoggedIn: () => !!currentUser || localStorage.getItem(USER_AUTH_KEY) === "1",
   login: () => localStorage.setItem(USER_AUTH_KEY, "1"),
-  logout: () => localStorage.removeItem(USER_AUTH_KEY),
+  logout: () => {
+    currentUser = null;
+    localStorage.removeItem(USER_AUTH_KEY);
+  },
 };
 
 // ログイン状態に応じて LOGIN / LOGOUT ボタンの表示を切り替える
 function applyAuthButtons() {
   const loggedIn = UserAuth.isLoggedIn();
   document.querySelectorAll(".login-btn, .nav__login").forEach((el) => {
-    el.textContent = loggedIn ? "LOGOUT" : "LOGIN";
-    if (loggedIn) el.removeAttribute("href");
+    el.textContent = loggedIn ? "MYPAGE" : "LOGIN";
+    if (loggedIn) el.setAttribute("href", "mypage.html");
     else el.setAttribute("href", "login.html");
+  });
+  document.querySelectorAll(".logout-btn").forEach((el) => {
+    el.hidden = !loggedIn;
   });
   // 気になるリストは未ログインでも確認できるため常に表示する。
   document.querySelectorAll(".wish-btn").forEach((el) => {
@@ -613,6 +634,37 @@ function loadCart() {
 }
 function saveCart() {
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  persistCartRemote();
+}
+
+async function persistCartRemote() {
+  if (!currentUser || !window.sb) return;
+  const userId = currentUser.id;
+  const { error: deleteError } = await sb.from("cart_items").delete().eq("user_id", userId);
+  if (deleteError) {
+    console.error("[Cart] Supabase の更新に失敗しました:", deleteError);
+    return;
+  }
+  const rows = cart
+    .filter((l) => Number(l.id) && Number(l.qty) > 0)
+    .map((l) => ({ user_id: userId, product_id: Number(l.id), qty: Number(l.qty) }));
+  if (!rows.length) return;
+  const { error } = await sb.from("cart_items").insert(rows);
+  if (error) console.error("[Cart] Supabase の保存に失敗しました:", error);
+}
+
+async function loadCartRemote() {
+  if (!currentUser || !window.sb) return [];
+  const { data, error } = await sb
+    .from("cart_items")
+    .select("product_id, qty")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+  if (error) {
+    console.error("[Cart] Supabase の取得に失敗しました:", error);
+    return [];
+  }
+  return (data || []).map((l) => ({ id: Number(l.product_id), qty: Number(l.qty) || 1 }));
 }
 
 // ============================================================
@@ -631,6 +683,7 @@ function loadWishlist() {
 }
 function saveWishlist() {
   localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
+  persistWishlistRemote();
 }
 function isWished(id) {
   return wishlist.includes(Number(id));
@@ -647,6 +700,59 @@ function removeFromWishlist(id) {
   saveWishlist();
   updateWishlistBadge();
   renderWishlistPage();
+}
+
+async function persistWishlistRemote() {
+  if (!currentUser || !window.sb) return;
+  const userId = currentUser.id;
+  const { error: deleteError } = await sb.from("wishlist_items").delete().eq("user_id", userId);
+  if (deleteError) {
+    console.error("[Wishlist] Supabase の更新に失敗しました:", deleteError);
+    return;
+  }
+  const rows = [...new Set(wishlist.map(Number).filter(Boolean))].map((id) => ({ user_id: userId, product_id: id }));
+  if (!rows.length) return;
+  const { error } = await sb.from("wishlist_items").insert(rows);
+  if (error) console.error("[Wishlist] Supabase の保存に失敗しました:", error);
+}
+
+async function loadWishlistRemote() {
+  if (!currentUser || !window.sb) return [];
+  const { data, error } = await sb
+    .from("wishlist_items")
+    .select("product_id")
+    .eq("user_id", currentUser.id)
+    .order("created_at", { ascending: true });
+  if (error) {
+    console.error("[Wishlist] Supabase の取得に失敗しました:", error);
+    return [];
+  }
+  return (data || []).map((l) => Number(l.product_id)).filter(Boolean);
+}
+
+async function syncUserCollections() {
+  if (!window.Auth) return;
+  currentUser = await Auth.getUser();
+  if (!currentUser) {
+    localStorage.removeItem(USER_AUTH_KEY);
+    return;
+  }
+  UserAuth.login();
+
+  const localCart = loadCart();
+  const remoteCart = await loadCartRemote();
+  const merged = new Map();
+  remoteCart.forEach((l) => merged.set(Number(l.id), Number(l.qty) || 1));
+  localCart.forEach((l) => merged.set(Number(l.id), (merged.get(Number(l.id)) || 0) + (Number(l.qty) || 1)));
+  cart = Array.from(merged, ([id, qty]) => ({ id, qty }));
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  await persistCartRemote();
+
+  const localWishlist = loadWishlist();
+  const remoteWishlist = await loadWishlistRemote();
+  wishlist = [...new Set([...remoteWishlist, ...localWishlist].map(Number).filter(Boolean))];
+  localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
+  await persistWishlistRemote();
 }
 
 // 気になるリストページ（wishlist.html）
@@ -811,6 +917,178 @@ function renderCartPage() {
     </div>`;
 }
 
+// My page (mypage.html)
+async function renderMyPage() {
+  const root = document.getElementById("mypagePage");
+  if (!root) return;
+
+  if (!UserAuth.isLoggedIn() || !currentUser) {
+    window.location.href = "login.html?redirect=mypage.html";
+    return;
+  }
+
+  const [profile, orders] = await Promise.all([
+    window.Auth ? Auth.getProfile() : Promise.resolve(null),
+    window.OrderStore ? OrderStore.findAll() : Promise.resolve([]),
+  ]);
+  const email = currentUser.email || (profile && profile.email) || "";
+  const name = currentUser.user_metadata?.name || (profile && profile.name) || "";
+  const ownOrders = (orders || []).filter((o) => {
+    if (o.authUserId) return o.authUserId === currentUser.id;
+    return String(o.email || "").toLowerCase() === email.toLowerCase();
+  });
+  const cartItems = cart
+    .map((l) => ({ line: l, product: PRODUCTS.find((p) => p.id === Number(l.id)) }))
+    .filter((x) => x.product);
+  const wishItems = wishlist
+    .map((id) => PRODUCTS.find((p) => p.id === Number(id)))
+    .filter(Boolean);
+  const cartTotal = cartItems.reduce((sum, x) => sum + x.product.price * x.line.qty, 0);
+
+  const orderRows = ownOrders.length
+    ? ownOrders
+        .map((o) => {
+          const status = o.status === "shipped" ? "発送済み" : "注文受付";
+          const items = (o.items || [])
+            .map((it) => {
+              const product = PRODUCTS.find((p) => Number(p.id) === Number(it.id));
+              const img = product?.img || "images/black-forest.png";
+              const price = Number(it.price) || Number(product?.price) || 0;
+              const qty = Number(it.qty) || 1;
+              return `
+                <div class="mypage-order-item">
+                  <a class="mypage-order-item__media" href="product.html?id=${Number(it.id) || ""}">
+                    <img src="${escapeHtml(img)}" alt="${escapeHtml(it.name || product?.name || "商品")}" loading="lazy" />
+                  </a>
+                  <div class="mypage-order-item__body">
+                    <a class="mypage-order-item__name" href="product.html?id=${Number(it.id) || ""}">${escapeHtml(it.name || product?.name || "商品")}</a>
+                    <span class="mypage-order-item__meta">SATSUMA NOIR SWEETS</span>
+                    <span class="mypage-order-item__price">${yen(price)} × ${qty}</span>
+                  </div>
+                </div>`;
+            })
+            .join("");
+          return `
+            <article class="mypage-order">
+              <div class="mypage-order__meta">
+                <time>${escapeHtml(formatDate(o.createdAt))}</time>
+                <span>ご注文番号 ${escapeHtml(o.id)}</span>
+                <span>ご注文状況 ${status}</span>
+                <span>お支払い ${escapeHtml(o.payment || "未設定")}</span>
+                <strong>${yen(Number(o.total) || 0)}</strong>
+                <button class="mypage-order__detail" type="button">詳細を見る</button>
+              </div>
+              <div class="mypage-order__items">${items || `<p class="mypage-empty">商品情報なし</p>`}</div>
+            </article>`;
+        })
+        .join("")
+    : `<p class="mypage-empty">注文履歴はまだありません。</p>`;
+
+  const cartRows = cartItems.length
+    ? cartItems
+        .slice(0, 3)
+        .map(({ line, product }) => `
+          <li class="mypage-product">
+            <img src="${escapeHtml(product.img || "images/black-forest.png")}" alt="${escapeHtml(product.name)}" loading="lazy" />
+            <span>${escapeHtml(product.name)} × ${Number(line.qty) || 1}</span>
+            <strong>${yen(product.price * (Number(line.qty) || 1))}</strong>
+          </li>`)
+        .join("")
+    : `<li class="mypage-empty">カートは空です。</li>`;
+
+  const wishRows = wishItems.length
+    ? wishItems
+        .slice(0, 4)
+        .map((p) => `
+          <a class="mypage-favorite" href="product.html?id=${p.id}">
+            <img src="${escapeHtml(p.img || "images/black-forest.png")}" alt="${escapeHtml(p.name)}" loading="lazy" />
+            <span>${escapeHtml(p.name)}</span>
+          </a>`)
+        .join("")
+    : `<span class="mypage-empty">お気に入りはまだありません。</span>`;
+
+  root.innerHTML = `
+    <div class="mypage-shell">
+      <nav class="mypage-tabs" aria-label="マイページメニュー">
+        <button class="mypage-tab is-active" type="button" data-mypage-tab="orders">ご注文履歴</button>
+        <button class="mypage-tab" type="button" data-mypage-tab="wishlist">お気に入り一覧</button>
+        <button class="mypage-tab" type="button" data-mypage-tab="profile">会員情報編集</button>
+        <button class="mypage-tab" type="button" data-mypage-tab="cart">カート一覧</button>
+      </nav>
+
+      <p class="mypage-greeting">ようこそ ${escapeHtml(name || "会員")} 様。SATSUMA NOIRのご利用ありがとうございます。</p>
+
+      <section class="mypage-panel mypage-tab-panel is-active" data-mypage-panel="orders">
+        <p class="mypage-count">${ownOrders.length}件の履歴があります</p>
+        <div class="mypage-orders__list">${orderRows}</div>
+      </section>
+
+      <section class="mypage-panel mypage-tab-panel" data-mypage-panel="wishlist">
+        <div class="mypage-panel__head">
+          <h3>お気に入り一覧</h3>
+          <a href="wishlist.html">一覧を開く</a>
+        </div>
+        <div class="mypage-favorites">${wishRows}</div>
+      </section>
+
+      <section class="mypage-panel mypage-tab-panel" data-mypage-panel="profile">
+        <div class="mypage-panel__head">
+          <h3>会員情報編集</h3>
+        </div>
+        <form id="profileForm" class="mypage-profile__form">
+          <label class="field">
+            <span>お名前</span>
+            <input type="text" id="profileName" value="${escapeHtml(name)}" placeholder="お名前" />
+          </label>
+          <label class="field">
+            <span>メールアドレス</span>
+            <input type="email" value="${escapeHtml(email)}" disabled />
+          </label>
+          <button type="submit" class="btn btn--primary">会員情報を更新</button>
+          <p class="mypage-message" id="profileMessage" hidden></p>
+        </form>
+      </section>
+
+      <section class="mypage-panel mypage-tab-panel" data-mypage-panel="cart">
+        <div class="mypage-panel__head">
+          <h3>カート</h3>
+          <a href="cart.html">カートを開く</a>
+        </div>
+        <ul class="mypage-products">${cartRows}</ul>
+        ${cartItems.length ? `<div class="mypage-total"><span>合計</span><strong>${yen(cartTotal)}</strong></div>` : ""}
+      </section>
+    </div>`;
+
+  const tabButtons = root.querySelectorAll("[data-mypage-tab]");
+  const tabPanels = root.querySelectorAll("[data-mypage-panel]");
+  tabButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.mypageTab;
+      tabButtons.forEach((b) => b.classList.toggle("is-active", b === btn));
+      tabPanels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.mypagePanel === target));
+    });
+  });
+
+  const form = document.getElementById("profileForm");
+  const message = document.getElementById("profileMessage");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nextName = document.getElementById("profileName").value.trim();
+      const result = await Auth.updateProfileName(nextName);
+      if (result.error) {
+        message.textContent = "更新できませんでした。時間をおいて再度お試しください。";
+        message.classList.add("is-error");
+      } else {
+        currentUser = result.data && result.data.user ? result.data.user : currentUser;
+        message.textContent = "会員情報を更新しました。";
+        message.classList.remove("is-error");
+      }
+      message.hidden = false;
+    });
+  }
+}
+
 // ============================================================
 //  Checkout (checkout.html page)
 // ============================================================
@@ -882,20 +1160,57 @@ function setupCheckoutPayment() {
 }
 
 // 支払い処理。成功なら { label, brand, last4, method } を返し、失敗なら例外。
-async function processPayment(method, name, email) {
+async function createStripePaymentIntent({ items, name, email }) {
+  if (!window.sb) throw new Error("決済サーバーに接続できません。");
+  const { data, error } = await sb.functions.invoke("create-payment-intent", {
+    body: {
+      items: items.map((item) => ({ id: item.id, qty: item.qty })),
+      customerName: name,
+      customerEmail: email,
+    },
+  });
+  if (error) {
+    console.error("[Stripe] PaymentIntent の作成に失敗しました:", error);
+    throw new Error("カード決済の準備に失敗しました。時間をおいて再度お試しください。");
+  }
+  if (!data || !data.clientSecret) {
+    throw new Error(data?.detail || data?.error || "カード決済の準備に失敗しました。");
+  }
+  return data;
+}
+
+async function processPayment(method, name, email, items, expectedTotal) {
   if (method === "cod") {
-    return { label: "代金引換（着払い）", method: "cod" };
+    return { label: "代金引換（着払い）", method: "cod", paymentStatus: "cod" };
   }
   // カード払い
   if (_stripeReady) {
-    const { paymentMethod, error } = await _stripe.createPaymentMethod({
-      type: "card",
-      card: _stripeCard,
-      billing_details: { name, email },
+    const intent = await createStripePaymentIntent({ items, name, email });
+    if (Number(intent.amount) !== Number(expectedTotal)) {
+      throw new Error("注文金額の確認に失敗しました。カートを確認して再度お試しください。");
+    }
+    const { paymentIntent, error } = await _stripe.confirmCardPayment(intent.clientSecret, {
+      payment_method: {
+        card: _stripeCard,
+        billing_details: { name, email },
+      },
     });
     if (error) throw new Error(error.message);
-    const c = paymentMethod.card || {};
-    return { label: `カード（${(c.brand || "card").toUpperCase()} ****${c.last4 || "----"}）`, brand: c.brand, last4: c.last4, method: "card", paymentMethodId: paymentMethod.id };
+    if (!paymentIntent || paymentIntent.status !== "succeeded") {
+      throw new Error("カード決済が完了しませんでした。別のカードをお試しください。");
+    }
+    const charge = paymentIntent.charges?.data?.[0];
+    const card = charge?.payment_method_details?.card || {};
+    const brand = card.brand || "card";
+    const last4 = card.last4 || "----";
+    return {
+      label: `カード（${brand.toUpperCase()} ****${last4}）`,
+      brand,
+      last4,
+      method: "card",
+      paymentStatus: "paid",
+      paymentIntentId: paymentIntent.id,
+    };
   }
   // デモ用カード入力のバリデーション
   const num = (document.getElementById("demoCardNumber").value || "").replace(/\s+/g, "");
@@ -904,7 +1219,41 @@ async function processPayment(method, name, email) {
   if (!/^\d{12,19}$/.test(num) || !/^\d{2}\/\d{2}$/.test(exp) || !/^\d{3,4}$/.test(cvc)) {
     throw new Error("カード情報を正しくご入力ください。（番号・有効期限 MM/YY・セキュリティコード）");
   }
-  return { label: `カード ****${num.slice(-4)}（デモ）`, last4: num.slice(-4), method: "card" };
+  return { label: `カード ****${num.slice(-4)}（デモ）`, last4: num.slice(-4), method: "card", paymentStatus: "demo" };
+}
+
+async function sendOrderConfirmationEmail(orderId) {
+  if (!window.sb || !orderId) return { sent: false };
+  try {
+    const { data, error } = await sb.functions.invoke("send-order-confirmation", {
+      body: { orderId },
+    });
+    if (error) {
+      console.error("[Checkout] 注文確認メールの送信に失敗しました:", error);
+      return { sent: false, error };
+    }
+    return { sent: !!(data && data.sent), data };
+  } catch (error) {
+    console.error("[Checkout] 注文確認メールの送信に失敗しました:", error);
+    return { sent: false, error };
+  }
+}
+
+async function sendAdminNotification(payload) {
+  if (!window.sb || !payload) return { sent: false };
+  try {
+    const { data, error } = await sb.functions.invoke("send-admin-notification", {
+      body: payload,
+    });
+    if (error) {
+      console.error("[Notification] 管理者通知の送信に失敗しました:", error);
+      return { sent: false, error };
+    }
+    return { sent: !!(data && data.sent), data };
+  } catch (error) {
+    console.error("[Notification] 管理者通知の送信に失敗しました:", error);
+    return { sent: false, error };
+  }
 }
 
 function renderCheckoutPage() {
@@ -988,20 +1337,6 @@ function renderCheckoutPage() {
 
     const method = document.querySelector('input[name="payMethod"]:checked').value;
 
-    // 支払い処理（Stripe もしくはデモ）
-    let payment;
-    submitBtn.disabled = true;
-    submitBtn.textContent = "処理中…";
-    try {
-      payment = await processPayment(method, name, email);
-    } catch (payErr) {
-      err.textContent = payErr.message || "決済情報の確認に失敗しました。";
-      err.hidden = false;
-      submitBtn.disabled = false;
-      submitBtn.textContent = "注文を確定する";
-      return;
-    }
-
     const items = cart
       .map((l) => {
         const p = PRODUCTS.find((x) => x.id === l.id);
@@ -1010,8 +1345,23 @@ function renderCheckoutPage() {
       .filter(Boolean);
     const orderTotal = items.reduce((sum, it) => sum + it.price * it.qty, 0);
 
+    // 支払い処理（Stripe もしくはデモ）。カード決済は成功後だけ注文を保存する。
+    let payment;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "処理中…";
+    try {
+      payment = await processPayment(method, name, email, items, orderTotal);
+    } catch (payErr) {
+      err.textContent = payErr.message || "決済情報の確認に失敗しました。";
+      err.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "注文を確定する";
+      return;
+    }
+
     try {
       const order = await OrderStore.create({
+        authUserId: currentUser ? currentUser.id : null,
         customer: name,
         email,
         address,
@@ -1019,14 +1369,20 @@ function renderCheckoutPage() {
         items,
         total: orderTotal,
         payment: payment.label,
+        paymentStatus: payment.paymentStatus || "pending",
+        paymentIntentId: payment.paymentIntentId || "",
       });
+      const mailResult = await sendOrderConfirmationEmail(order.id);
       cart = [];
       saveCart();
       updateCartBadge();
+      const mailMessage = mailResult.sent
+        ? `確認メールを ${escapeHtml(email)} 宛に送信しました。`
+        : `確認メールは送信準備中です。注文番号をお控えください。`;
       root.innerHTML = `
         <div class="checkout-done">
           <p class="checkout-done__title">ご注文ありがとうございました。</p>
-          <p class="checkout-done__sub">注文番号：#${order.id}<br />お支払い方法：${payment.label}<br />確認メールを ${email} 宛にお送りします。（デモ）</p>
+          <p class="checkout-done__sub">注文番号：#${order.id}<br />お支払い方法：${escapeHtml(payment.label)}<br />${mailMessage}</p>
           <div class="section-more"><a href="item.html" class="btn btn--ghost">買い物を続ける</a></div>
         </div>`;
     } catch (e2) {
@@ -1101,26 +1457,33 @@ function wire() {
     });
   }
 
-  // LOGIN/LOGOUT ボタン: ログイン中はクリックでログアウト
+  // LOGOUT ボタン
   document.addEventListener("click", (e) => {
-    const authBtn = e.target.closest(".login-btn, .nav__login");
-    if (authBtn && UserAuth.isLoggedIn()) {
-      e.preventDefault();
-      UserAuth.logout();
-      if (window.Auth) Auth.signOut(); // Supabase セッションも破棄
-      window.location.href = "index.html";
-    }
+    const logoutBtn = e.target.closest(".logout-btn");
+    if (!logoutBtn) return;
+    e.preventDefault();
+    if (window.Auth) Auth.signOut();
+    UserAuth.logout();
+    cart = [];
+    wishlist = [];
+    localStorage.removeItem(CART_KEY);
+    localStorage.removeItem(WISHLIST_KEY);
+    window.location.href = "index.html";
   });
 
   // Auth tabs + form submit (login.html)
   document.querySelectorAll(".auth-tab").forEach((t) => t.addEventListener("click", () => setAuthTab(t.dataset.tab)));
   // ?tab=signup / ?tab=login で初期表示タブを切り替え（モーダルの「会員登録」導線用）
-  const initTab = new URLSearchParams(location.search).get("tab");
+  const initParams = new URLSearchParams(location.search);
+  const initTab = initParams.get("reset") === "1" ? "reset-password" : initParams.get("tab");
   if (initTab === "signup" || initTab === "login") setAuthTab(initTab);
+  if (initTab === "reset-password") setAuthTab("reset-password");
   document.querySelectorAll(".auth-form").forEach((form) => {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const isSignup = form.dataset.form === "signup";
+      const isRequestReset = form.dataset.form === "request-reset";
+      const isResetPassword = form.dataset.form === "reset-password";
       const action = isSignup ? "会員登録" : "ログイン";
 
       if (!window.Auth) {
@@ -1128,10 +1491,42 @@ function wire() {
         return;
       }
 
-      const email = form.querySelector('input[type="email"]').value.trim();
-      const password = form.querySelector('input[type="password"]').value;
+      const emailInput = form.querySelector('input[type="email"]');
+      const email = emailInput ? emailInput.value.trim() : "";
+      const passwordInput = form.querySelector('input[type="password"]');
+      const password = passwordInput ? passwordInput.value : "";
 
-      // Supabase Auth で会員登録／ログイン
+      if (isRequestReset) {
+        const result = await Auth.requestPasswordReset(email);
+        if (result.error) {
+          alert("再設定メールを送信できませんでした。" + (result.error.message || ""));
+          return;
+        }
+        form.reset();
+        alert("パスワード再設定メールを送信しました。メール内のリンクを開いてください。");
+        setAuthTab("login");
+        return;
+      }
+
+      if (isResetPassword) {
+        const passwords = Array.from(form.querySelectorAll('input[type="password"]')).map((input) => input.value);
+        if (passwords[0] !== passwords[1]) {
+          alert("確認用パスワードが一致しません。");
+          return;
+        }
+        const result = await Auth.updatePassword(passwords[0]);
+        if (result.error) {
+          alert("パスワードを更新できませんでした。" + (result.error.message || ""));
+          return;
+        }
+        UserAuth.login();
+        await syncUserCollections();
+        form.reset();
+        alert("パスワードを更新しました。");
+        window.location.href = "index.html";
+        return;
+      }
+
       let result;
       if (isSignup) {
         const name = form.querySelector('input[type="text"]').value.trim();
@@ -1143,12 +1538,20 @@ function wire() {
       if (result.error) {
         const msg = isSignup
           ? "会員登録に失敗しました。" + (result.error.message || "")
-          : "メールアドレスまたはパスワードが違います。";
+          : result.error.message || "メールアドレスまたはパスワードが違います。";
         alert(msg);
         return;
       }
 
-      UserAuth.login(); // ヘッダーの LOGIN/LOGOUT 表示用フラグ
+      if (isSignup && !(result.data && result.data.session)) {
+        form.reset();
+        alert("会員登録を受け付けました。確認メールのリンクを開いてからログインしてください。");
+        setAuthTab("login");
+        return;
+      }
+
+      UserAuth.login();
+      await syncUserCollections();
       form.reset();
       alert(`${action}が完了しました。`);
       const redirect = new URLSearchParams(location.search).get("redirect");
@@ -1159,10 +1562,13 @@ function wire() {
   // Nav drawer
   const navToggle = document.getElementById("navToggle");
   const nav = document.getElementById("nav");
-  navToggle.addEventListener("click", () => {
-    nav.classList.contains("is-open") ? closeNav() : openNav();
-  });
-  document.getElementById("navOverlay").addEventListener("click", closeNav);
+  const navOverlay = document.getElementById("navOverlay");
+  if (navToggle && nav && navOverlay) {
+    navToggle.addEventListener("click", () => {
+      nav.classList.contains("is-open") ? closeNav() : openNav();
+    });
+    navOverlay.addEventListener("click", closeNav);
+  }
 
   // テーマ切替（ダーク / ライト）
   const themeToggle = document.getElementById("themeToggle");
@@ -1183,7 +1589,7 @@ function wire() {
   const header = document.getElementById("header");
   const isHome = currentPage() === "index.html";
   window.addEventListener("scroll", () => {
-    if (isHome) header.classList.toggle("is-scrolled", window.scrollY > 40);
+    if (isHome && header) header.classList.toggle("is-scrolled", window.scrollY > 40);
   });
 
   // Contact form (CONTACT page)
@@ -1200,6 +1606,7 @@ function wire() {
         if (window.InquiryStore) {
           await InquiryStore.create({ name, email, message });
         }
+        await sendAdminNotification({ type: "inquiry", name, email, message });
         contactForm.reset();
         alert("お問い合わせを送信しました。");
       } catch (err) {
@@ -1225,6 +1632,7 @@ function wire() {
         if (window.ApplicantStore) {
           await ApplicantStore.create({ name, kana, email, phone, position });
         }
+        await sendAdminNotification({ type: "applicant", name, kana, email, phone, position });
       } catch (err) {
         console.error("応募の保存に失敗しました:", err);
       }
@@ -1337,15 +1745,37 @@ function wire() {
 // ============================================================
 buildChrome();
 wire();
-updateCartBadge();
-updateWishlistBadge();
 applySiteImages();
 applyAboutText();
 applySiteText();
 
-// 商品はストアから読み込んでから描画（将来 fetch に変わっても同じ流れ）
-ProductStore.findAll()
-  .then((products) => {
+(async function init() {
+  if (window.Auth) {
+    const result = await Auth.completeRedirect();
+    if (result && result.error) console.error("メール確認後の認証処理に失敗しました:", result.error);
+  }
+  await syncUserCollections();
+  const url = new URL(location.href);
+  if (url.searchParams.get("verified") === "1" && url.searchParams.get("reset") !== "1") {
+    const message = currentUser
+      ? "メールアドレスの確認が完了しました。ログイン済みです。"
+      : "メールアドレスの確認が完了しました。ログインしてください。";
+    setTimeout(() => alert(message), 100);
+    url.searchParams.delete("verified");
+    url.searchParams.delete("code");
+    history.replaceState(null, "", url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : "") + url.hash);
+  }
+  if (url.searchParams.get("reset") === "1") {
+    url.searchParams.delete("code");
+    history.replaceState(null, "", url.pathname + (url.searchParams.toString() ? `?${url.searchParams}` : "") + url.hash);
+  }
+  applyAuthButtons();
+  updateCartBadge();
+  updateWishlistBadge();
+
+  // 商品はストアから読み込んでから描画（将来 fetch に変わっても同じ流れ）
+  try {
+    const products = await ProductStore.findAll();
     PRODUCTS = products;
     renderRanking();
     renderFilters();
@@ -1354,7 +1784,8 @@ ProductStore.findAll()
     renderCartPage();
     renderWishlistPage();
     renderCheckoutPage();
-  })
-  .catch((err) => {
+    await renderMyPage();
+  } catch (err) {
     console.error("商品の読み込みに失敗しました:", err);
-  });
+  }
+})();

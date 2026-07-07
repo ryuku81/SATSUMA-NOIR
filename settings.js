@@ -61,6 +61,7 @@
     howtoImage1: "howto_image1",
     howtoImage2: "howto_image2",
     howtoImage3: "howto_image3",
+    aboutImage: "about_image",
     aboutHeading: "about_heading",
     aboutBody: "about_body",
     heroConceptLabel: "hero_concept_label",

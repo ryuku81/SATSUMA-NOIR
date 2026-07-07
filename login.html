@@ -31,7 +31,7 @@
             <span>パスワード</span>
             <input type="password" placeholder="••••••••" required />
           </label>
-          <a href="#" class="auth-form__forgot">パスワードをお忘れですか？</a>
+          <button type="button" class="auth-form__forgot" data-goto="request-reset">パスワードをお忘れですか？</button>
           <p class="auth-form__test">はじめての方は「会員登録」からアカウントを作成してください。</p>
           <button type="submit" class="btn btn--primary btn--full">ログインする</button>
           <p class="auth-form__switch">アカウントをお持ちでない方は <button type="button" data-goto="signup">会員登録</button></p>
@@ -58,18 +58,42 @@
           <button type="submit" class="btn btn--primary btn--full">登録する</button>
           <p class="auth-form__switch">すでにアカウントをお持ちの方は <button type="button" data-goto="login">ログイン</button></p>
         </form>
+
+        <!-- Request password reset -->
+        <form class="auth-form" data-form="request-reset" onsubmit="return false;">
+          <p class="auth-form__test">登録済みのメールアドレスに、パスワード再設定用のリンクを送信します。</p>
+          <label class="field">
+            <span>メールアドレス</span>
+            <input type="email" placeholder="mail@example.com" required />
+          </label>
+          <button type="submit" class="btn btn--primary btn--full">再設定メールを送る</button>
+          <p class="auth-form__switch"><button type="button" data-goto="login">ログインに戻る</button></p>
+        </form>
+
+        <!-- Update password -->
+        <form class="auth-form" data-form="reset-password" onsubmit="return false;">
+          <p class="auth-form__test">新しいパスワードを入力してください。</p>
+          <label class="field">
+            <span>新しいパスワード</span>
+            <input type="password" placeholder="8文字以上" minlength="8" required />
+          </label>
+          <label class="field">
+            <span>新しいパスワード（確認）</span>
+            <input type="password" placeholder="もう一度入力" minlength="8" required />
+          </label>
+          <button type="submit" class="btn btn--primary btn--full">パスワードを更新する</button>
+        </form>
       </div>
     </section>
   </main>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-client.js?v=1"></script>
-  <script src="auth.js?v=1"></script>
+  <script src="supabase-client.js?v=3"></script>
+  <script src="auth.js?v=4"></script>
 
   <script src="settings.js"></script>
 
   <script src="store.js?v=5"></script>
 
-  <script src="app.js?v=32"></script>
+  <script src="app.js?v=38"></script>
 </body>
 </html>

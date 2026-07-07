@@ -52,8 +52,9 @@
   async function fetchFromSupabase() {
     if (!global.sb) return null;
     const { data, error } = await global.sb
-      .from("recruit")
+      .from("recruit_settings")
       .select("lead, body, positions, button_label, button_url")
+      .eq("id", 1)
       .limit(1)
       .maybeSingle();
     if (error) {
@@ -79,6 +80,22 @@
 
     async update(data) {
       const next = { ...read(), ...data };
+      if (global.sb) {
+        const { error } = await global.sb
+          .from("recruit_settings")
+          .update({
+            lead: next.lead || "",
+            body: next.body || "",
+            positions: Array.isArray(next.positions) ? next.positions : [],
+            button_label: next.buttonLabel || "",
+            button_url: next.buttonUrl || "",
+          })
+          .eq("id", 1);
+        if (error) {
+          console.error("[RecruitStore] Supabase への保存に失敗しました:", error);
+          throw error;
+        }
+      }
       write(next);
       return next;
     },

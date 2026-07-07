@@ -55,15 +55,59 @@
     return list.reduce((max, s) => Math.max(max, Number(s.id) || 0), 0) + 1;
   }
 
+  const fromRow = (s) => ({
+    id: s.id,
+    name: s.name,
+    lead: s.lead,
+    openDate: s.open_date,
+    hours: s.hours,
+    address: s.address,
+    mapImage: s.map_image,
+  });
+  const toRow = (data) => ({
+    name: data.name || "",
+    lead: data.lead || "",
+    open_date: data.openDate || "",
+    hours: data.hours || "",
+    address: data.address || "",
+    map_image: data.mapImage || "",
+  });
+
   const StoreStore = {
     PRIMARY_ID,
     async getAll() {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("stores")
+          .select("id, name, lead, open_date, hours, address, map_image, is_primary")
+          .order("id", { ascending: true });
+        if (!error) return (data || []).map(fromRow);
+        console.error("[StoreStore] Supabase の取得に失敗しました:", error);
+      }
       return read();
     },
     async findById(id) {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("stores")
+          .select("id, name, lead, open_date, hours, address, map_image, is_primary")
+          .eq("id", Number(id))
+          .maybeSingle();
+        if (!error) return data ? fromRow(data) : null;
+        console.error("[StoreStore] Supabase の取得に失敗しました:", error);
+      }
       return read().find((s) => Number(s.id) === Number(id)) || null;
     },
     async create(data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("stores")
+          .insert(toRow(data))
+          .select("id, name, lead, open_date, hours, address, map_image, is_primary")
+          .single();
+        if (error) throw error;
+        return fromRow(row);
+      }
       const list = read();
       const item = {
         id: nextId(list),
@@ -78,6 +122,16 @@
       return item;
     },
     async update(id, data) {
+      if (global.sb) {
+        const { data: row, error } = await global.sb
+          .from("stores")
+          .update(toRow(data))
+          .eq("id", Number(id))
+          .select("id, name, lead, open_date, hours, address, map_image, is_primary")
+          .single();
+        if (error) throw error;
+        return fromRow(row);
+      }
       const list = read();
       const target = Number(id);
       const next = list.map((s) => (Number(s.id) === target ? { ...s, ...data, id: target } : s));
@@ -85,6 +139,11 @@
       return next.find((s) => Number(s.id) === target) || null;
     },
     async remove(id) {
+      if (global.sb) {
+        const { error } = await global.sb.from("stores").delete().eq("id", Number(id));
+        if (error) throw error;
+        return;
+      }
       const target = Number(id);
       write(read().filter((s) => Number(s.id) !== target));
     },

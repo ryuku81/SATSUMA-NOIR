@@ -1,64 +1,143 @@
 // ============================================================
-//  Supabase Auth ヘルパー（共有）
+//  Supabase Auth Helper
 //  ------------------------------------------------------------
-//  window.sb（supabase-client.js）を前提に、認証まわりの
-//  共通操作を window.Auth として公開する。
-//
-//  読み込み順（各 HTML）:
-//    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-//    <script src="supabase-client.js"></script>
-//    <script src="auth.js"></script>
+//  ログイン・会員登録・管理者判定を window.Auth として公開する。
+//  role は public.users.role を参照する。
 // ============================================================
 (function (global) {
-  if (!global.sb) {
-    console.error("[auth] supabase-client.js（window.sb）が読み込まれていません。");
-    return;
-  }
+  const client = () => global.supabaseAuthClient;
+
+  const notReady = () => ({
+    data: null,
+    error: new Error("認証クライアントが初期化されていません。"),
+  });
 
   const Auth = {
-    // 会員登録（role は DB トリガーで member 固定。admin は付与できない）
+    emailRedirectTo(path = "login.html", params = { verified: "1" }) {
+      const url = new URL(path, global.location.href);
+      Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+      return url.href;
+    },
+
+    passwordResetRedirectTo() {
+      return this.emailRedirectTo("login.html", { reset: "1" });
+    },
+
+    async completeRedirect() {
+      const sb = client();
+      if (!sb) return { data: null, error: null };
+      const code = new URLSearchParams(global.location.search).get("code");
+      if (!code) return { data: null, error: null };
+      return sb.auth.exchangeCodeForSession(code);
+    },
+
     async signUp({ email, password, name }) {
-      return global.sb.auth.signUp({
+      const sb = client();
+      if (!sb) return notReady();
+      return sb.auth.signUp({
         email,
         password,
-        options: { data: { name: name || "" } },
+        options: {
+          data: { name: name || "" },
+          emailRedirectTo: this.emailRedirectTo("login.html", { verified: "1" }),
+        },
       });
     },
 
-    // ログイン
     async signIn({ email, password }) {
-      return global.sb.auth.signInWithPassword({ email, password });
+      const sb = client();
+      if (!sb) return notReady();
+      return sb.auth.signInWithPassword({ email, password });
     },
 
     async signOut() {
-      return global.sb.auth.signOut();
+      const sb = client();
+      if (!sb) return { error: null };
+      return sb.auth.signOut();
     },
 
-    // 現在のログインユーザー（未ログインなら null）
+    async requestPasswordReset(email) {
+      const sb = client();
+      if (!sb) return notReady();
+      return sb.auth.resetPasswordForEmail(email, {
+        redirectTo: this.passwordResetRedirectTo(),
+      });
+    },
+
+    async updatePassword(password) {
+      const sb = client();
+      if (!sb) return notReady();
+      return sb.auth.updateUser({ password });
+    },
+
+    async updateProfileName(name) {
+      const sb = client();
+      const user = await this.getUser();
+      if (!sb || !user) return notReady();
+      const authResult = await sb.auth.updateUser({ data: { name } });
+      if (authResult.error) return authResult;
+      const profileResult = await sb
+        .from("users")
+        .update({ name })
+        .eq("auth_user_id", user.id)
+        .select("id, auth_user_id, email, name, role, created_at")
+        .single();
+      if (profileResult.error) {
+        console.warn("[auth] users テーブルへの名前同期に失敗しました:", profileResult.error);
+      }
+      return authResult;
+    },
+
     async getUser() {
-      const { data } = await global.sb.auth.getUser();
+      const sb = client();
+      if (!sb) return null;
+      const { data } = await sb.auth.getUser();
       return data ? data.user : null;
     },
 
-    // 自分の role を取得（'admin' | 'member' | null）
-    //  profiles は本人分のみ select 可（RLS）。
-    async getRole() {
+    async getProfile() {
+      const sb = client();
       const user = await this.getUser();
-      if (!user) return null;
-      const { data, error } = await global.sb
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
+      if (!sb || !user) return null;
+      const { data, error } = await sb
+        .from("users")
+        .select("id, auth_user_id, email, name, role, created_at")
+        .eq("auth_user_id", user.id)
         .maybeSingle();
       if (error) {
-        console.error("[auth] role の取得に失敗しました:", error);
+        console.error("[auth] profile の取得に失敗しました:", error);
         return null;
       }
-      return data ? data.role : null;
+      return data || null;
+    },
+
+    async getRole() {
+      const profile = await this.getProfile();
+      return profile ? profile.role : null;
     },
 
     async isAdmin() {
       return (await this.getRole()) === "admin";
+    },
+
+    async listUsers() {
+      const sb = client();
+      if (!sb) return { data: [], error: new Error("認証クライアントが初期化されていません。") };
+      return sb
+        .from("users")
+        .select("id, auth_user_id, email, name, role, created_at")
+        .order("created_at", { ascending: false });
+    },
+
+    async updateUserRole(id, role) {
+      const sb = client();
+      if (!sb) return { data: null, error: new Error("認証クライアントが初期化されていません。") };
+      return sb
+        .from("users")
+        .update({ role })
+        .eq("id", id)
+        .select("id, auth_user_id, email, name, role, created_at")
+        .single();
     },
   };
 

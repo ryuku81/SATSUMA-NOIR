@@ -64,7 +64,7 @@
 
   async function fetchSorted() {
     const { data, error } = await global.sb
-      .from("categories")
+      .from("product_categories")
       .select("value, label, sort_order")
       .order("sort_order", { ascending: true });
     if (error) {
@@ -114,14 +114,14 @@
       const value = uniqueValue(lbl, list);
       if (global.sb) {
         const { data: maxRow } = await global.sb
-          .from("categories")
+          .from("product_categories")
           .select("sort_order")
           .order("sort_order", { ascending: false })
           .limit(1)
           .maybeSingle();
         const nextOrder = ((maxRow && maxRow.sort_order) || 0) + 1;
         const { data: row, error } = await global.sb
-          .from("categories")
+          .from("product_categories")
           .insert({ value, label: lbl, sort_order: nextOrder })
           .select("value, label")
           .single();
@@ -141,7 +141,7 @@
 
     async remove(value) {
       if (global.sb) {
-        const { error } = await global.sb.from("categories").delete().eq("value", value);
+        const { error } = await global.sb.from("product_categories").delete().eq("value", value);
         if (error) {
           console.error("[CategoryStore] カテゴリの削除に失敗しました:", error);
           throw error;

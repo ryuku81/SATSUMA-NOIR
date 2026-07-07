@@ -67,6 +67,22 @@
         desc: (t.desc || "").trim(),
         url: (t.url || "").trim() || "#",
       }));
+      if (global.sb) {
+        const { error: deleteError } = await global.sb.from("topics").delete().neq("id", 0);
+        if (deleteError) throw deleteError;
+        if (clean.length) {
+          const { error } = await global.sb.from("topics").insert(
+            clean.map((t, i) => ({
+              image: t.image,
+              title: t.title,
+              description: t.desc,
+              url: t.url,
+              sort_order: i + 1,
+            }))
+          );
+          if (error) throw error;
+        }
+      }
       write(clean);
       return clean;
     },

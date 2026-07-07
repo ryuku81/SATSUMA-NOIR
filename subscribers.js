@@ -46,6 +46,14 @@
   const SubscriberStore = {
     // 新しい順（登録日時の降順）
     async findAll() {
+      if (global.sb) {
+        const { data, error } = await global.sb
+          .from("subscribers")
+          .select("id, email, created_at")
+          .order("created_at", { ascending: false });
+        if (!error) return (data || []).map((s) => ({ id: s.id, email: s.email, createdAt: s.created_at }));
+        console.error("[SubscriberStore] Supabase の取得に失敗しました:", error);
+      }
       return read()
         .slice()
         .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -56,6 +64,13 @@
       const list = read();
       const mail = String(email || "").trim();
       if (!mail) throw new Error("メールアドレスが空です");
+      if (global.sb) {
+        const { error } = await global.sb
+          .from("subscribers")
+          .insert({ email: mail });
+        if (!error) return { id: Date.now(), email: mail, createdAt: new Date().toISOString() };
+        if (error.code !== "23505") throw error;
+      }
       const exists = list.find((s) => s.email.toLowerCase() === mail.toLowerCase());
       if (exists) return exists;
       const sub = { id: nextId(list), email: mail, createdAt: new Date().toISOString() };
@@ -64,11 +79,20 @@
     },
 
     async remove(id) {
+      if (global.sb) {
+        const { error } = await global.sb.from("subscribers").delete().eq("id", Number(id));
+        if (error) throw error;
+        return;
+      }
       const target = Number(id);
       write(read().filter((s) => s.id !== target));
     },
 
     async count() {
+      if (global.sb) {
+        const { count, error } = await global.sb.from("subscribers").select("id", { count: "exact", head: true });
+        if (!error) return count || 0;
+      }
       return read().length;
     },
 

@@ -59,7 +59,7 @@
   async function fetchFromSupabase() {
     if (!global.sb) return null;
     const { data, error } = await global.sb
-      .from("privacy")
+      .from("privacy_policy")
       .select("lead, blocks, date")
       .limit(1)
       .maybeSingle();
@@ -78,6 +78,10 @@
 
     async update(data) {
       const next = { ...read(), ...data };
+      if (global.sb) {
+        const { error } = await global.sb.from("privacy_policy").update(next).eq("id", 1);
+        if (error) throw error;
+      }
       write(next);
       return next;
     },
