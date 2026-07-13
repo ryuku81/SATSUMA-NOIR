@@ -20,6 +20,9 @@
     noteUrl: "",
     // メインビジュアル画像（空なら HTML 既定の画像を使う）
     heroImage: "",
+    heroImage2: "",
+    heroImage3: "",
+    heroImage4: "",
     statementImage: "",
     // HOW TO EAT セクションの3枚（空なら HTML 既定の画像を使う）
     howtoImage1: "",
@@ -37,6 +40,15 @@
     heroConceptHead: "『ひと口食べた瞬間、週末気分に』",
     heroConceptBody:
       "その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。",
+    heroSlide2Head: "果実がほどける、静かな余韻。",
+    heroSlide2Body:
+      "果実の瑞々しさとレアチーズのなめらかさを、軽やかな酸味でひとつに。甘さの奥に、夜の余白を感じる一品です。",
+    heroSlide3Head: "深いカカオを、少しずつ。",
+    heroSlide3Body:
+      "カカオの深みをまっすぐに味わえる、静かな存在感のタブレット。少しずつ割って楽しむ時間まで、上質に整えました。",
+    heroSlide4Head: "軽やかに続く、やさしいコク。",
+    heroSlide4Body:
+      "ふわりとほどける口どけに、チーズのやさしいコクを重ねて。日常の終わりに小さな余韻を残す、軽やかなチーズケーキです。",
 
     // ステートメント（RANKINGの上）。本文は改行で行が分かれる。
     statementHead: "いつもの一日を、特別な週末に。",
@@ -57,6 +69,9 @@
     xUrl: "x_url",
     noteUrl: "note_url",
     heroImage: "hero_image",
+    heroImage2: "hero_image2",
+    heroImage3: "hero_image3",
+    heroImage4: "hero_image4",
     statementImage: "statement_image",
     howtoImage1: "howto_image1",
     howtoImage2: "howto_image2",
@@ -67,6 +82,12 @@
     heroConceptLabel: "hero_concept_label",
     heroConceptHead: "hero_concept_head",
     heroConceptBody: "hero_concept_body",
+    heroSlide2Head: "hero_slide2_head",
+    heroSlide2Body: "hero_slide2_body",
+    heroSlide3Head: "hero_slide3_head",
+    heroSlide3Body: "hero_slide3_body",
+    heroSlide4Head: "hero_slide4_head",
+    heroSlide4Body: "hero_slide4_body",
     statementHead: "statement_head",
     statementBody: "statement_body",
     howtoEyebrow: "howto_eyebrow",

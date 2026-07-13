@@ -126,6 +126,14 @@ function buildChrome() {
   toast.id = "toast";
   document.body.appendChild(toast);
 
+  // Page transition loader
+  const loader = document.createElement("div");
+  loader.className = "page-loader";
+  loader.id = "pageLoader";
+  loader.setAttribute("aria-hidden", "true");
+  loader.innerHTML = `<span class="page-loader__spinner" aria-label="読み込み中"></span>`;
+  document.body.appendChild(loader);
+
   // 下層ページではヘッダーに背景を付ける
   if (page !== "index.html") header.classList.add("is-scrolled");
 
@@ -141,6 +149,9 @@ function applySiteImages() {
     .then((settings) => {
       const map = {
         hero: settings.heroImage,
+        hero2: settings.heroImage2,
+        hero3: settings.heroImage3,
+        hero4: settings.heroImage4,
         statement: settings.statementImage,
         howto1: settings.howtoImage1,
         howto2: settings.howtoImage2,
@@ -578,7 +589,7 @@ function renderProductDetail() {
     } else {
       addToWishlist(p.id);
       showToast(`「${p.name}」を気になるリストに追加しました`);
-      window.location.href = "wishlist.html";
+      navigateWithLoader("wishlist.html");
     }
     syncWishBtn();
   });
@@ -841,7 +852,7 @@ function addToCart(id, amount = 1, options = {}) {
   const p = PRODUCTS.find((x) => x.id === id);
   showToast(`「${p ? p.name : "商品"}」をカートに追加しました`);
   if (options.redirect) {
-    window.location.href = options.redirect;
+    navigateWithLoader(options.redirect);
   }
 }
 function changeQty(id, delta) {
@@ -923,7 +934,7 @@ async function renderMyPage() {
   if (!root) return;
 
   if (!UserAuth.isLoggedIn() || !currentUser) {
-    window.location.href = "login.html?redirect=mypage.html";
+    navigateWithLoader("login.html?redirect=mypage.html");
     return;
   }
 
@@ -1262,7 +1273,7 @@ function renderCheckoutPage() {
 
   // 未ログインで直接来た場合はログイン画面へ
   if (!UserAuth.isLoggedIn()) {
-    window.location.href = "login.html?redirect=checkout.html";
+    navigateWithLoader("login.html?redirect=checkout.html");
     return;
   }
 
@@ -1420,9 +1431,70 @@ function closeNav() {
 }
 
 // ============================================================
+//  Page transition loader
+// ============================================================
+function showPageLoader() {
+  const loader = document.getElementById("pageLoader");
+  if (!loader) return;
+  loader.classList.add("is-active");
+  loader.setAttribute("aria-hidden", "false");
+}
+
+function hidePageLoader() {
+  const loader = document.getElementById("pageLoader");
+  if (!loader) return;
+  loader.classList.remove("is-active");
+  loader.setAttribute("aria-hidden", "true");
+}
+
+function isPlainLeftClick(e) {
+  return e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+}
+
+function shouldShowLoaderForUrl(url, link) {
+  if (!url || url.origin !== location.origin) return false;
+  if (link && (link.target || link.hasAttribute("download"))) return false;
+  if (url.pathname === location.pathname && url.search === location.search && url.hash) return false;
+  return true;
+}
+
+function navigateWithLoader(href) {
+  if (!href) return;
+  showPageLoader();
+  window.setTimeout(() => {
+    window.location.href = href;
+  }, 80);
+}
+
+function setupPageTransitions() {
+  window.addEventListener("pageshow", hidePageLoader);
+
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!isPlainLeftClick(e) || e.defaultPrevented) return;
+      const link = e.target.closest("a[href]");
+      if (!link) return;
+      const href = link.getAttribute("href");
+      if (!href || href === "#" || href.startsWith("javascript:")) return;
+      const url = new URL(href, location.href);
+      if (!shouldShowLoaderForUrl(url, link)) return;
+      e.preventDefault();
+      closeNav();
+      navigateWithLoader(url.href);
+    },
+    true
+  );
+
+  window.addEventListener("beforeunload", showPageLoader);
+}
+
+// ============================================================
 //  Wire up events
 // ============================================================
 function wire() {
+  setupPageTransitions();
+
   // Global click delegation (add / qty / remove / tab switch)
   document.addEventListener("click", (e) => {
     const add = e.target.closest("[data-add]");
@@ -1440,7 +1512,7 @@ function wire() {
     // 商品カード / ベストセラー行クリックで詳細ページへ（カート追加ボタンは上で return 済み）
     const nav = e.target.closest("[data-href]");
     if (nav) {
-      window.location.href = nav.dataset.href;
+      navigateWithLoader(nav.dataset.href);
       return;
     }
   });
@@ -1468,7 +1540,7 @@ function wire() {
     wishlist = [];
     localStorage.removeItem(CART_KEY);
     localStorage.removeItem(WISHLIST_KEY);
-    window.location.href = "index.html";
+    navigateWithLoader("index.html");
   });
 
   // Auth tabs + form submit (login.html)
@@ -1523,7 +1595,7 @@ function wire() {
         await syncUserCollections();
         form.reset();
         alert("パスワードを更新しました。");
-        window.location.href = "index.html";
+        navigateWithLoader("index.html");
         return;
       }
 
@@ -1555,7 +1627,7 @@ function wire() {
       form.reset();
       alert(`${action}が完了しました。`);
       const redirect = new URLSearchParams(location.search).get("redirect");
-      window.location.href = redirect || "index.html";
+      navigateWithLoader(redirect || "index.html");
     });
   });
 

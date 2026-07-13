@@ -189,9 +189,24 @@
     String(s ?? "").replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
     );
-  // "YYYY-MM-DD" → "YYYY.MM.DD"
-  const dotDate = (d) => String(d ?? "").replace(/-/g, ".");
+  // "YYYY-MM-DD" / ISO文字列 → "YYYY.MM.DD"
+  const dateParts = (d) => {
+    const [y = "", m = "", day = ""] = String(d ?? "").slice(0, 10).split("-");
+    return { y, m, d: day };
+  };
+  const dotDate = (d) => {
+    const p = dateParts(d);
+    return [p.y, p.m, p.d].filter(Boolean).join(".");
+  };
   const WD = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const weekdayFor = (d) => {
+    const p = dateParts(d);
+    const y = Number(p.y);
+    const m = Number(p.m);
+    const day = Number(p.d);
+    if (!y || !m || !day) return "";
+    return WD[new Date(Date.UTC(y, m - 1, day)).getUTCDay()] || "";
+  };
 
   const PLACEHOLDER_IMG = "images/basque-cheesecake.png";
   const imgOf = (p) => (p.image && p.image.trim() ? p.image : PLACEHOLDER_IMG);
@@ -204,36 +219,56 @@
     const list = document.getElementById("journalList");
     if (!list) return;
 
+    const feature = document.querySelector(".journal-feature");
     const info = document.getElementById("journalInfo");
     const prev = document.getElementById("journalPrev");
     const next = document.getElementById("journalNext");
 
     const POSTS = await JournalStore.findAll();
+    if (POSTS.length === 0) {
+      if (feature) feature.hidden = true;
+      list.innerHTML = `<p class="cart-page__empty">ジャーナル記事はありません。</p>`;
+      if (info) info.textContent = "0/0";
+      if (prev) prev.disabled = true;
+      if (next) next.disabled = true;
+      return;
+    }
+
+    if (feature) {
+      const featureImages = POSTS.slice(0, 3).map(imgOf);
+      while (featureImages.length < 3) featureImages.push(imgOf(POSTS[0]));
+      feature.innerHTML = `
+        <div class="journal-feature__media journal-feature__media--triptych">
+          ${featureImages
+            .slice(0, 3)
+            .map((src) => `<img class="journal-feature__shot" src="${escapeHtml(src)}" alt="" loading="eager" />`)
+            .join("")}
+          <span class="journal-feature__label">SATSUMA NOIR</span>
+        </div>`;
+    }
+
+    const timelinePosts = POSTS;
     const PER_PAGE = 6;
-    const totalPages = Math.max(1, Math.ceil(POSTS.length / PER_PAGE));
+    const totalPages = Math.max(1, Math.ceil(timelinePosts.length / PER_PAGE));
     let page = 1;
 
     function render() {
       const start = (page - 1) * PER_PAGE;
-      const slice = POSTS.slice(start, start + PER_PAGE);
+      const slice = timelinePosts.slice(start, start + PER_PAGE);
       list.innerHTML = slice
         .map((p) => {
-          const dd = dotDate(p.date);
-          const [y, m, d] = dd.split(".");
-          let wd = "";
-          try {
-            wd = WD[new Date(`${y}-${m}-${d}T00:00:00`).getDay()] || "";
-          } catch {}
+          const { y, m, d } = dateParts(p.date);
+          const wd = weekdayFor(p.date);
           return `
           <a class="jtl" href="journal-detail.html?id=${encodeURIComponent(p.id)}">
-            <div class="jtl__when"><span class="jtl__ym">${escapeHtml(y + "." + m)}</span><span class="jtl__d">${escapeHtml((d || "") + " " + wd)}</span></div>
+            <div class="jtl__when"><span class="jtl__ym">${escapeHtml([y, m, d].filter(Boolean).join("."))}</span><span class="jtl__d">${escapeHtml(wd)}</span></div>
             <div class="jtl__card">
               <div class="jtl__media"><img src="${escapeHtml(imgOf(p))}" alt="" loading="lazy" /></div>
               <div><span class="jtl__cat">${escapeHtml(p.cat || "")}</span><h3 class="jtl__title">${escapeHtml(p.title)}</h3></div>
             </div>
           </a>`;
         })
-        .join("");
+        .join("") || `<p class="cart-page__empty">ほかの記事はありません。</p>`;
       if (info) info.textContent = page + "/" + totalPages;
       if (prev) prev.disabled = page <= 1;
       if (next) next.disabled = page >= totalPages;

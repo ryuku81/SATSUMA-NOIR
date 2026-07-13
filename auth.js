@@ -132,6 +132,10 @@
     async updateUserRole(id, role) {
       const sb = client();
       if (!sb) return { data: null, error: new Error("認証クライアントが初期化されていません。") };
+      const rpcResult = await sb.rpc("set_user_role", { p_user_id: id, p_role: role });
+      if (!rpcResult.error) return rpcResult;
+      if (!/set_user_role/i.test(rpcResult.error.message || "")) return rpcResult;
+
       return sb
         .from("users")
         .update({ role })

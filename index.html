@@ -15,9 +15,9 @@
   <section class="hero">
     <div class="hero__track" id="heroTrack">
       <img class="hero__img" src="images/basque-cheesecake.png" alt="バスクチーズケーキ" data-site-img="hero" />
-      <img class="hero__img" src="images/berry-rare-cheesecake.png" alt="ベリーレアチーズケーキ" loading="lazy" />
-      <img class="hero__img" src="images/noir-tablette.png" alt="NOIR タブレット" loading="lazy" />
-      <img class="hero__img" src="images/souffle-cheesecake.png" alt="スフレチーズケーキ" loading="lazy" />
+      <img class="hero__img" src="images/berry-rare-cheesecake.png" alt="ベリーレアチーズケーキ" loading="lazy" data-site-img="hero2" />
+      <img class="hero__img" src="images/noir-tablette.png" alt="NOIR タブレット" loading="lazy" data-site-img="hero3" />
+      <img class="hero__img" src="images/souffle-cheesecake.png" alt="スフレチーズケーキ" loading="lazy" data-site-img="hero4" />
     </div>
     <div class="hero__overlay"></div>
     <div class="hero__center">
@@ -25,7 +25,7 @@
     </div>
     <div class="hero__dots" id="heroDots" aria-label="メインビジュアルの切り替え"></div>
     <div class="hero-concept">
-      <p class="hero-concept__label">CONCEPT：WEEKEND_BASQUE</p>
+      <p class="hero-concept__label" data-site-text="heroConceptLabel">CONCEPT：WEEKEND_BASQUE</p>
       <p class="hero-concept__head">『ひと口食べた瞬間、週末気分に』</p>
       <p class="hero-concept__body">その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。</p>
     </div>
@@ -53,7 +53,7 @@
   <!-- How to eat -->
   <section class="howto" id="howto">
     <div class="howto__head">
-      <p class="howto__eyebrow">熟成冷凍チーズケーキの<br />お召し上がり方</p>
+      <p class="howto__eyebrow" data-site-text="howtoTitle">熟成冷凍チーズケーキの<br />お召し上がり方</p>
       <div class="howto__strip">
         <img class="howto__strip-img" src="images/basque-cheesecake.png" alt="バスクチーズケーキ" loading="lazy" data-site-img="howto1" />
         <img class="howto__strip-img" src="images/souffle-cheesecake.png" alt="" loading="lazy" data-site-img="howto2" />
@@ -130,19 +130,20 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js?v=3"></script>
 
-  <script src="settings.js?v=6"></script>
+  <script src="settings.js?v=8"></script>
   <script src="categories.js?v=7"></script>
 
   <script src="store.js?v=5"></script>
+  <script src="storeinfo.js?v=3"></script>
 
-  <script src="topics.js?v=3"></script>
+  <script src="topics.js?v=4"></script>
 
   <script src="subscribers.js?v=1"></script>
 
   <script src="bestseller.js?v=1"></script>
   <script src="auth.js?v=4"></script>
 
-  <script src="app.js?v=38"></script>
+  <script src="app.js?v=40"></script>
 
   <!-- メインビジュアル：横スクロール/スワイプで画像切り替え＋ドット連動 -->
   <script>
@@ -158,18 +159,38 @@
       if (!track || !dotsWrap) return;
       const slides = Array.from(track.querySelectorAll(".hero__img"));
       if (slides.length <= 1) return;
-      const heroHeadTexts = [
+      let heroHeadTexts = [
         "『ひと口食べた瞬間、週末気分に』",
         "果実がほどける、静かな余韻。",
         "深いカカオを、少しずつ。",
         "軽やかに続く、やさしいコク。"
       ];
-      const heroTexts = [
+      let heroTexts = [
         "その瞬間のためだけに地道なモノ作りをしていると言っても過言ではありません。品質と味をトコトン大切にひとつひとつ地道で地味な作業を繰り返しています。",
         "果実の瑞々しさとレアチーズのなめらかさを、軽やかな酸味でひとつに。甘さの奥に、夜の余白を感じる一品です。",
         "カカオの深みをまっすぐに味わえる、静かな存在感のタブレット。少しずつ割って楽しむ時間まで、上質に整えました。",
         "ふわりとほどける口どけに、チーズのやさしいコクを重ねて。日常の終わりに小さな余韻を残す、軽やかなチーズケーキです。"
       ];
+      if (typeof SettingsStore !== "undefined") {
+        SettingsStore.get()
+          .then((settings) => {
+            heroHeadTexts = [
+              settings.heroConceptHead || heroHeadTexts[0],
+              settings.heroSlide2Head || heroHeadTexts[1],
+              settings.heroSlide3Head || heroHeadTexts[2],
+              settings.heroSlide4Head || heroHeadTexts[3],
+            ];
+            heroTexts = [
+              settings.heroConceptBody || heroTexts[0],
+              settings.heroSlide2Body || heroTexts[1],
+              settings.heroSlide3Body || heroTexts[2],
+              settings.heroSlide4Body || heroTexts[3],
+            ];
+            if (heroConceptLabel) heroConceptLabel.textContent = settings.heroConceptLabel || heroConceptLabel.textContent;
+            updateHeroState();
+          })
+          .catch((err) => console.error("メインビジュアル文章の読み込みに失敗しました:", err));
+      }
 
       slides.forEach((_, i) => {
         const b = document.createElement("button");

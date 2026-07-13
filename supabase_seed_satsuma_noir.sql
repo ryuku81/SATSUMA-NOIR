@@ -31,11 +31,11 @@ insert into public.bestsellers (product_id, rank) values
   (7, 1), (3, 2), (1, 3)
 on conflict (rank) do update set product_id = excluded.product_id;
 
-insert into public.news (id, date, cat, title, url) values
-  (1, '2026-06-05', 'INFO', '「熟成冷凍チーズケーキ」数量限定で再入荷しました。', '#'),
-  (2, '2026-05-20', 'ITEM', '新作「オペラ」がコレクションに登場しました。', '#'),
-  (3, '2026-05-01', 'GIFT', '季節限定ギフトボックスの受付を開始しました。', '#'),
-  (4, '2026-04-15', 'INFO', '大型連休期間中の配送スケジュールについて。', '#')
+insert into public.news (id, date, cat, title, url, body, image) values
+  (1, '2026-06-05', 'INFO', '「熟成冷凍チーズケーキ」数量限定で再入荷しました。', '#', '', ''),
+  (2, '2026-05-20', 'ITEM', '新作「オペラ」がコレクションに登場しました。', '#', '', ''),
+  (3, '2026-05-01', 'GIFT', '季節限定ギフトボックスの受付を開始しました。', '#', '', ''),
+  (4, '2026-04-15', 'INFO', '大型連休期間中の配送スケジュールについて。', '#', '', '')
 on conflict (id) do nothing;
 select setval(pg_get_serial_sequence('public.news', 'id'), greatest((select max(id) from public.news), 1), true);
 
@@ -48,15 +48,21 @@ insert into public.faqs (id, question, answer, sort_order) values
 on conflict (id) do nothing;
 select setval(pg_get_serial_sequence('public.faqs', 'id'), greatest((select max(id) from public.faqs), 1), true);
 
-insert into public.topics (id, image, title, description, url, sort_order) values
-  (1, 'images/terukuni-store.jpg', '照国本店、カフェスペースのご案内', '焼きたて・解凍したての一皿をその場で。エスプレッソやお茶とともにお楽しみいただけます。', '#', 1),
-  (2, 'images/souffle-cheesecake.png', '“熟成冷凍”のおいしい解凍ガイド', '室温で約1時間。半解凍とフル解凍で変わる、口どけの違いをご紹介します。', '#', 2),
-  (3, 'images/basque-cheesecake.png', 'バスクチーズケーキ専門店としてのこだわり', '高温で焼き上げる表面のほろ苦さと、とろける中心。私たちの原点の一台です。', '#', 3),
-  (4, 'images/truffle-collection.png', 'ご褒美に、トリュフチョコレートの詰め合わせ', 'ひと粒に込めた濃密なひととき。大切な方への贈り物にもおすすめです。', '#', 4)
+insert into public.topics (id, image, title, description, url, detail_image, body, sort_order) values
+  (1, 'images/terukuni-store.jpg', '照国本店、カフェスペースのご案内', '焼きたて・解凍したての一皿をその場で。エスプレッソやお茶とともにお楽しみいただけます。', '#', '', '', 1),
+  (2, 'images/souffle-cheesecake.png', '“熟成冷凍”のおいしい解凍ガイド', '室温で約1時間。半解凍とフル解凍で変わる、口どけの違いをご紹介します。', '#', '', '', 2),
+  (3, 'images/basque-cheesecake.png', 'バスクチーズケーキ専門店としてのこだわり', '高温で焼き上げる表面のほろ苦さと、とろける中心。私たちの原点の一台です。', '#', '', '', 3),
+  (4, 'images/truffle-collection.png', 'ご褒美に、トリュフチョコレートの詰め合わせ', 'ひと粒に込めた濃密なひととき。大切な方への贈り物にもおすすめです。', '#', '', '', 4)
 on conflict (id) do nothing;
 select setval(pg_get_serial_sequence('public.topics', 'id'), greatest((select max(id) from public.topics), 1), true);
 
-insert into public.stores (id, name, lead, open_date, hours, address, map_image, is_primary)
+insert into public.stores (
+  id, name, lead, open_date, hours, address, map_image,
+  hero_image1, hero_image2, detail_image,
+  limited_name, limited_desc, limited_image, limited_product, limited_price,
+  regular_brand, regular_desc, regular_items,
+  is_primary
+)
 values (
   1,
   '照国本店',
@@ -69,6 +75,17 @@ values (
 ※店頭販売は売り切れ次第終了となります',
   '〒892-0841 鹿児島県鹿児島市照国町14-15',
   '',
+  'images/terukuni-store.jpg',
+  'images/noir-tablette.png',
+  'images/terukuni-store.jpg',
+  '焼きたて NOIR BAKED CHEESECAKE',
+  '店内で焼き上げた、出来立てのひとくちチーズケーキ「NOIR BAKED CHEESECAKE」をご用意。毎週 金曜日・土曜日・日曜日 13:00 の焼き上がりです。',
+  'images/baked-cheesecake.png',
+  'Original',
+  '¥459/個（税込）',
+  'SATSUMA NOIR',
+  '温度によって変化する味わいと香りを楽しめる、レストランデザートのようなチーズケーキ。',
+  '[{"id":1},{"id":2},{"id":3},{"id":4},{"id":5}]'::jsonb,
   true
 )
 on conflict (id) do update set
@@ -78,6 +95,17 @@ on conflict (id) do update set
   hours = excluded.hours,
   address = excluded.address,
   map_image = excluded.map_image,
+  hero_image1 = excluded.hero_image1,
+  hero_image2 = excluded.hero_image2,
+  detail_image = excluded.detail_image,
+  limited_name = excluded.limited_name,
+  limited_desc = excluded.limited_desc,
+  limited_image = excluded.limited_image,
+  limited_product = excluded.limited_product,
+  limited_price = excluded.limited_price,
+  regular_brand = excluded.regular_brand,
+  regular_desc = excluded.regular_desc,
+  regular_items = excluded.regular_items,
   is_primary = excluded.is_primary;
 select setval(pg_get_serial_sequence('public.stores', 'id'), greatest((select max(id) from public.stores), 1), true);
 

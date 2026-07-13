@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=170" />
+  <link rel="stylesheet" href="styles.css?v=182" />
 </head>
 <body class="admin-body">
   <!-- ログインゲート（※簡易・本番では本物の認証に差し替える） -->
@@ -317,7 +317,7 @@
           <div class="admin__panel-head">
             <h2 class="admin__panel-title">会員管理（権限）</h2>
           </div>
-          <p class="admin__panel-note">新しいバックエンドの認証APIを接続すると、会員一覧と権限変更をここで管理できます。</p>
+          <p class="admin__panel-note">登録済み会員の権限を管理できます。</p>
           <div class="admin__table-wrap">
             <table class="admin-table admin-table--stack" id="memberTable">
               <thead>
@@ -516,7 +516,7 @@
             <h2 class="admin__panel-title">店舗情報管理</h2>
             <button class="btn btn--primary btn--sm" id="addStoreBtn">＋ 店舗を追加</button>
           </div>
-          <p class="settings-form__note">店舗を追加・編集・削除できます。「照国本店（主店舗）」は店舗ページ（store-terukuni.html）に、追加した店舗は店舗詳細ページ（store-detail.html?id=◯）に反映されます。</p>
+          <p class="settings-form__note">店舗を追加・編集・削除できます。</p>
           <div class="admin__table-wrap">
             <table class="admin-table admin-table--stack" id="storeTable">
               <thead>
@@ -552,7 +552,7 @@
             <p class="settings-form__note">トップ最上部のヒーロー画像と、右下に表示されるコンセプト文です。画像は自動で縮小して保存され、クリアすると初期画像に戻ります。</p>
             <div class="settings-img-grid">
               <div class="field">
-                <span>ヒーロー画像</span>
+                <span>1枚目</span>
                 <div class="img-upload">
                   <div class="img-upload__preview" id="heroPreview"></div>
                   <div class="img-upload__side">
@@ -561,10 +561,46 @@
                   </div>
                 </div>
               </div>
+              <div class="field">
+                <span>2枚目</span>
+                <div class="img-upload">
+                  <div class="img-upload__preview" id="hero2Preview"></div>
+                  <div class="img-upload__side">
+                    <label class="img-upload__btn">画像を選択<input type="file" id="hero2File" accept="image/*" hidden /></label>
+                    <button type="button" class="img-upload__clear" id="hero2Clear">クリア</button>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <span>3枚目</span>
+                <div class="img-upload">
+                  <div class="img-upload__preview" id="hero3Preview"></div>
+                  <div class="img-upload__side">
+                    <label class="img-upload__btn">画像を選択<input type="file" id="hero3File" accept="image/*" hidden /></label>
+                    <button type="button" class="img-upload__clear" id="hero3Clear">クリア</button>
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <span>4枚目</span>
+                <div class="img-upload">
+                  <div class="img-upload__preview" id="hero4Preview"></div>
+                  <div class="img-upload__side">
+                    <label class="img-upload__btn">画像を選択<input type="file" id="hero4File" accept="image/*" hidden /></label>
+                    <button type="button" class="img-upload__clear" id="hero4Clear">クリア</button>
+                  </div>
+                </div>
+              </div>
             </div>
             <label class="field"><span>ラベル（小見出し）</span><input type="text" id="txt_heroConceptLabel" /></label>
-            <label class="field"><span>見出し</span><input type="text" id="txt_heroConceptHead" /></label>
-            <label class="field"><span>本文</span><textarea id="txt_heroConceptBody" rows="3"></textarea></label>
+            <label class="field"><span>1枚目の見出し</span><input type="text" id="txt_heroConceptHead" /></label>
+            <label class="field"><span>1枚目の本文</span><textarea id="txt_heroConceptBody" rows="3"></textarea></label>
+            <label class="field"><span>2枚目の見出し</span><input type="text" id="txt_heroSlide2Head" /></label>
+            <label class="field"><span>2枚目の本文</span><textarea id="txt_heroSlide2Body" rows="3"></textarea></label>
+            <label class="field"><span>3枚目の見出し</span><input type="text" id="txt_heroSlide3Head" /></label>
+            <label class="field"><span>3枚目の本文</span><textarea id="txt_heroSlide3Body" rows="3"></textarea></label>
+            <label class="field"><span>4枚目の見出し</span><input type="text" id="txt_heroSlide4Head" /></label>
+            <label class="field"><span>4枚目の本文</span><textarea id="txt_heroSlide4Body" rows="3"></textarea></label>
 
             <!-- ステートメント（RANKINGの上：画像＋見出し＋本文） -->
             <h3 class="settings-section__title">ステートメント（RANKINGの上）</h3>
@@ -619,7 +655,6 @@
                 </div>
               </div>
             </div>
-            <label class="field"><span>小見出し（英字ラベル）</span><input type="text" id="txt_howtoEyebrow" /></label>
             <label class="field"><span>見出し（改行可）</span><textarea id="txt_howtoTitle" rows="2"></textarea></label>
             <label class="field"><span>おすすめ本文（改行可）</span><textarea id="txt_howtoRecommendText" rows="3"></textarea></label>
 
@@ -845,6 +880,18 @@
       </div>
       <label class="field"><span>タイトル *</span><input type="text" id="newsFieldTitle" required placeholder="お知らせの見出しを入力" /></label>
       <label class="field"><span>リンク先URL（任意）</span><input type="text" id="newsFieldUrl" placeholder="https://… または 空欄（#）" /></label>
+      <div class="field">
+        <span>詳細画像</span>
+        <div class="img-upload">
+          <div class="img-upload__preview" id="newsImagePreview"></div>
+          <div class="img-upload__side">
+            <label class="img-upload__btn">画像を選択<input type="file" id="newsImageFile" accept="image/*" hidden /></label>
+            <button type="button" class="img-upload__clear" id="newsImageClear">クリア</button>
+            <p class="img-upload__hint">未設定の場合は既定画像が表示されます。</p>
+          </div>
+        </div>
+      </div>
+      <label class="field"><span>詳細本文（任意）</span><textarea id="newsFieldBody" rows="7" placeholder="改行で本文を入力できます。空欄の場合は既定本文が表示されます。"></textarea></label>
       <div class="admin-modal__actions">
         <button type="button" class="btn btn--ghost btn--sm" id="newsCancelBtn">キャンセル</button>
         <button type="submit" class="btn btn--primary btn--sm">保存する</button>
@@ -862,8 +909,19 @@
         <label class="field"><span>日付 *</span><input type="date" id="journalFieldDate" required /></label>
         <label class="field"><span>カテゴリ *</span><input type="text" id="journalFieldCat" required placeholder="Store / Craft / Recipe など" /></label>
       </div>
-      <label class="field"><span>タイトル *</span><input type="text" id="journalFieldTitle" required placeholder="記事の見出しを入力" /></label>
-      <label class="field"><span>画像URL（任意）</span><input type="text" id="journalFieldImage" placeholder="例：images/basque-cheesecake.png" /></label>
+      <label class="field"><span>タイトル *</span><textarea id="journalFieldTitle" class="journal-title-input" rows="3" required placeholder="記事の見出しを入力"></textarea></label>
+      <div class="field">
+        <span>画像</span>
+        <div class="img-upload">
+          <div class="img-upload__preview" id="journalImagePreview"></div>
+          <div class="img-upload__side">
+            <label class="img-upload__btn">画像を選択<input type="file" id="journalImageFile" accept="image/*" hidden /></label>
+            <button type="button" class="img-upload__clear" id="journalImageClear">クリア</button>
+            <p class="img-upload__hint">未設定の場合は既定画像が表示されます。</p>
+          </div>
+        </div>
+        <input type="hidden" id="journalFieldImage" />
+      </div>
       <label class="field"><span>本文（任意・空欄なら自動生成）</span><textarea id="journalFieldBody" rows="6" placeholder="改行で段落を区切って入力できます。"></textarea></label>
       <div class="admin-modal__actions">
         <button type="button" class="btn btn--ghost btn--sm" id="journalCancelBtn">キャンセル</button>
@@ -898,6 +956,61 @@
       <label class="field"><span>開店日</span><input type="text" id="storeOpenDate" placeholder="2025年4月1日（火）" /></label>
       <label class="field"><span>営業時間（改行で行分け）</span><textarea id="storeHours" rows="4"></textarea></label>
       <label class="field"><span>住所</span><input type="text" id="storeAddress" placeholder="〒892-0841 鹿児島県鹿児島市照国町14-15" /></label>
+      <h3 class="settings-section__title">店舗詳細画像</h3>
+      <div class="settings-img-grid">
+        <div class="field">
+          <span>ヒーロー画像 1</span>
+          <div class="img-upload">
+            <div class="img-upload__preview" id="storeHero1Preview"></div>
+            <div class="img-upload__side">
+              <label class="img-upload__btn">画像を選択<input type="file" id="storeHero1File" accept="image/*" hidden /></label>
+              <button type="button" class="img-upload__clear" id="storeHero1Clear">クリア</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <span>ヒーロー画像 2</span>
+          <div class="img-upload">
+            <div class="img-upload__preview" id="storeHero2Preview"></div>
+            <div class="img-upload__side">
+              <label class="img-upload__btn">画像を選択<input type="file" id="storeHero2File" accept="image/*" hidden /></label>
+              <button type="button" class="img-upload__clear" id="storeHero2Clear">クリア</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <span>詳細本文画像</span>
+          <div class="img-upload">
+            <div class="img-upload__preview" id="storeDetailImagePreview"></div>
+            <div class="img-upload__side">
+              <label class="img-upload__btn">画像を選択<input type="file" id="storeDetailImageFile" accept="image/*" hidden /></label>
+              <button type="button" class="img-upload__clear" id="storeDetailImageClear">クリア</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h3 class="settings-section__title">店舗限定商品</h3>
+      <label class="field"><span>商品見出し</span><input type="text" id="storeLimitedName" /></label>
+      <label class="field"><span>説明文</span><textarea id="storeLimitedDesc" rows="3"></textarea></label>
+      <label class="field"><span>商品名</span><input type="text" id="storeLimitedProduct" /></label>
+      <label class="field"><span>価格</span><input type="text" id="storeLimitedPrice" /></label>
+      <div class="field">
+        <span>商品画像</span>
+        <div class="img-upload">
+          <div class="img-upload__preview" id="storeLimitedImagePreview"></div>
+          <div class="img-upload__side">
+            <label class="img-upload__btn">画像を選択<input type="file" id="storeLimitedImageFile" accept="image/*" hidden /></label>
+            <button type="button" class="img-upload__clear" id="storeLimitedImageClear">クリア</button>
+          </div>
+        </div>
+      </div>
+      <h3 class="settings-section__title">定番・その他商品</h3>
+      <label class="field"><span>ブランド見出し</span><input type="text" id="storeRegularBrand" /></label>
+      <label class="field"><span>説明文</span><textarea id="storeRegularDesc" rows="3"></textarea></label>
+      <div class="field">
+        <span>表示する商品</span>
+        <div class="store-product-picker" id="storeRegularProductList"></div>
+      </div>
       <div class="field">
         <span>地図画像</span>
         <div class="img-upload">
@@ -926,15 +1039,15 @@
   <script src="customers.js?v=4"></script>
   <script src="inquiries.js?v=3"></script>
   <script src="applicants.js?v=6"></script>
-  <script src="settings.js?v=3"></script>
-  <script src="news.js?v=5"></script>
-  <script src="journal.js?v=1"></script>
+  <script src="settings.js?v=8"></script>
+  <script src="news.js?v=7"></script>
+  <script src="journal.js?v=5"></script>
   <script src="faq.js?v=4"></script>
   <script src="recruit.js?v=6"></script>
-  <script src="topics.js?v=3"></script>
+  <script src="topics.js?v=4"></script>
   <script src="subscribers.js?v=1"></script>
   <script src="bestseller.js?v=1"></script>
-  <script src="storeinfo.js?v=2"></script>
-  <script src="admin.js?v=2"></script>
+  <script src="storeinfo.js?v=3"></script>
+  <script src="admin.js?v=17"></script>
 </body>
 </html>

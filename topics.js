@@ -2,7 +2,7 @@
 //  Data Access Layer — TopicStore
 //  ------------------------------------------------------------
 //  トップページ TOPICS セクションのカードを保存・取得する層。
-//  カードの形: { image, title, desc, url }
+  //  カードの形: { image, title, desc, url, detailImage, body }
 //    image … 画像URL or データURL（アップロード時）
 // ============================================================
 (function (global) {
@@ -14,10 +14,10 @@
   // ニュース（お知らせ）と内容が被らないよう、トピックスは
   //  「店舗・食べ方・こだわり・贈り物」など読みもの寄りの訴求にする。
   const SEED = [
-    { image: "images/terukuni-store.jpg", title: "照国本店、カフェスペースのご案内", desc: "焼きたて・解凍したての一皿をその場で。エスプレッソやお茶とともにお楽しみいただけます。", url: "#" },
-    { image: "images/souffle-cheesecake.png", title: "“熟成冷凍”のおいしい解凍ガイド", desc: "室温で約1時間。半解凍とフル解凍で変わる、口どけの違いをご紹介します。", url: "#" },
-    { image: "images/basque-cheesecake.png", title: "バスクチーズケーキ専門店としてのこだわり", desc: "高温で焼き上げる表面のほろ苦さと、とろける中心。私たちの原点の一台です。", url: "#" },
-    { image: "images/truffle-collection.png", title: "ご褒美に、トリュフチョコレートの詰め合わせ", desc: "ひと粒に込めた濃密なひととき。大切な方への贈り物にもおすすめです。", url: "#" },
+    { image: "images/terukuni-store.jpg", title: "照国本店、カフェスペースのご案内", desc: "焼きたて・解凍したての一皿をその場で。エスプレッソやお茶とともにお楽しみいただけます。", url: "#", detailImage: "", body: "" },
+    { image: "images/souffle-cheesecake.png", title: "“熟成冷凍”のおいしい解凍ガイド", desc: "室温で約1時間。半解凍とフル解凍で変わる、口どけの違いをご紹介します。", url: "#", detailImage: "", body: "" },
+    { image: "images/basque-cheesecake.png", title: "バスクチーズケーキ専門店としてのこだわり", desc: "高温で焼き上げる表面のほろ苦さと、とろける中心。私たちの原点の一台です。", url: "#", detailImage: "", body: "" },
+    { image: "images/truffle-collection.png", title: "ご褒美に、トリュフチョコレートの詰め合わせ", desc: "ひと粒に込めた濃密なひととき。大切な方への贈り物にもおすすめです。", url: "#", detailImage: "", body: "" },
   ];
 
   function read() {
@@ -30,7 +30,7 @@
     }
     try {
       const data = JSON.parse(raw);
-      return Array.isArray(data) ? data : JSON.parse(JSON.stringify(SEED));
+      return Array.isArray(data) ? data.map((t) => ({ detailImage: "", body: "", ...t })) : JSON.parse(JSON.stringify(SEED));
     } catch {
       return JSON.parse(JSON.stringify(SEED));
     }
@@ -45,13 +45,13 @@
     if (!global.sb) return null;
     const { data, error } = await global.sb
       .from("topics")
-      .select("image, title, description, url, sort_order")
+      .select("image, title, description, url, detail_image, body, sort_order")
       .order("sort_order", { ascending: true });
     if (error) {
       console.error("[TopicStore] Supabase の取得に失敗しました:", error);
       return null;
     }
-    return (data || []).map((t) => ({ image: t.image, title: t.title, desc: t.description, url: t.url }));
+    return (data || []).map((t) => ({ image: t.image, title: t.title, desc: t.description, url: t.url, detailImage: t.detail_image || "", body: t.body || "" }));
   }
 
   const TopicStore = {
@@ -66,6 +66,8 @@
         title: (t.title || "").trim(),
         desc: (t.desc || "").trim(),
         url: (t.url || "").trim() || "#",
+        detailImage: t.detailImage || "",
+        body: (t.body || "").trim(),
       }));
       if (global.sb) {
         const { error: deleteError } = await global.sb.from("topics").delete().neq("id", 0);
@@ -77,6 +79,8 @@
               title: t.title,
               description: t.desc,
               url: t.url,
+              detail_image: t.detailImage,
+              body: t.body,
               sort_order: i + 1,
             }))
           );
@@ -102,6 +106,15 @@
     String(s ?? "").replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
     );
+
+  function bodyToHtml(body) {
+    return String(body || "")
+      .split(/\n{2,}/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+      .map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`)
+      .join("");
+  }
 
   async function renderPublicTopics() {
     const row = document.getElementById("topicsRow");
@@ -150,6 +163,12 @@
     }
 
     const title = escapeHtml(t.title);
+    const detailImage = t.detailImage || t.image;
+    const detailBody = t.body && t.body.trim()
+      ? bodyToHtml(t.body)
+      : `
+        <p>SATSUMA NOIR では、独自の“熟成冷凍”加工により、解凍後がいちばんの食べごろとなるよう、ひとつひとつ手仕事で丁寧に仕上げております。室温で1時間ほど解凍していただくと、外側はしっとり、中心はとろりとほどけるような口どけに変わります。</p>
+        <p>最新のお知らせやご注文については、NEWS ページもあわせてご覧ください。</p>`;
     document.title = `${t.title} — TOPICS — SATSUMA NOIR`;
 
     root.innerHTML = `
@@ -165,10 +184,10 @@
         <p>${escapeHtml(t.desc)}</p>
 
         <figure class="news-article__figure">
-          <img class="news-article__img" src="${escapeHtml(t.image)}" alt="${title}" loading="lazy" />
+          <img class="news-article__img" src="${escapeHtml(detailImage)}" alt="${title}" loading="lazy" />
         </figure>
 
-        <p>SATSUMA NOIR では、独自の“熟成冷凍”加工により、解凍後がいちばんの食べごろとなるよう、ひとつひとつ手仕事で丁寧に仕上げております。室温で1時間ほど解凍していただくと、外側はしっとり、中心はとろりとほどけるような口どけに変わります。最新のお知らせやご注文については、NEWS ページもあわせてご覧ください。</p>
+        ${detailBody}
       </div>
 
       <div class="section-more"><a href="news.html" class="btn btn--ghost">お知らせ一覧へ</a></div>`;

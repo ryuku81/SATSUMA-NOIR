@@ -373,6 +373,92 @@ const salesToEl = document.getElementById("salesTo");
 salesFromEl.addEventListener("change", renderSalesSummary);
 salesToEl.addEventListener("change", renderSalesSummary);
 
+function setupCenteredDatePicker(input) {
+  if (!input || input.classList.contains("dash-date--custom")) return;
+  let viewDate = input.value ? new Date(`${input.value}T00:00:00`) : new Date();
+  input.type = "text";
+  input.readOnly = true;
+  input.classList.add("dash-date--custom");
+
+  const fmt = (d) => {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  const parse = (v) => {
+    const [y, m, d] = String(v || "").split("-").map(Number);
+    return y && m && d ? new Date(y, m - 1, d) : new Date();
+  };
+  const sameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+  function close() {
+    document.querySelector(".date-picker")?.remove();
+  }
+
+  function render() {
+    close();
+    const selected = parse(input.value);
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth();
+    const first = new Date(year, month, 1);
+    const start = new Date(year, month, 1 - first.getDay());
+    const days = Array.from({ length: 42 }, (_, i) => {
+      const d = addDays(start, i);
+      const isCurrent = d.getMonth() === month;
+      const isSelected = sameDay(d, selected);
+      return `<button type="button" class="date-picker__day${isCurrent ? "" : " is-muted"}${isSelected ? " is-selected" : ""}" data-date="${fmt(d)}">${d.getDate()}</button>`;
+    }).join("");
+
+    const picker = document.createElement("div");
+    picker.className = "date-picker";
+    picker.innerHTML = `
+      <div class="date-picker__overlay" data-close></div>
+      <div class="date-picker__box" role="dialog" aria-modal="true" aria-label="日付を選択">
+        <div class="date-picker__head">
+          <button type="button" class="date-picker__nav" data-prev aria-label="前の月">‹</button>
+          <strong class="date-picker__title">${year}/${String(month + 1).padStart(2, "0")}</strong>
+          <button type="button" class="date-picker__nav" data-next aria-label="次の月">›</button>
+        </div>
+        <div class="date-picker__week"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+        <div class="date-picker__grid">${days}</div>
+      </div>`;
+    document.body.appendChild(picker);
+
+    picker.addEventListener("click", (e) => {
+      if (e.target.closest("[data-close]")) close();
+      if (e.target.closest("[data-prev]")) {
+        viewDate = new Date(year, month - 1, 1);
+        render();
+      }
+      if (e.target.closest("[data-next]")) {
+        viewDate = new Date(year, month + 1, 1);
+        render();
+      }
+      const day = e.target.closest("[data-date]");
+      if (day) {
+        input.value = day.dataset.date;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        close();
+      }
+    });
+  }
+
+  input.addEventListener("click", () => {
+    viewDate = parse(input.value);
+    render();
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      viewDate = parse(input.value);
+      render();
+    }
+    if (e.key === "Escape") close();
+  });
+}
+
+document.querySelectorAll('input[type="date"]').forEach(setupCenteredDatePicker);
+
 async function renderDashboard() {
   const [alerts, orders, customers] = await Promise.all([
     ProductStore.findStockAlerts(),
@@ -720,7 +806,7 @@ customerForm.addEventListener("submit", async (e) => {
 
 // ------------------------------------------------------------
 //  会員管理（バックエンド認証ユーザーの role 変更）
-//  新しいバックエンド接続後にユーザー一覧を取得し、admin/member を切り替える。
+//  Supabase Auth と public.users を使い、admin/member を切り替える。
 // ------------------------------------------------------------
 const memberRows = document.getElementById("memberRows");
 
@@ -750,7 +836,7 @@ async function renderMembers() {
       const label = m.role === "admin" ? "会員に戻す" : "管理者にする";
       const action = isSelf
         ? `自分（あなた）`
-        : `<button class="admin-op" data-mrole="${m.id}" data-next="${next}">${label}</button>`;
+        : `<button class="admin-op" data-mrole="${m.id}" data-next="${next}" data-email="${escapeHtml(m.email || "")}">${label}</button>`;
       return `
     <tr>
       <td class="admin-nowrap" data-label="メール">${escapeHtml(m.email || "")}</td>
@@ -768,10 +854,13 @@ if (memberRows) {
     const btn = e.target.closest("[data-mrole]");
     if (!btn) return;
     const next = btn.dataset.next;
+    const email = btn.dataset.email || "この会員";
+    const nextLabel = next === "admin" ? "管理者" : "会員";
+    if (!confirm(`${email} を${nextLabel}に変更します。よろしいですか？`)) return;
     const { error } = await Auth.updateUserRole(btn.dataset.mrole, next);
     if (error) {
       console.error("権限の変更に失敗しました:", error);
-      showToast("権限の変更に失敗しました。");
+      showToast(`権限の変更に失敗しました。${error.message || ""}`);
       return;
     }
     showToast(next === "admin" ? "管理者に変更しました。" : "会員に変更しました。");
@@ -1048,7 +1137,12 @@ const NF = {
   cat: document.getElementById("newsFieldCat"),
   title: document.getElementById("newsFieldTitle"),
   url: document.getElementById("newsFieldUrl"),
+  body: document.getElementById("newsFieldBody"),
 };
+const newsImagePreview = document.getElementById("newsImagePreview");
+const newsImageFile = document.getElementById("newsImageFile");
+const newsImageClear = document.getElementById("newsImageClear");
+let newsImage = "";
 
 const dotDate = (d) => String(d ?? "").replace(/-/g, ".");
 
@@ -1078,15 +1172,28 @@ async function renderNews() {
 function openNewsModal(item) {
   document.getElementById("newsModalTitle").textContent = item ? "お知らせを編集" : "お知らせを追加";
   NF.id.value = item?.id ?? "";
-  NF.date.value = item?.date ?? "";
+  NF.date.value = item?.date ?? ymd(new Date());
   NF.cat.value = item?.cat ?? "";
   NF.title.value = item?.title ?? "";
   NF.url.value = item && item.url && item.url !== "#" ? item.url : "";
+  NF.body.value = item?.body ?? "";
+  newsImage = item?.image ?? "";
+  newsImageFile.value = "";
+  renderNewsImagePreview();
   newsModal.hidden = false;
 }
 function closeNewsModal() {
   newsModal.hidden = true;
   newsForm.reset();
+  newsImage = "";
+  newsImageFile.value = "";
+  renderNewsImagePreview();
+}
+
+function renderNewsImagePreview() {
+  newsImagePreview.innerHTML = newsImage
+    ? `<img src="${escapeHtml(newsImage)}" alt="" />`
+    : `<span class="img-upload__empty">既定画像</span>`;
 }
 
 document.getElementById("addNewsBtn").addEventListener("click", () => openNewsModal(null));
@@ -1103,6 +1210,8 @@ newsForm.addEventListener("submit", async (e) => {
     cat: NF.cat.value.trim(),
     title: NF.title.value.trim(),
     url: NF.url.value.trim() || "#",
+    body: NF.body.value.trim(),
+    image: newsImage,
   };
   if (!data.date || !data.cat || !data.title) {
     showToast("日付・カテゴリ・タイトルは必須です。");
@@ -1110,6 +1219,8 @@ newsForm.addEventListener("submit", async (e) => {
   }
   try {
     const id = NF.id.value;
+    const actionLabel = id ? "更新" : "追加";
+    if (!confirm(`「${data.title}」のお知らせを${actionLabel}します。よろしいですか？`)) return;
     if (id) {
       await NewsStore.update(id, data);
       showToast("お知らせを更新しました。");
@@ -1123,6 +1234,28 @@ newsForm.addEventListener("submit", async (e) => {
     console.error("お知らせの保存に失敗しました:", err);
     showToast("保存に失敗しました。");
   }
+});
+
+newsImageFile.addEventListener("change", async () => {
+  const file = newsImageFile.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    showToast("画像ファイルを選択してください。");
+    return;
+  }
+  try {
+    newsImage = await uploadImageToStorage(file, "site-images", "news", 1400, 0.82);
+    renderNewsImagePreview();
+  } catch (err) {
+    console.error("ニュース画像の処理に失敗しました:", err);
+    showToast("画像の処理に失敗しました。");
+  }
+});
+
+newsImageClear.addEventListener("click", () => {
+  newsImage = "";
+  newsImageFile.value = "";
+  renderNewsImagePreview();
 });
 
 newsRows.addEventListener("click", async (e) => {
@@ -1157,6 +1290,9 @@ const JF = {
   image: document.getElementById("journalFieldImage"),
   body: document.getElementById("journalFieldBody"),
 };
+const journalImagePreview = document.getElementById("journalImagePreview");
+const journalImageFile = document.getElementById("journalImageFile");
+const journalImageClear = document.getElementById("journalImageClear");
 
 async function renderJournal() {
   const items = await JournalStore.findAll();
@@ -1184,16 +1320,26 @@ async function renderJournal() {
 function openJournalModal(item) {
   document.getElementById("journalModalTitle").textContent = item ? "記事を編集" : "記事を追加";
   JF.id.value = item?.id ?? "";
-  JF.date.value = item?.date ?? "";
+  JF.date.value = item?.date ?? ymd(new Date());
   JF.cat.value = item?.cat ?? "";
   JF.title.value = item?.title ?? "";
   JF.image.value = item?.image ?? "";
   JF.body.value = item?.body ?? "";
+  journalImageFile.value = "";
+  renderJournalImagePreview();
   journalModal.hidden = false;
 }
 function closeJournalModal() {
   journalModal.hidden = true;
   journalForm.reset();
+  journalImageFile.value = "";
+  renderJournalImagePreview();
+}
+
+function renderJournalImagePreview() {
+  journalImagePreview.innerHTML = JF.image.value
+    ? `<img src="${escapeHtml(JF.image.value)}" alt="" />`
+    : `<span class="img-upload__empty">既定画像</span>`;
 }
 
 document.getElementById("addJournalBtn").addEventListener("click", () => openJournalModal(null));
@@ -1218,6 +1364,8 @@ journalForm.addEventListener("submit", async (e) => {
   }
   try {
     const id = JF.id.value;
+    const actionLabel = id ? "更新" : "追加";
+    if (!confirm(`「${data.title}」の記事を${actionLabel}します。よろしいですか？`)) return;
     if (id) {
       await JournalStore.update(id, data);
       showToast("記事を更新しました。");
@@ -1231,6 +1379,28 @@ journalForm.addEventListener("submit", async (e) => {
     console.error("記事の保存に失敗しました:", err);
     showToast("保存に失敗しました。");
   }
+});
+
+journalImageFile.addEventListener("change", async () => {
+  const file = journalImageFile.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    showToast("画像ファイルを選択してください。");
+    return;
+  }
+  try {
+    JF.image.value = await uploadImageToStorage(file, "site-images", "journal", 1400, 0.82);
+    renderJournalImagePreview();
+  } catch (err) {
+    console.error("ジャーナル画像の処理に失敗しました:", err);
+    showToast("画像の処理に失敗しました。");
+  }
+});
+
+journalImageClear.addEventListener("click", () => {
+  JF.image.value = "";
+  journalImageFile.value = "";
+  renderJournalImagePreview();
 });
 
 journalRows.addEventListener("click", async (e) => {
@@ -1323,6 +1493,8 @@ faqForm.addEventListener("submit", async (e) => {
   }
   try {
     const id = QF.id.value;
+    const actionLabel = id ? "更新" : "追加";
+    if (!confirm(`「${data.q}」のFAQを${actionLabel}します。よろしいですか？`)) return;
     if (id) {
       await FaqStore.update(id, data);
       showToast("FAQを更新しました。");
@@ -1434,6 +1606,7 @@ recruitForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   syncRecruitPositionsFromDOM();
   const positions = recruitPositionsState.map((p) => p.trim()).filter((p) => p);
+  if (!confirm("採用情報の変更を保存します。よろしいですか？")) return;
   try {
     await RecruitStore.update({
       lead: RF.lead.value.trim(),
@@ -1590,12 +1763,15 @@ const SF = {
 // トップページ各所の文章（id は "txt_" + 設定キー）。
 const SITE_TEXT_KEYS = [
   "heroConceptLabel", "heroConceptHead", "heroConceptBody",
+  "heroSlide2Head", "heroSlide2Body",
+  "heroSlide3Head", "heroSlide3Body",
+  "heroSlide4Head", "heroSlide4Body",
   "statementHead", "statementBody",
-  "howtoEyebrow", "howtoTitle", "howtoRecommendText",
+  "howtoTitle", "howtoRecommendText",
 ];
 
 // メインビジュアル画像の編集状態（data URL。空なら既定画像）
-const siteImages = { heroImage: "", statementImage: "", howtoImage1: "", howtoImage2: "", howtoImage3: "", aboutImage: "" };
+const siteImages = { heroImage: "", heroImage2: "", heroImage3: "", heroImage4: "", statementImage: "", howtoImage1: "", howtoImage2: "", howtoImage3: "", aboutImage: "" };
 
 // 画像アップロード欄を 1 セット分セットアップする汎用ヘルパー
 function setupImageField(key, previewId, fileId, clearId) {
@@ -1636,6 +1812,9 @@ function setupImageField(key, previewId, fileId, clearId) {
 }
 
 const renderHeroPreview = setupImageField("heroImage", "heroPreview", "heroFile", "heroClear");
+const renderHero2Preview = setupImageField("heroImage2", "hero2Preview", "hero2File", "hero2Clear");
+const renderHero3Preview = setupImageField("heroImage3", "hero3Preview", "hero3File", "hero3Clear");
+const renderHero4Preview = setupImageField("heroImage4", "hero4Preview", "hero4File", "hero4Clear");
 const renderStmtPreview = setupImageField("statementImage", "stmtPreview", "stmtFile", "stmtClear");
 const renderHowto1Preview = setupImageField("howtoImage1", "howto1Preview", "howto1File", "howto1Clear");
 const renderHowto2Preview = setupImageField("howtoImage2", "howto2Preview", "howto2File", "howto2Clear");
@@ -1654,12 +1833,18 @@ async function renderSettings() {
     if (el) el.value = settings[key] || "";
   });
   siteImages.heroImage = settings.heroImage || "";
+  siteImages.heroImage2 = settings.heroImage2 || "";
+  siteImages.heroImage3 = settings.heroImage3 || "";
+  siteImages.heroImage4 = settings.heroImage4 || "";
   siteImages.statementImage = settings.statementImage || "";
   siteImages.howtoImage1 = settings.howtoImage1 || "";
   siteImages.howtoImage2 = settings.howtoImage2 || "";
   siteImages.howtoImage3 = settings.howtoImage3 || "";
   siteImages.aboutImage = settings.aboutImage || "";
   renderHeroPreview();
+  renderHero2Preview();
+  renderHero3Preview();
+  renderHero4Preview();
   renderStmtPreview();
   renderHowto1Preview();
   renderHowto2Preview();
@@ -1690,14 +1875,22 @@ function renderTopicsEditor() {
       (t, i) => `
     <div class="topic-edit" data-i="${i}">
       <div class="topic-edit__img">
+        <span class="topic-edit__label">カード画像</span>
         <div class="img-upload__preview topic-edit__preview">${
           t.image ? `<img src="${escapeHtml(t.image)}" alt="" />` : `<span class="img-upload__empty">画像なし</span>`
         }</div>
         <label class="img-upload__btn">画像を選択<input type="file" class="topic-edit__file" data-i="${i}" accept="image/*" hidden /></label>
+        <span class="topic-edit__label">詳細画像</span>
+        <div class="img-upload__preview topic-edit__preview">${
+          t.detailImage ? `<img src="${escapeHtml(t.detailImage)}" alt="" />` : `<span class="img-upload__empty">カード画像</span>`
+        }</div>
+        <label class="img-upload__btn">画像を選択<input type="file" class="topic-edit__detail-file" data-i="${i}" accept="image/*" hidden /></label>
+        <button type="button" class="img-upload__clear topic-edit__detail-clear" data-i="${i}">クリア</button>
       </div>
       <div class="topic-edit__fields">
         <input type="text" class="topic-edit__title" data-i="${i}" placeholder="タイトル" value="${escapeHtml(t.title)}" />
-        <textarea class="topic-edit__desc" data-i="${i}" rows="2" placeholder="説明">${escapeHtml(t.desc)}</textarea>
+        <textarea class="topic-edit__desc" data-i="${i}" rows="2" placeholder="カード説明">${escapeHtml(t.desc)}</textarea>
+        <textarea class="topic-edit__body" data-i="${i}" rows="6" placeholder="詳細本文（空欄の場合は既定文が表示されます）">${escapeHtml(t.body || "")}</textarea>
       </div>
       <button type="button" class="admin-op admin-op--danger topic-edit__del" data-i="${i}">削除</button>
     </div>`
@@ -1713,19 +1906,26 @@ function syncTopicsFromDOM() {
     if (!topicsState[i]) return;
     topicsState[i].title = row.querySelector(".topic-edit__title").value;
     topicsState[i].desc = row.querySelector(".topic-edit__desc").value;
+    topicsState[i].body = row.querySelector(".topic-edit__body").value;
   });
 }
 
 if (topicsEditor) {
   document.getElementById("addTopicBtn").addEventListener("click", () => {
     syncTopicsFromDOM();
-    topicsState.push({ image: "", title: "", desc: "", url: "news.html" });
+    topicsState.push({ image: "", title: "", desc: "", url: "news.html", detailImage: "", body: "" });
     renderTopicsEditor();
+    const added = topicsEditor.querySelector(".topic-edit:last-child");
+    if (added) {
+      added.scrollIntoView({ behavior: "smooth", block: "center" });
+      added.querySelector(".topic-edit__title")?.focus({ preventScroll: true });
+    }
   });
 
   document.getElementById("saveTopicsBtn").addEventListener("click", async () => {
     try {
       syncTopicsFromDOM();
+      if (!confirm("TOPICS の変更を保存します。よろしいですか？")) return;
       await TopicStore.saveAll(topicsState);
       showToast("TOPICS を保存しました。");
     } catch (err) {
@@ -1737,23 +1937,35 @@ if (topicsEditor) {
 
   topicsEditor.addEventListener("click", (e) => {
     const del = e.target.closest(".topic-edit__del");
-    if (!del) return;
-    syncTopicsFromDOM();
-    topicsState.splice(Number(del.dataset.i), 1);
-    renderTopicsEditor();
+    const detailClear = e.target.closest(".topic-edit__detail-clear");
+    if (del) {
+      syncTopicsFromDOM();
+      const i = Number(del.dataset.i);
+      topicsState.splice(i, 1);
+      renderTopicsEditor();
+    }
+    if (detailClear) {
+      syncTopicsFromDOM();
+      topicsState[Number(detailClear.dataset.i)].detailImage = "";
+      renderTopicsEditor();
+    }
   });
 
   topicsEditor.addEventListener("change", async (e) => {
     const file = e.target.closest(".topic-edit__file");
-    if (!file || !file.files[0]) return;
-    if (!file.files[0].type.startsWith("image/")) {
+    const detailFile = e.target.closest(".topic-edit__detail-file");
+    const input = file || detailFile;
+    if (!input || !input.files[0]) return;
+    if (!input.files[0].type.startsWith("image/")) {
       showToast("画像ファイルを選択してください。");
       return;
     }
     try {
       syncTopicsFromDOM();
-      const i = Number(file.dataset.i);
-      topicsState[i].image = await compressImage(file.files[0], 1200, 0.82);
+      const i = Number(input.dataset.i);
+      const uploaded = await uploadImageToStorage(input.files[0], "site-images", "topics", 1200, 0.82);
+      if (detailFile) topicsState[i].detailImage = uploaded;
+      else topicsState[i].image = uploaded;
       renderTopicsEditor();
     } catch (err) {
       console.error("画像の処理に失敗しました:", err);
@@ -1853,6 +2065,7 @@ if (bestsellerEditor) {
 
   document.getElementById("saveBestsellerBtn").addEventListener("click", () => {
     try {
+      if (!confirm("人気商品の表示内容を保存します。よろしいですか？")) return;
       BestSellerStore.saveIds(bestsellerIds);
       showToast("人気商品を保存しました。");
     } catch (err) {
@@ -1875,15 +2088,94 @@ const STF = {
   openDate: document.getElementById("storeOpenDate"),
   hours: document.getElementById("storeHours"),
   address: document.getElementById("storeAddress"),
+  limitedName: document.getElementById("storeLimitedName"),
+  limitedDesc: document.getElementById("storeLimitedDesc"),
+  limitedProduct: document.getElementById("storeLimitedProduct"),
+  limitedPrice: document.getElementById("storeLimitedPrice"),
+  regularBrand: document.getElementById("storeRegularBrand"),
+  regularDesc: document.getElementById("storeRegularDesc"),
 };
 let storeMapImage = "";
+let storeDetailImages = { heroImage1: "", heroImage2: "", detailImage: "", limitedImage: "" };
+let storeRegularProductIds = [];
 const storeMapPreview = document.getElementById("storeMapPreview");
+const storeRegularProductList = document.getElementById("storeRegularProductList");
+const storeImageControls = {
+  heroImage1: {
+    preview: document.getElementById("storeHero1Preview"),
+    file: document.getElementById("storeHero1File"),
+    clear: document.getElementById("storeHero1Clear"),
+  },
+  heroImage2: {
+    preview: document.getElementById("storeHero2Preview"),
+    file: document.getElementById("storeHero2File"),
+    clear: document.getElementById("storeHero2Clear"),
+  },
+  detailImage: {
+    preview: document.getElementById("storeDetailImagePreview"),
+    file: document.getElementById("storeDetailImageFile"),
+    clear: document.getElementById("storeDetailImageClear"),
+  },
+  limitedImage: {
+    preview: document.getElementById("storeLimitedImagePreview"),
+    file: document.getElementById("storeLimitedImageFile"),
+    clear: document.getElementById("storeLimitedImageClear"),
+  },
+};
 
 function renderStoreMapPreview() {
   if (!storeMapPreview) return;
   storeMapPreview.innerHTML = storeMapImage
     ? `<img src="${storeMapImage}" alt="プレビュー" />`
     : `<span class="img-upload__empty">初期画像</span>`;
+}
+
+function renderStoreImagePreview(key) {
+  const ctrl = storeImageControls[key];
+  if (!ctrl || !ctrl.preview) return;
+  const src = storeDetailImages[key];
+  ctrl.preview.innerHTML = src
+    ? `<img src="${escapeHtml(src)}" alt="プレビュー" />`
+    : `<span class="img-upload__empty">初期画像</span>`;
+}
+
+function renderStoreImagePreviews() {
+  Object.keys(storeImageControls).forEach(renderStoreImagePreview);
+}
+
+function selectedStoreProductIds(items, products) {
+  const byName = new Map((products || []).map((p) => [String(p.name || "").trim(), Number(p.id)]));
+  const ids = (Array.isArray(items) ? items : [])
+    .map((item) => Number(item.id || item.productId || byName.get(String(item.name || "").trim())))
+    .filter(Boolean);
+  if (!ids.length && Array.isArray(items) && items.length) {
+    return (products || []).slice(0, 5).map((p) => Number(p.id)).filter(Boolean);
+  }
+  return ids;
+}
+
+async function renderStoreRegularProductList(items = []) {
+  if (!storeRegularProductList) return;
+  const products = await ProductStore.findAll();
+  storeRegularProductIds = selectedStoreProductIds(items, products);
+  if (!products.length) {
+    storeRegularProductList.innerHTML = `<p class="img-upload__hint">商品がありません。先に商品管理で商品を追加してください。</p>`;
+    return;
+  }
+  storeRegularProductList.innerHTML = products
+    .map((p) => {
+      const checked = storeRegularProductIds.includes(Number(p.id)) ? "checked" : "";
+      return `
+        <label class="store-product-picker__item">
+          <input type="checkbox" value="${p.id}" ${checked} />
+          <span class="store-product-picker__thumb">${p.img ? `<img src="${escapeHtml(p.img)}" alt="" />` : escapeHtml(p.glyph || "")}</span>
+          <span class="store-product-picker__meta">
+            <span class="store-product-picker__name">${escapeHtml(p.name)}</span>
+            <span class="store-product-picker__price">${yen(p.price)}</span>
+          </span>
+        </label>`;
+    })
+    .join("");
 }
 
 const firstLine = (s) => String(s || "").split("\n")[0] || "—";
@@ -1912,7 +2204,7 @@ async function renderStore() {
     .join("");
 }
 
-function openStoreModal(item) {
+async function openStoreModal(item) {
   document.getElementById("storeModalTitle").textContent = item ? "店舗を編集" : "店舗を追加";
   STF.id.value = item?.id ?? "";
   STF.name.value = item?.name ?? "";
@@ -1920,9 +2212,26 @@ function openStoreModal(item) {
   STF.openDate.value = item?.openDate ?? "";
   STF.hours.value = item?.hours ?? "";
   STF.address.value = item?.address ?? "";
+  STF.limitedName.value = item?.limitedName ?? "";
+  STF.limitedDesc.value = item?.limitedDesc ?? "";
+  STF.limitedProduct.value = item?.limitedProduct ?? "";
+  STF.limitedPrice.value = item?.limitedPrice ?? "";
+  STF.regularBrand.value = item?.regularBrand ?? "";
+  STF.regularDesc.value = item?.regularDesc ?? "";
   storeMapImage = item?.mapImage ?? "";
+  storeDetailImages = {
+    heroImage1: item?.heroImage1 ?? "",
+    heroImage2: item?.heroImage2 ?? "",
+    detailImage: item?.detailImage ?? "",
+    limitedImage: item?.limitedImage ?? "",
+  };
   document.getElementById("storeMapFile").value = "";
+  Object.values(storeImageControls).forEach((ctrl) => {
+    if (ctrl.file) ctrl.file.value = "";
+  });
+  await renderStoreRegularProductList(item?.regularItems || []);
   renderStoreMapPreview();
+  renderStoreImagePreviews();
   storeModal.hidden = false;
 }
 function closeStoreModal() {
@@ -1960,6 +2269,38 @@ if (storeForm) {
     }
   });
 
+  Object.entries(storeImageControls).forEach(([key, ctrl]) => {
+    if (!ctrl.file || !ctrl.clear) return;
+    ctrl.clear.addEventListener("click", () => {
+      storeDetailImages[key] = "";
+      ctrl.file.value = "";
+      renderStoreImagePreview(key);
+    });
+    ctrl.file.addEventListener("change", async () => {
+      const f = ctrl.file.files[0];
+      if (!f) return;
+      if (!f.type.startsWith("image/")) {
+        showToast("画像ファイルを選択してください。");
+        return;
+      }
+      try {
+        storeDetailImages[key] = await uploadImageToStorage(f, "site-images", "stores", 1400, 0.82);
+        renderStoreImagePreview(key);
+      } catch (err) {
+        console.error("画像の処理に失敗しました:", err);
+        showToast("画像の処理に失敗しました。");
+      }
+    });
+  });
+
+  if (storeRegularProductList) {
+    storeRegularProductList.addEventListener("change", () => {
+      storeRegularProductIds = Array.from(storeRegularProductList.querySelectorAll('input[type="checkbox"]:checked'))
+        .map((input) => Number(input.value))
+        .filter(Boolean);
+    });
+  }
+
   storeForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = {
@@ -1969,6 +2310,17 @@ if (storeForm) {
       hours: STF.hours.value,
       address: STF.address.value.trim(),
       mapImage: storeMapImage,
+      heroImage1: storeDetailImages.heroImage1,
+      heroImage2: storeDetailImages.heroImage2,
+      detailImage: storeDetailImages.detailImage,
+      limitedName: STF.limitedName.value.trim(),
+      limitedDesc: STF.limitedDesc.value.trim(),
+      limitedProduct: STF.limitedProduct.value.trim(),
+      limitedPrice: STF.limitedPrice.value.trim(),
+      limitedImage: storeDetailImages.limitedImage,
+      regularBrand: STF.regularBrand.value.trim(),
+      regularDesc: STF.regularDesc.value.trim(),
+      regularItems: storeRegularProductIds.map((id) => ({ id })),
     };
     if (!data.name) {
       showToast("店名は必須です。");
@@ -1976,6 +2328,8 @@ if (storeForm) {
     }
     try {
       const id = STF.id.value;
+      const actionLabel = id ? "更新" : "追加";
+      if (!confirm(`「${data.name}」の店舗情報を${actionLabel}します。よろしいですか？`)) return;
       if (id) {
         await StoreStore.update(id, data);
         showToast("店舗を更新しました。");
@@ -1997,7 +2351,7 @@ if (storeForm) {
     const delBtn = e.target.closest("[data-sdel]");
     if (editBtn) {
       const item = await StoreStore.findById(editBtn.dataset.sedit);
-      if (item) openStoreModal(item);
+      if (item) await openStoreModal(item);
     }
     if (delBtn) {
       const item = await StoreStore.findById(delBtn.dataset.sdel);
@@ -2012,6 +2366,7 @@ if (storeForm) {
 
 settingsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (!confirm("設定の変更を保存します。よろしいですか？")) return;
   try {
     const siteText = {};
     SITE_TEXT_KEYS.forEach((key) => {
@@ -2023,6 +2378,9 @@ settingsForm.addEventListener("submit", async (e) => {
       xUrl: SF.x.value.trim(),
       noteUrl: SF.note.value.trim(),
       heroImage: siteImages.heroImage,
+      heroImage2: siteImages.heroImage2,
+      heroImage3: siteImages.heroImage3,
+      heroImage4: siteImages.heroImage4,
       statementImage: siteImages.statementImage,
       howtoImage1: siteImages.howtoImage1,
       howtoImage2: siteImages.howtoImage2,
@@ -2414,6 +2772,8 @@ form.addEventListener("submit", async (e) => {
   }
   try {
     const id = F.id.value;
+    const actionLabel = id ? "更新" : "追加";
+    if (!confirm(`「${data.name}」の商品情報を${actionLabel}します。よろしいですか？`)) return;
     if (id) {
       await ProductStore.update(id, data);
       showToast("商品を更新しました。");

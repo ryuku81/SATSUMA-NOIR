@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=170" />
+  <link rel="stylesheet" href="styles.css?v=171" />
 </head>
 <body>
   <main class="page">
@@ -17,16 +17,14 @@
         <h1 class="journal__title">JOURNAL</h1>
       </header>
 
-      <a class="journal-feature" href="journal-detail.html">
+      <div class="journal-feature" aria-label="直近のジャーナル画像">
         <div class="journal-feature__media journal-feature__media--triptych">
-          <img class="journal-feature__shot" src="images/rare-cheesecake.png" alt="" loading="eager" />
+          <img class="journal-feature__shot" src="images/terukuni-store.jpg" alt="" loading="eager" />
           <img class="journal-feature__shot" src="images/basque-cheesecake.png" alt="" loading="eager" />
-          <img class="journal-feature__shot" src="images/berry-rare-cheesecake.png" alt="" loading="eager" />
+          <img class="journal-feature__shot" src="images/noir-tablette.png" alt="" loading="eager" />
           <span class="journal-feature__label">SATSUMA NOIR</span>
         </div>
-        <h2 class="journal-feature__title">初夏のひと皿。軽やかに溶ける、レアチーズの季節がやってきた。</h2>
-        <time class="journal-feature__date">2026.06.24</time>
-      </a>
+      </div>
 
       <div class="journal-tl__list" id="journalList"></div>
 
@@ -52,6 +50,6 @@
   <script src="app.js?v=38"></script>
 
   <!-- ジャーナル一覧：JournalStore から取得＋クライアントサイドのページ送り -->
-  <script src="journal.js?v=1"></script>
+  <script src="journal.js?v=5"></script>
 </body>
 </html>
