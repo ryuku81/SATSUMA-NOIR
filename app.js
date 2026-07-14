@@ -29,6 +29,7 @@ const ICON_CLOSE = `<svg viewBox="0 0 24 24" width="20" height="20"><line x1="6"
 const ICON_HEART_HDR = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5 4.4 13a4.6 4.6 0 0 1 6.5-6.5l1.1 1.1 1.1-1.1A4.6 4.6 0 0 1 19.6 13z"/></svg>`;
 const ICON_SUN = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>`;
 const ICON_MOON = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8 8 0 1 1 9.8 3.5a6.3 6.3 0 0 0 10.7 10.7z"/></svg>`;
+const ICON_ACCOUNT = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg>`;
 
 // ---------- Theme (dark / light) ----------
 const THEME_KEY = "satsuma-theme";
@@ -615,7 +616,20 @@ const UserAuth = {
 // ログイン状態に応じて LOGIN / LOGOUT ボタンの表示を切り替える
 function applyAuthButtons() {
   const loggedIn = UserAuth.isLoggedIn();
-  document.querySelectorAll(".login-btn, .nav__login").forEach((el) => {
+  document.querySelectorAll(".login-btn").forEach((el) => {
+    if (loggedIn) {
+      el.innerHTML = ICON_ACCOUNT;
+      el.classList.add("is-account");
+      el.setAttribute("href", "mypage.html");
+      el.setAttribute("aria-label", "マイページ");
+    } else {
+      el.textContent = "LOGIN";
+      el.classList.remove("is-account");
+      el.setAttribute("href", "login.html");
+      el.setAttribute("aria-label", "ログイン");
+    }
+  });
+  document.querySelectorAll(".nav__login").forEach((el) => {
     el.textContent = loggedIn ? "MYPAGE" : "LOGIN";
     if (loggedIn) el.setAttribute("href", "mypage.html");
     else el.setAttribute("href", "login.html");
@@ -754,7 +768,11 @@ async function syncUserCollections() {
   const remoteCart = await loadCartRemote();
   const merged = new Map();
   remoteCart.forEach((l) => merged.set(Number(l.id), Number(l.qty) || 1));
-  localCart.forEach((l) => merged.set(Number(l.id), (merged.get(Number(l.id)) || 0) + (Number(l.qty) || 1)));
+  localCart.forEach((l) => {
+    const id = Number(l.id);
+    const qty = Number(l.qty) || 1;
+    merged.set(id, Math.max(merged.get(id) || 0, qty));
+  });
   cart = Array.from(merged, ([id, qty]) => ({ id, qty }));
   localStorage.setItem(CART_KEY, JSON.stringify(cart));
   await persistCartRemote();
@@ -787,33 +805,40 @@ function renderWishlistPage() {
     .map((p) => {
       const media = p.img ? `<img src="${p.img}" alt="${p.name}" />` : `<span>${p.glyph}</span>`;
       const soldOut = (Number(p.stock) || 0) <= 0;
-      return `
-      <article class="wish-card">
-        <a class="wish-card__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
-        <div class="wish-card__body">
-          <div class="wish-card__head">
-            <h3 class="wish-card__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-            ${p.catLabel ? `<span class="wish-card__tag">${p.catLabel}</span>` : ""}
-          </div>
-          <div class="wish-card__foot">
-            <span class="wish-card__price">${yen(p.price)}</span>
-          </div>
-          <div class="wish-row__actions">
-            <button class="btn btn--primary wish-row__cart" data-add="${p.id}" ${soldOut ? "disabled" : ""}>
-              ${soldOut ? "在庫切れ" : "カートに入れる"}
-            </button>
-            <button class="cart-row__remove" data-wishremove="${p.id}" aria-label="気になるリストから削除">削除</button>
-          </div>
-        </div>
-      </article>`;
-    })
-    .join("");
+	      return `
+	      <article class="wish-card card${p.tag ? " has-tag" : ""}">
+	        <div class="wish-card__media-wrap">
+	          <a class="wish-card__media card__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
+	          <span class="wish-card__heart" aria-hidden="true">
+	            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5 4.4 13a4.6 4.6 0 0 1 6.5-6.5l1.1 1.1 1.1-1.1A4.6 4.6 0 0 1 19.6 13z"/></svg>
+	          </span>
+	        </div>
+	        <div class="wish-card__body">
+	          <div class="wish-card__head">
+	            <h3 class="wish-card__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+	            ${p.tag ? `<span class="wish-card__tag">${p.tag}</span>` : ""}
+	          </div>
+	          <div class="wish-card__foot">
+	            <span class="wish-card__price">${yen(p.price)}</span>
+	            <span class="wish-card__actions">
+	              <button class="wish-card__icon-btn wish-card__icon-btn--cart" data-add="${p.id}" ${soldOut ? "disabled" : ""} aria-label="${soldOut ? "在庫切れ" : "カートに入れる"}">
+	                ${ICON_CART_SM}
+	              </button>
+	              <button class="wish-card__icon-btn wish-card__icon-btn--remove" data-wishremove="${p.id}" aria-label="気になるリストから削除">
+	                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h4"/><path d="M4 6h16"/><path d="M7 6l1 14h8l1-14"/><path d="M10 10v6M14 10v6"/></svg>
+	              </button>
+	            </span>
+	          </div>
+	        </div>
+	      </article>`;
+	    })
+	    .join("");
 
-  root.innerHTML = `
-    <div class="wishlist-total"><span>合計</span><strong>${items.length}</strong></div>
-    <div class="wishlist-list">${rows}</div>
-    <div class="section-more"><a href="item.html" class="btn btn--ghost">買い物を続ける</a></div>`;
-}
+	  root.innerHTML = `
+	    <div class="wishlist-total"><span>合計</span><strong>${items.length}</strong></div>
+	    <div class="wishlist-list">${rows}</div>
+	    <div class="section-more"><a href="item.html" class="btn btn--ghost">買い物を続ける</a></div>`;
+	}
 
 let toastTimer = null;
 function showToast(msg) {
@@ -898,35 +923,42 @@ function renderCartPage() {
       if (!p) return "";
       total += p.price * l.qty;
       const media = p.img ? `<img src="${p.img}" alt="${p.name}" />` : `<span>${p.glyph}</span>`;
-      return `
-      <div class="cart-row">
-        <a class="cart-row__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
-        <div class="cart-row__info">
-          <h3 class="cart-row__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
-          <span class="cart-row__price">${yen(p.price)}</span>
-        </div>
-        <div class="cart-row__qty">
-          <button data-qty="${p.id}" data-delta="-1" aria-label="減らす">−</button>
-          <span>${l.qty}</span>
-          <button data-qty="${p.id}" data-delta="1" aria-label="増やす">+</button>
-        </div>
-        <div class="cart-row__sub">${yen(p.price * l.qty)}</div>
-        <button class="cart-row__remove" data-remove="${p.id}" aria-label="削除">削除</button>
-      </div>`;
-    })
-    .join("");
+	      return `
+	      <div class="cart-row">
+	        <a class="cart-row__media" href="product.html?id=${p.id}" aria-label="${p.name}の詳細">${media}</a>
+	        <div class="cart-row__info">
+	          <h3 class="cart-row__name"><a href="product.html?id=${p.id}">${p.name}</a></h3>
+	          <span class="cart-row__price">${yen(p.price)}</span>
+	        </div>
+	        <div class="cart-row__qty">
+	          <button data-qty="${p.id}" data-delta="-1" aria-label="減らす">−</button>
+	          <span>${l.qty}</span>
+	          <button data-qty="${p.id}" data-delta="1" aria-label="増やす">+</button>
+	        </div>
+	        <div class="cart-row__sub">${yen(p.price * l.qty)}</div>
+	        <button class="cart-row__remove" data-remove="${p.id}" aria-label="削除">
+	          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l1 2h4"/><path d="M4 6h16"/><path d="M7 6l1 14h8l1-14"/><path d="M10 10v6M14 10v6"/></svg>
+	        </button>
+	      </div>`;
+	    })
+	    .join("");
 
-  root.innerHTML = `
-    <div class="cart-page__list">${items}</div>
-    <div class="cart-page__summary-row">
-      <button class="cart-page__clear" data-clear-cart type="button">カゴの中身を空にする</button>
-      <div class="cart-page__total"><span>合計金額</span><span>${yen(total)}</span></div>
-    </div>
-    <div class="cart-page__summary">
-      <a href="checkout.html" class="btn btn--primary btn--full">レジに進む</a>
-      <a href="item.html" class="cart-page__continue">買い物を続ける</a>
-    </div>`;
-}
+	  root.innerHTML = `
+	    <div class="cart-page__list">${items}</div>
+	    <button class="cart-page__clear" data-clear-cart type="button">
+	      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h8l1 10H7L8 8Z"/><path d="M10 8V6a2 2 0 0 1 4 0v2"/><path d="M5 10h14"/></svg>
+	      <span>カゴの中身を空にする</span>
+	    </button>
+	    <div class="cart-page__summary">
+	      <div class="cart-page__total"><span>合計金額<small>税込・送料別</small></span><span>${yen(total)}</span></div>
+	      <a href="checkout.html" class="btn btn--primary btn--full">レジに進む<span aria-hidden="true">›</span></a>
+	      <a href="item.html" class="cart-page__continue">買い物を続ける</a>
+	      <p class="cart-page__secure">
+	        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3"/><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M12 15v2"/></svg>
+	        <span>お支払いは安全に処理されます</span>
+	      </p>
+	    </div>`;
+	}
 
 // My page (mypage.html)
 async function renderMyPage() {
@@ -1018,56 +1050,104 @@ async function renderMyPage() {
         .join("")
     : `<span class="mypage-empty">お気に入りはまだありません。</span>`;
 
+  const nameParts = String(name || "").trim().split(/\s+/).filter(Boolean);
+  const lastName = nameParts.length > 1 ? nameParts[0] : name || "";
+  const firstName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+  const initial = escapeHtml((name || email || "U").trim().charAt(0).toUpperCase() || "U");
+  const sideIcon = {
+    box: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 8 4.4v9.2L12 21l-8-4.4V7.4L12 3z"/><path d="M4.4 7.7 12 12l7.6-4.3M12 12v8.5"/></svg>`,
+    pin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><path d="M18.5 10.2c0 5-6.5 10-6.5 10s-6.5-5-6.5-10a6.5 6.5 0 0 1 13 0z"/><circle cx="12" cy="10.2" r="2.2"/></svg>`,
+    card: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M3.5 10h17M7 15h4"/></svg>`,
+    user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>`,
+  };
+
   root.innerHTML = `
-    <div class="mypage-shell">
-      <nav class="mypage-tabs" aria-label="マイページメニュー">
-        <button class="mypage-tab is-active" type="button" data-mypage-tab="orders">ご注文履歴</button>
-        <button class="mypage-tab" type="button" data-mypage-tab="wishlist">お気に入り一覧</button>
-        <button class="mypage-tab" type="button" data-mypage-tab="profile">会員情報編集</button>
-        <button class="mypage-tab" type="button" data-mypage-tab="cart">カート一覧</button>
-      </nav>
-
-      <p class="mypage-greeting">ようこそ ${escapeHtml(name || "会員")} 様。SATSUMA NOIRのご利用ありがとうございます。</p>
-
-      <section class="mypage-panel mypage-tab-panel is-active" data-mypage-panel="orders">
-        <p class="mypage-count">${ownOrders.length}件の履歴があります</p>
-        <div class="mypage-orders__list">${orderRows}</div>
-      </section>
-
-      <section class="mypage-panel mypage-tab-panel" data-mypage-panel="wishlist">
-        <div class="mypage-panel__head">
-          <h3>お気に入り一覧</h3>
-          <a href="wishlist.html">一覧を開く</a>
+    <div class="mypage-shell mypage-account">
+      <aside class="mypage-side" aria-label="アカウントメニュー">
+        <div class="mypage-member">
+          <div class="mypage-member__avatar">${initial}</div>
+          <div>
+            <p>こんにちは、</p>
+            <strong>${escapeHtml(name || "会員")} 様</strong>
+            <span>NOIR MEMBER</span>
+          </div>
         </div>
-        <div class="mypage-favorites">${wishRows}</div>
-      </section>
+        <nav class="mypage-tabs" aria-label="マイページメニュー">
+          <button class="mypage-tab" type="button" data-mypage-tab="orders">${sideIcon.box}<span>注文履歴</span></button>
+          <button class="mypage-tab" type="button" data-mypage-tab="address">${sideIcon.pin}<span>配送先</span></button>
+          <button class="mypage-tab" type="button" data-mypage-tab="payment">${sideIcon.card}<span>お支払い方法</span></button>
+          <button class="mypage-tab is-active" type="button" data-mypage-tab="profile">${sideIcon.user}<span>アカウント設定</span></button>
+        </nav>
+      </aside>
 
-      <section class="mypage-panel mypage-tab-panel" data-mypage-panel="profile">
-        <div class="mypage-panel__head">
-          <h3>会員情報編集</h3>
-        </div>
-        <form id="profileForm" class="mypage-profile__form">
-          <label class="field">
-            <span>お名前</span>
-            <input type="text" id="profileName" value="${escapeHtml(name)}" placeholder="お名前" />
-          </label>
-          <label class="field">
-            <span>メールアドレス</span>
-            <input type="email" value="${escapeHtml(email)}" disabled />
-          </label>
-          <button type="submit" class="btn btn--primary">会員情報を更新</button>
-          <p class="mypage-message" id="profileMessage" hidden></p>
-        </form>
-      </section>
+      <div class="mypage-main">
+        <section class="mypage-panel mypage-tab-panel" data-mypage-panel="orders">
+          <div class="mypage-panel__head">
+            <h3>注文履歴</h3>
+            <p>${ownOrders.length}件の履歴があります</p>
+          </div>
+          <div class="mypage-orders__list">${orderRows}</div>
+        </section>
 
-      <section class="mypage-panel mypage-tab-panel" data-mypage-panel="cart">
-        <div class="mypage-panel__head">
-          <h3>カート</h3>
-          <a href="cart.html">カートを開く</a>
-        </div>
-        <ul class="mypage-products">${cartRows}</ul>
-        ${cartItems.length ? `<div class="mypage-total"><span>合計</span><strong>${yen(cartTotal)}</strong></div>` : ""}
-      </section>
+        <section class="mypage-panel mypage-tab-panel" data-mypage-panel="address">
+          <div class="mypage-panel__head">
+            <h3>配送先</h3>
+            <p>登録済みの配送先を確認できます。</p>
+          </div>
+          <p class="mypage-empty">配送先はまだ登録されていません。</p>
+        </section>
+
+        <section class="mypage-panel mypage-tab-panel" data-mypage-panel="payment">
+          <div class="mypage-panel__head">
+            <h3>お支払い方法</h3>
+            <p>お支払い方法の確認・変更ができます。</p>
+          </div>
+          <p class="mypage-empty">登録済みのお支払い方法はありません。</p>
+        </section>
+
+        <section class="mypage-panel mypage-tab-panel is-active" data-mypage-panel="profile">
+          <div class="mypage-panel__head">
+            <h3>アカウント設定</h3>
+            <p>登録情報の確認・変更ができます。</p>
+          </div>
+          <form id="profileForm" class="mypage-profile__form">
+            <div class="mypage-form-section">
+              <h4>お名前 <span>必須</span></h4>
+              <div class="mypage-name-grid">
+                <label class="field">
+                  <span>姓</span>
+                  <input type="text" id="profileLastName" value="${escapeHtml(lastName)}" placeholder="山田" />
+                </label>
+                <label class="field">
+                  <span>名</span>
+                  <input type="text" id="profileFirstName" value="${escapeHtml(firstName)}" placeholder="太郎" />
+                </label>
+              </div>
+            </div>
+            <div class="mypage-form-section">
+              <h4>メールアドレス <span>必須</span></h4>
+              <label class="field">
+                <input type="email" value="${escapeHtml(email)}" disabled />
+              </label>
+            </div>
+            <div class="mypage-form-section mypage-password-row">
+              <h4>パスワード</h4>
+              <button class="mypage-small-btn" type="button">パスワードを変更する ›</button>
+            </div>
+            <div class="mypage-form-section">
+              <h4>メールマガジン受信設定</h4>
+              <p>新商品やキャンペーン情報などをお届けします。</p>
+              <label class="mypage-switch">
+                <input type="checkbox" checked />
+                <span></span>
+                受信する
+              </label>
+            </div>
+            <button type="submit" class="btn btn--primary mypage-save">変更を保存する</button>
+            <p class="mypage-message" id="profileMessage" hidden></p>
+          </form>
+        </section>
+      </div>
     </div>`;
 
   const tabButtons = root.querySelectorAll("[data-mypage-tab]");
@@ -1085,7 +1165,9 @@ async function renderMyPage() {
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const nextName = document.getElementById("profileName").value.trim();
+      const last = document.getElementById("profileLastName")?.value.trim() || "";
+      const first = document.getElementById("profileFirstName")?.value.trim() || "";
+      const nextName = [last, first].filter(Boolean).join(" ");
       const result = await Auth.updateProfileName(nextName);
       if (result.error) {
         message.textContent = "更新できませんでした。時間をおいて再度お試しください。";
@@ -1550,6 +1632,15 @@ function wire() {
   const initTab = initParams.get("reset") === "1" ? "reset-password" : initParams.get("tab");
   if (initTab === "signup" || initTab === "login") setAuthTab(initTab);
   if (initTab === "reset-password") setAuthTab("reset-password");
+  document.querySelectorAll(".password-toggle").forEach((button) => {
+    button.addEventListener("click", () => {
+      const input = button.closest(".password-field")?.querySelector("input");
+      if (!input) return;
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      button.setAttribute("aria-label", isHidden ? "パスワードを隠す" : "パスワードを表示");
+    });
+  });
   document.querySelectorAll(".auth-form").forEach((form) => {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -1565,7 +1656,7 @@ function wire() {
 
       const emailInput = form.querySelector('input[type="email"]');
       const email = emailInput ? emailInput.value.trim() : "";
-      const passwordInput = form.querySelector('input[type="password"]');
+      const passwordInput = form.querySelector(".field--password input") || form.querySelector('input[type="password"]');
       const password = passwordInput ? passwordInput.value : "";
 
       if (isRequestReset) {
@@ -1581,7 +1672,7 @@ function wire() {
       }
 
       if (isResetPassword) {
-        const passwords = Array.from(form.querySelectorAll('input[type="password"]')).map((input) => input.value);
+        const passwords = Array.from(form.querySelectorAll(".field--password input")).map((input) => input.value);
         if (passwords[0] !== passwords[1]) {
           alert("確認用パスワードが一致しません。");
           return;
