@@ -161,26 +161,69 @@
   // "YYYY-MM-DD" → "YYYY.MM.DD"（表示用）
   const dotDate = (d) => String(d ?? "").replace(/-/g, ".");
 
+  const ICON_ARROW = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M14.5 6.5 20 12l-5.5 5.5"/></svg>`;
+
+  // 一覧の先頭（最新記事）に表示する抜粋。本文の最初の段落を使う。
+  // 本文が未設定の記事は抜粋を表示しない。
+  function excerptFor(n) {
+    const raw = String(n.body || "").trim();
+    return raw ? raw.split(/\n{2,}/)[0].trim() : "";
+  }
+
+  // 最新の1件を大きく見せる
+  function featureHtml(n) {
+    const title = escapeHtml(n.title);
+    const excerpt = excerptFor(n);
+    const excerptHtml = excerpt
+      ? `<p class="news-feature__excerpt">${escapeHtml(excerpt).replace(/\n/g, "<br />")}</p>`
+      : "";
+    return `
+        <li class="news-feature">
+          <a class="news-feature__link" href="news-detail.html?id=${encodeURIComponent(n.id)}">
+            <div class="news-feature__media">
+              <img src="${escapeHtml(n.image || newsImageFor(n))}" alt="" loading="eager" />
+            </div>
+            <div class="news-feature__body">
+              <div class="news-feature__meta">
+                <span class="news-item__date">${escapeHtml(dotDate(n.date))}</span>
+                <span class="news-item__cat">${escapeHtml(n.cat)}</span>
+              </div>
+              <h3 class="news-feature__title">${title}</h3>
+              ${excerptHtml}
+              <span class="news-feature__more">詳しく見る${ICON_ARROW}</span>
+            </div>
+          </a>
+        </li>`;
+  }
+
+  function rowHtml(n) {
+    const title = escapeHtml(n.title);
+    return `
+        <li class="news-item">
+          <a href="news-detail.html?id=${encodeURIComponent(n.id)}">
+            <div class="news-item__media">
+              <img src="${escapeHtml(n.image || newsImageFor(n))}" alt="" loading="lazy" />
+            </div>
+            <span class="news-item__date">${escapeHtml(dotDate(n.date))}</span>
+            <div class="news-item__text">
+              <span class="news-item__cat">${escapeHtml(n.cat)}</span>
+              <span class="news-item__title">${title}</span>
+            </div>
+            <span class="news-item__arrow">${ICON_ARROW}</span>
+          </a>
+        </li>`;
+  }
+
   async function renderPublicNews() {
     const listEl = document.getElementById("newsList");
     if (!listEl) return;
     const items = await NewsStore.findAll();
     if (items.length === 0) {
-      listEl.innerHTML = `<li class="news-item"><a><span class="news-item__title">お知らせはありません。</span></a></li>`;
+      listEl.innerHTML = `<li class="news__empty">お知らせはありません。</li>`;
       return;
     }
-    listEl.innerHTML = items
-      .map((n) => {
-        return `
-        <li class="news-item">
-          <a href="news-detail.html?id=${encodeURIComponent(n.id)}">
-            <span class="news-item__date">${escapeHtml(dotDate(n.date))}</span>
-            <span class="news-item__cat">${escapeHtml(n.cat)}</span>
-            <span class="news-item__title">${escapeHtml(n.title)}</span>
-          </a>
-        </li>`;
-      })
-      .join("");
+    const [latest, ...rest] = items;
+    listEl.innerHTML = featureHtml(latest) + rest.map(rowHtml).join("");
   }
 
   // ------------------------------------------------------------
