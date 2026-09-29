@@ -2398,8 +2398,8 @@ img { display: block; max-width: 100%; }
   padding: 2rem 2.5rem 7rem;
 }
 /* 見出しまわりの余白を詰める（.page > section:first-child の 3rem を上書き） */
-.page > .news:first-child { padding-top: 3.8rem; }
-.news .section-head { margin-bottom: 1.9rem; }
+.page > .news:first-child { padding-top: 2rem; }
+.news .section-head { margin-bottom: 1.4rem; }
 .news .section-head__title {
   font-size: clamp(1.9rem, 3.6vw, 2.6rem);
   line-height: 1.2;
@@ -3663,8 +3663,8 @@ img { display: block; max-width: 100%; }
   .cart-row__remove { order: initial; }
   .cart-page__clear { margin-left: 0; }
   .cart-page__summary { max-width: none; }
-  .page > .news:first-child { padding-top: 2.6rem; }
-  .news .section-head { margin-bottom: 1.4rem; }
+  .page > .news:first-child { padding-top: 1.6rem; }
+  .news .section-head { margin-bottom: 1.2rem; }
   .news__sub { font-size: 0.76rem; letter-spacing: 0.1em; }
   .news-feature__link { grid-template-columns: 1fr; }
   .news-feature__media { aspect-ratio: 16 / 9; }
@@ -6733,7 +6733,35 @@ img { display: block; max-width: 100%; }
 .news-article {
   max-width: 760px;
   margin: 0 auto;
-  padding: 4.5rem 1.4rem 2rem;
+  padding: 2rem 1.4rem 2rem;
+}
+/* 見出しの大きさと位置を一覧ページ（news.html）に揃える */
+.news-article .section-head { position: relative; margin-bottom: 1.6rem; }
+/* 左上の戻るボタン（一覧へ） */
+.news-article__back {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--text);
+  transition: border-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease);
+}
+.news-article__back:hover {
+  border-color: var(--gold);
+  color: var(--gold-soft);
+  transform: translate(-3px, -50%);
+}
+[data-theme="light"] .news-article__back:hover { border-color: #e08a3c; color: #e08a3c; }
+.news-article .section-head__title {
+  font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+  line-height: 1.2;
+  letter-spacing: 0.1em;
 }
 .news-article__eyebrow {
   text-align: center;
@@ -6773,8 +6801,9 @@ img { display: block; max-width: 100%; }
   line-height: 1.7;
   letter-spacing: 0.02em;
   color: var(--text);
-  margin: 0.9rem 0 2.4rem;
+  margin: 0.7rem 0 1.5rem;
 }
+.news-article__body > .news-article__figure:first-child { margin-top: 0; }
 .news-article__body p {
   font-family: "Noto Sans JP", sans-serif;
   font-weight: 400;

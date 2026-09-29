@@ -161,7 +161,21 @@
   // "YYYY-MM-DD" → "YYYY.MM.DD"（表示用）
   const dotDate = (d) => String(d ?? "").replace(/-/g, ".");
 
+  const ICON_ARROW_BACK = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H4M9.5 6.5 4 12l5.5 5.5"/></svg>`;
   const ICON_ARROW = `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M14.5 6.5 20 12l-5.5 5.5"/></svg>`;
+
+  // 記事が少ないときに一覧の下段を埋める見本。
+  // データベースには登録されていないため、詳細ページは ?sample=番号 で開く。
+  const MIN_LIST_ITEMS = 4;
+  const SAMPLE_NEWS = [
+    { date: "2026-04-15", cat: "EVENT", title: "初夏のスイーツフェアを開催します。", image: "images/italian-tiramisu.png" },
+    { date: "2026-04-03", cat: "MEDIA", title: "「SATSUMA NOIR」が雑誌『料理王国』に掲載されました。", image: "images/rare-cheesecake.png" },
+  ];
+  const isSample = (n) => n.id == null;
+  const detailHref = (n) =>
+    isSample(n)
+      ? `news-detail.html?sample=${SAMPLE_NEWS.indexOf(n) + 1}`
+      : `news-detail.html?id=${encodeURIComponent(n.id)}`;
 
   // 一覧の先頭（最新記事）に表示する抜粋。本文の最初の段落を使う。
   // 本文が未設定の記事は抜粋を表示しない。
@@ -179,7 +193,7 @@
       : "";
     return `
         <li class="news-feature">
-          <a class="news-feature__link" href="news-detail.html?id=${encodeURIComponent(n.id)}">
+          <a class="news-feature__link" href="${detailHref(n)}">
             <div class="news-feature__media">
               <img src="${escapeHtml(n.image || newsImageFor(n))}" alt="" loading="eager" />
             </div>
@@ -200,7 +214,7 @@
     const title = escapeHtml(n.title);
     return `
         <li class="news-item">
-          <a href="news-detail.html?id=${encodeURIComponent(n.id)}">
+          <a href="${detailHref(n)}">
             <div class="news-item__media">
               <img src="${escapeHtml(n.image || newsImageFor(n))}" alt="" loading="lazy" />
             </div>
@@ -222,7 +236,8 @@
       listEl.innerHTML = `<li class="news__empty">お知らせはありません。</li>`;
       return;
     }
-    const [latest, ...rest] = items;
+    const samples = SAMPLE_NEWS.slice(0, Math.max(0, MIN_LIST_ITEMS - items.length));
+    const [latest, ...rest] = [...items, ...samples];
     listEl.innerHTML = featureHtml(latest) + rest.map(rowHtml).join("");
   }
 
@@ -260,8 +275,10 @@
     const root = document.getElementById("newsDetail");
     if (!root) return;
 
-    const id = Number(new URLSearchParams(location.search).get("id"));
-    const n = await NewsStore.findById(id);
+    const params = new URLSearchParams(location.search);
+    const n = params.has("sample")
+      ? SAMPLE_NEWS[Number(params.get("sample")) - 1] || null
+      : await NewsStore.findById(Number(params.get("id")));
 
     if (!n) {
       root.innerHTML = `
@@ -278,6 +295,7 @@
 
     root.innerHTML = `
       <div class="section-head">
+        <a class="news-article__back" href="news.html" aria-label="お知らせ一覧へ戻る">${ICON_ARROW_BACK}</a>
         <h2 class="section-head__title">NEWS</h2>
       </div>
       <div class="news-article__meta">
