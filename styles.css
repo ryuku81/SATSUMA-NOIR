@@ -7250,3 +7250,261 @@ img { display: block; max-width: 100%; }
 .mypage-save {
   color: #090909;
 }
+
+/* ---------- 金のリボンの背景（news.html） ----------
+   body.ribbon-bg を付けたページだけに適用する。リボンは CSS に埋め込んだ SVG。 */
+.ribbon-bg {
+  --ribbon-opacity: 0.9;
+  --ribbon: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 500%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%221%22 x2=%221%22 y2=%220%22%3E%3Cstop offset=%220%22 stop-color=%22%23c4933f%22/%3E%3Cstop offset=%22.3%22 stop-color=%22%23f7e7b8%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23d2a452%22/%3E%3Cstop offset=%22.75%22 stop-color=%22%23fbf0cf%22/%3E%3Cstop offset=%221%22 stop-color=%22%23c99a48%22/%3E%3C/linearGradient%3E%3Cfilter id=%22b%22 x=%22-20%25%22 y=%22-20%25%22 width=%22140%25%22 height=%22140%25%22%3E%3CfeGaussianBlur stdDeviation=%2222%22/%3E%3C/filter%3E%3Cfilter id=%22s%22 x=%22-10%25%22 y=%22-10%25%22 width=%22120%25%22 height=%22120%25%22%3E%3CfeGaussianBlur stdDeviation=%221.2%22/%3E%3C/filter%3E%3C/defs%3E%3Cg%3E%3Cpath d=%22M-40 330C160 300 420 190 700-40h90C480 230 190 350-40 400z%22 fill=%22%23c9a25f%22 opacity=%22.13%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-40 120C90 110 230 60 340-40h70C280 90 100 150-40 170z%22 fill=%22%23c9a25f%22 opacity=%22.1%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22%23000%22 opacity=%22.5%22 filter=%22url%28%23s%29%22 transform=%22translate%282 5%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22url%28%23g%29%22/%3E%3Cpath d=%22M-20 232C110 210 260 150 430 38C290 146 130 214-20 246z%22 fill=%22url%28%23g%29%22 opacity=%22.85%22/%3E%3Cpath d=%22M-20 300C200 262 440 160 720-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221.2%22 opacity=%22.8%22/%3E%3Cpath d=%22M-20 420C120 400 260 330 380 230%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cpath d=%22M-20 90C80 80 180 40 260-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cg fill=%22%23c99a48%22%3E%3Ccircle cx=%2258%22 cy=%22381%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2228%22 cy=%22337%22 r=%220.6%22 opacity=%220.85%22/%3E%3Ccircle cx=%2274%22 cy=%22375%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22110%22 cy=%22384%22 r=%221.8%22 opacity=%220.42%22/%3E%3Ccircle cx=%2281%22 cy=%22433%22 r=%220.6%22 opacity=%220.67%22/%3E%3Ccircle cx=%22-28%22 cy=%22449%22 r=%220.6%22 opacity=%220.66%22/%3E%3Ccircle cx=%22101%22 cy=%22396%22 r=%221.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2240%22 cy=%22453%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2244%22 cy=%22333%22 r=%220.6%22 opacity=%220.65%22/%3E%3Ccircle cx=%2285%22 cy=%22358%22 r=%220.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%22-6%22 cy=%22329%22 r=%221.3%22 opacity=%220.67%22/%3E%3Ccircle cx=%2234%22 cy=%22365%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%2272%22 cy=%22428%22 r=%221.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%2243%22 cy=%22405%22 r=%221.8%22 opacity=%220.89%22/%3E%3Ccircle cx=%22105%22 cy=%22392%22 r=%221.0%22 opacity=%220.43%22/%3E%3Ccircle cx=%2257%22 cy=%22351%22 r=%220.6%22 opacity=%220.77%22/%3E%3Ccircle cx=%22-12%22 cy=%22296%22 r=%221.0%22 opacity=%220.54%22/%3E%3Ccircle cx=%2239%22 cy=%22407%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22100%22 cy=%22376%22 r=%220.6%22 opacity=%220.38%22/%3E%3Ccircle cx=%2251%22 cy=%22267%22 r=%221.3%22 opacity=%220.51%22/%3E%3Ccircle cx=%2220%22 cy=%22409%22 r=%220.6%22 opacity=%220.87%22/%3E%3Ccircle cx=%2232%22 cy=%22415%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2273%22 cy=%22319%22 r=%220.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%220.8%22 opacity=%220.60%22/%3E%3Ccircle cx=%22-19%22 cy=%22312%22 r=%221.3%22 opacity=%220.83%22/%3E%3Ccircle cx=%2262%22 cy=%22411%22 r=%221.0%22 opacity=%220.73%22/%3E%3Ccircle cx=%2246%22 cy=%22380%22 r=%220.6%22 opacity=%220.45%22/%3E%3Ccircle cx=%2274%22 cy=%22393%22 r=%221.3%22 opacity=%220.81%22/%3E%3Ccircle cx=%2285%22 cy=%22394%22 r=%220.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%2230%22 cy=%22407%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%228%22 cy=%22342%22 r=%220.6%22 opacity=%220.60%22/%3E%3Ccircle cx=%22146%22 cy=%22243%22 r=%221.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%2253%22 cy=%22367%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2298%22 cy=%22367%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2253%22 cy=%22334%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22104%22 cy=%22384%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2281%22 cy=%22406%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2229%22 cy=%22309%22 r=%220.6%22 opacity=%220.82%22/%3E%3Ccircle cx=%22120%22 cy=%22347%22 r=%221.3%22 opacity=%220.52%22/%3E%3Ccircle cx=%22116%22 cy=%22429%22 r=%221.0%22 opacity=%220.61%22/%3E%3Ccircle cx=%2251%22 cy=%22282%22 r=%220.8%22 opacity=%220.87%22/%3E%3Ccircle cx=%2245%22 cy=%22344%22 r=%221.8%22 opacity=%220.85%22/%3E%3Ccircle cx=%2272%22 cy=%22300%22 r=%220.6%22 opacity=%220.73%22/%3E%3Ccircle cx=%2267%22 cy=%22407%22 r=%220.8%22 opacity=%220.55%22/%3E%3Ccircle cx=%2280%22 cy=%22424%22 r=%221.8%22 opacity=%220.53%22/%3E%3Ccircle cx=%2284%22 cy=%22458%22 r=%220.8%22 opacity=%220.79%22/%3E%3Ccircle cx=%22101%22 cy=%22260%22 r=%220.8%22 opacity=%220.46%22/%3E%3Ccircle cx=%22-3%22 cy=%22354%22 r=%220.6%22 opacity=%220.78%22/%3E%3Ccircle cx=%2241%22 cy=%22357%22 r=%221.8%22 opacity=%220.88%22/%3E%3Ccircle cx=%22-30%22 cy=%22396%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2249%22 cy=%22382%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2243%22 cy=%22409%22 r=%221.8%22 opacity=%220.81%22/%3E%3Ccircle cx=%225%22 cy=%22361%22 r=%220.6%22 opacity=%220.81%22/%3E%3Ccircle cx=%22103%22 cy=%22391%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%22104%22 cy=%22445%22 r=%221.0%22 opacity=%220.40%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%221.3%22 opacity=%220.57%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%220.8%22 opacity=%220.90%22/%3E%3Ccircle cx=%22129%22 cy=%22364%22 r=%221.3%22 opacity=%220.79%22/%3E%3Ccircle cx=%22121%22 cy=%22439%22 r=%221.3%22 opacity=%220.71%22/%3E%3Ccircle cx=%2237%22 cy=%22411%22 r=%220.8%22 opacity=%220.36%22/%3E%3Ccircle cx=%2292%22 cy=%22258%22 r=%220.6%22 opacity=%220.64%22/%3E%3Ccircle cx=%22114%22 cy=%22324%22 r=%220.8%22 opacity=%220.80%22/%3E%3Ccircle cx=%2278%22 cy=%22394%22 r=%221.0%22 opacity=%220.63%22/%3E%3Ccircle cx=%2273%22 cy=%22297%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22137%22 cy=%22447%22 r=%221.0%22 opacity=%220.84%22/%3E%3Ccircle cx=%2227%22 cy=%22256%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22-21%22 cy=%22342%22 r=%220.8%22 opacity=%220.68%22/%3E%3Ccircle cx=%2274%22 cy=%22316%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2261%22 cy=%22274%22 r=%221.0%22 opacity=%220.73%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 500%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%221%22 x2=%221%22 y2=%220%22%3E%3Cstop offset=%220%22 stop-color=%22%23c4933f%22/%3E%3Cstop offset=%22.3%22 stop-color=%22%23f7e7b8%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23d2a452%22/%3E%3Cstop offset=%22.75%22 stop-color=%22%23fbf0cf%22/%3E%3Cstop offset=%221%22 stop-color=%22%23c99a48%22/%3E%3C/linearGradient%3E%3Cfilter id=%22b%22 x=%22-20%25%22 y=%22-20%25%22 width=%22140%25%22 height=%22140%25%22%3E%3CfeGaussianBlur stdDeviation=%2222%22/%3E%3C/filter%3E%3Cfilter id=%22s%22 x=%22-10%25%22 y=%22-10%25%22 width=%22120%25%22 height=%22120%25%22%3E%3CfeGaussianBlur stdDeviation=%221.2%22/%3E%3C/filter%3E%3C/defs%3E%3Cg transform=%22rotate%28180 400 250%29%22%3E%3Cpath d=%22M-40 330C160 300 420 190 700-40h90C480 230 190 350-40 400z%22 fill=%22%23c9a25f%22 opacity=%22.13%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-40 120C90 110 230 60 340-40h70C280 90 100 150-40 170z%22 fill=%22%23c9a25f%22 opacity=%22.1%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22%23000%22 opacity=%22.5%22 filter=%22url%28%23s%29%22 transform=%22translate%282 5%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22url%28%23g%29%22/%3E%3Cpath d=%22M-20 232C110 210 260 150 430 38C290 146 130 214-20 246z%22 fill=%22url%28%23g%29%22 opacity=%22.85%22/%3E%3Cpath d=%22M-20 300C200 262 440 160 720-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221.2%22 opacity=%22.8%22/%3E%3Cpath d=%22M-20 420C120 400 260 330 380 230%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cpath d=%22M-20 90C80 80 180 40 260-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cg fill=%22%23c99a48%22%3E%3Ccircle cx=%2258%22 cy=%22381%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2228%22 cy=%22337%22 r=%220.6%22 opacity=%220.85%22/%3E%3Ccircle cx=%2274%22 cy=%22375%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22110%22 cy=%22384%22 r=%221.8%22 opacity=%220.42%22/%3E%3Ccircle cx=%2281%22 cy=%22433%22 r=%220.6%22 opacity=%220.67%22/%3E%3Ccircle cx=%22-28%22 cy=%22449%22 r=%220.6%22 opacity=%220.66%22/%3E%3Ccircle cx=%22101%22 cy=%22396%22 r=%221.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2240%22 cy=%22453%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2244%22 cy=%22333%22 r=%220.6%22 opacity=%220.65%22/%3E%3Ccircle cx=%2285%22 cy=%22358%22 r=%220.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%22-6%22 cy=%22329%22 r=%221.3%22 opacity=%220.67%22/%3E%3Ccircle cx=%2234%22 cy=%22365%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%2272%22 cy=%22428%22 r=%221.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%2243%22 cy=%22405%22 r=%221.8%22 opacity=%220.89%22/%3E%3Ccircle cx=%22105%22 cy=%22392%22 r=%221.0%22 opacity=%220.43%22/%3E%3Ccircle cx=%2257%22 cy=%22351%22 r=%220.6%22 opacity=%220.77%22/%3E%3Ccircle cx=%22-12%22 cy=%22296%22 r=%221.0%22 opacity=%220.54%22/%3E%3Ccircle cx=%2239%22 cy=%22407%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22100%22 cy=%22376%22 r=%220.6%22 opacity=%220.38%22/%3E%3Ccircle cx=%2251%22 cy=%22267%22 r=%221.3%22 opacity=%220.51%22/%3E%3Ccircle cx=%2220%22 cy=%22409%22 r=%220.6%22 opacity=%220.87%22/%3E%3Ccircle cx=%2232%22 cy=%22415%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2273%22 cy=%22319%22 r=%220.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%220.8%22 opacity=%220.60%22/%3E%3Ccircle cx=%22-19%22 cy=%22312%22 r=%221.3%22 opacity=%220.83%22/%3E%3Ccircle cx=%2262%22 cy=%22411%22 r=%221.0%22 opacity=%220.73%22/%3E%3Ccircle cx=%2246%22 cy=%22380%22 r=%220.6%22 opacity=%220.45%22/%3E%3Ccircle cx=%2274%22 cy=%22393%22 r=%221.3%22 opacity=%220.81%22/%3E%3Ccircle cx=%2285%22 cy=%22394%22 r=%220.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%2230%22 cy=%22407%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%228%22 cy=%22342%22 r=%220.6%22 opacity=%220.60%22/%3E%3Ccircle cx=%22146%22 cy=%22243%22 r=%221.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%2253%22 cy=%22367%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2298%22 cy=%22367%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2253%22 cy=%22334%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22104%22 cy=%22384%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2281%22 cy=%22406%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2229%22 cy=%22309%22 r=%220.6%22 opacity=%220.82%22/%3E%3Ccircle cx=%22120%22 cy=%22347%22 r=%221.3%22 opacity=%220.52%22/%3E%3Ccircle cx=%22116%22 cy=%22429%22 r=%221.0%22 opacity=%220.61%22/%3E%3Ccircle cx=%2251%22 cy=%22282%22 r=%220.8%22 opacity=%220.87%22/%3E%3Ccircle cx=%2245%22 cy=%22344%22 r=%221.8%22 opacity=%220.85%22/%3E%3Ccircle cx=%2272%22 cy=%22300%22 r=%220.6%22 opacity=%220.73%22/%3E%3Ccircle cx=%2267%22 cy=%22407%22 r=%220.8%22 opacity=%220.55%22/%3E%3Ccircle cx=%2280%22 cy=%22424%22 r=%221.8%22 opacity=%220.53%22/%3E%3Ccircle cx=%2284%22 cy=%22458%22 r=%220.8%22 opacity=%220.79%22/%3E%3Ccircle cx=%22101%22 cy=%22260%22 r=%220.8%22 opacity=%220.46%22/%3E%3Ccircle cx=%22-3%22 cy=%22354%22 r=%220.6%22 opacity=%220.78%22/%3E%3Ccircle cx=%2241%22 cy=%22357%22 r=%221.8%22 opacity=%220.88%22/%3E%3Ccircle cx=%22-30%22 cy=%22396%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2249%22 cy=%22382%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2243%22 cy=%22409%22 r=%221.8%22 opacity=%220.81%22/%3E%3Ccircle cx=%225%22 cy=%22361%22 r=%220.6%22 opacity=%220.81%22/%3E%3Ccircle cx=%22103%22 cy=%22391%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%22104%22 cy=%22445%22 r=%221.0%22 opacity=%220.40%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%221.3%22 opacity=%220.57%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%220.8%22 opacity=%220.90%22/%3E%3Ccircle cx=%22129%22 cy=%22364%22 r=%221.3%22 opacity=%220.79%22/%3E%3Ccircle cx=%22121%22 cy=%22439%22 r=%221.3%22 opacity=%220.71%22/%3E%3Ccircle cx=%2237%22 cy=%22411%22 r=%220.8%22 opacity=%220.36%22/%3E%3Ccircle cx=%2292%22 cy=%22258%22 r=%220.6%22 opacity=%220.64%22/%3E%3Ccircle cx=%22114%22 cy=%22324%22 r=%220.8%22 opacity=%220.80%22/%3E%3Ccircle cx=%2278%22 cy=%22394%22 r=%221.0%22 opacity=%220.63%22/%3E%3Ccircle cx=%2273%22 cy=%22297%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22137%22 cy=%22447%22 r=%221.0%22 opacity=%220.84%22/%3E%3Ccircle cx=%2227%22 cy=%22256%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22-21%22 cy=%22342%22 r=%220.8%22 opacity=%220.68%22/%3E%3Ccircle cx=%2274%22 cy=%22316%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2261%22 cy=%22274%22 r=%221.0%22 opacity=%220.73%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+[data-theme="light"] .ribbon-bg {
+  --ribbon-opacity: 0.85;
+  --ribbon: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 500%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%221%22 x2=%221%22 y2=%220%22%3E%3Cstop offset=%220%22 stop-color=%22%23c4933f%22/%3E%3Cstop offset=%22.3%22 stop-color=%22%23f7e7b8%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23d2a452%22/%3E%3Cstop offset=%22.75%22 stop-color=%22%23fbf0cf%22/%3E%3Cstop offset=%221%22 stop-color=%22%23c99a48%22/%3E%3C/linearGradient%3E%3Cfilter id=%22b%22 x=%22-20%25%22 y=%22-20%25%22 width=%22140%25%22 height=%22140%25%22%3E%3CfeGaussianBlur stdDeviation=%2222%22/%3E%3C/filter%3E%3Cfilter id=%22s%22 x=%22-10%25%22 y=%22-10%25%22 width=%22120%25%22 height=%22120%25%22%3E%3CfeGaussianBlur stdDeviation=%221.2%22/%3E%3C/filter%3E%3C/defs%3E%3Cg%3E%3Cpath d=%22M-40 330C160 300 420 190 700-40h90C480 230 190 350-40 400z%22 fill=%22%23e6cf9f%22 opacity=%22.3%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-40 120C90 110 230 60 340-40h70C280 90 100 150-40 170z%22 fill=%22%23efdcb4%22 opacity=%22.3%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22%23a8792c%22 opacity=%22.25%22 filter=%22url%28%23s%29%22 transform=%22translate%282 5%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22url%28%23g%29%22/%3E%3Cpath d=%22M-20 232C110 210 260 150 430 38C290 146 130 214-20 246z%22 fill=%22url%28%23g%29%22 opacity=%22.85%22/%3E%3Cpath d=%22M-20 300C200 262 440 160 720-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221.2%22 opacity=%22.8%22/%3E%3Cpath d=%22M-20 420C120 400 260 330 380 230%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cpath d=%22M-20 90C80 80 180 40 260-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cg fill=%22%23c99a48%22%3E%3Ccircle cx=%2258%22 cy=%22381%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2228%22 cy=%22337%22 r=%220.6%22 opacity=%220.85%22/%3E%3Ccircle cx=%2274%22 cy=%22375%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22110%22 cy=%22384%22 r=%221.8%22 opacity=%220.42%22/%3E%3Ccircle cx=%2281%22 cy=%22433%22 r=%220.6%22 opacity=%220.67%22/%3E%3Ccircle cx=%22-28%22 cy=%22449%22 r=%220.6%22 opacity=%220.66%22/%3E%3Ccircle cx=%22101%22 cy=%22396%22 r=%221.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2240%22 cy=%22453%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2244%22 cy=%22333%22 r=%220.6%22 opacity=%220.65%22/%3E%3Ccircle cx=%2285%22 cy=%22358%22 r=%220.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%22-6%22 cy=%22329%22 r=%221.3%22 opacity=%220.67%22/%3E%3Ccircle cx=%2234%22 cy=%22365%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%2272%22 cy=%22428%22 r=%221.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%2243%22 cy=%22405%22 r=%221.8%22 opacity=%220.89%22/%3E%3Ccircle cx=%22105%22 cy=%22392%22 r=%221.0%22 opacity=%220.43%22/%3E%3Ccircle cx=%2257%22 cy=%22351%22 r=%220.6%22 opacity=%220.77%22/%3E%3Ccircle cx=%22-12%22 cy=%22296%22 r=%221.0%22 opacity=%220.54%22/%3E%3Ccircle cx=%2239%22 cy=%22407%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22100%22 cy=%22376%22 r=%220.6%22 opacity=%220.38%22/%3E%3Ccircle cx=%2251%22 cy=%22267%22 r=%221.3%22 opacity=%220.51%22/%3E%3Ccircle cx=%2220%22 cy=%22409%22 r=%220.6%22 opacity=%220.87%22/%3E%3Ccircle cx=%2232%22 cy=%22415%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2273%22 cy=%22319%22 r=%220.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%220.8%22 opacity=%220.60%22/%3E%3Ccircle cx=%22-19%22 cy=%22312%22 r=%221.3%22 opacity=%220.83%22/%3E%3Ccircle cx=%2262%22 cy=%22411%22 r=%221.0%22 opacity=%220.73%22/%3E%3Ccircle cx=%2246%22 cy=%22380%22 r=%220.6%22 opacity=%220.45%22/%3E%3Ccircle cx=%2274%22 cy=%22393%22 r=%221.3%22 opacity=%220.81%22/%3E%3Ccircle cx=%2285%22 cy=%22394%22 r=%220.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%2230%22 cy=%22407%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%228%22 cy=%22342%22 r=%220.6%22 opacity=%220.60%22/%3E%3Ccircle cx=%22146%22 cy=%22243%22 r=%221.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%2253%22 cy=%22367%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2298%22 cy=%22367%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2253%22 cy=%22334%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22104%22 cy=%22384%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2281%22 cy=%22406%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2229%22 cy=%22309%22 r=%220.6%22 opacity=%220.82%22/%3E%3Ccircle cx=%22120%22 cy=%22347%22 r=%221.3%22 opacity=%220.52%22/%3E%3Ccircle cx=%22116%22 cy=%22429%22 r=%221.0%22 opacity=%220.61%22/%3E%3Ccircle cx=%2251%22 cy=%22282%22 r=%220.8%22 opacity=%220.87%22/%3E%3Ccircle cx=%2245%22 cy=%22344%22 r=%221.8%22 opacity=%220.85%22/%3E%3Ccircle cx=%2272%22 cy=%22300%22 r=%220.6%22 opacity=%220.73%22/%3E%3Ccircle cx=%2267%22 cy=%22407%22 r=%220.8%22 opacity=%220.55%22/%3E%3Ccircle cx=%2280%22 cy=%22424%22 r=%221.8%22 opacity=%220.53%22/%3E%3Ccircle cx=%2284%22 cy=%22458%22 r=%220.8%22 opacity=%220.79%22/%3E%3Ccircle cx=%22101%22 cy=%22260%22 r=%220.8%22 opacity=%220.46%22/%3E%3Ccircle cx=%22-3%22 cy=%22354%22 r=%220.6%22 opacity=%220.78%22/%3E%3Ccircle cx=%2241%22 cy=%22357%22 r=%221.8%22 opacity=%220.88%22/%3E%3Ccircle cx=%22-30%22 cy=%22396%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2249%22 cy=%22382%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2243%22 cy=%22409%22 r=%221.8%22 opacity=%220.81%22/%3E%3Ccircle cx=%225%22 cy=%22361%22 r=%220.6%22 opacity=%220.81%22/%3E%3Ccircle cx=%22103%22 cy=%22391%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%22104%22 cy=%22445%22 r=%221.0%22 opacity=%220.40%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%221.3%22 opacity=%220.57%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%220.8%22 opacity=%220.90%22/%3E%3Ccircle cx=%22129%22 cy=%22364%22 r=%221.3%22 opacity=%220.79%22/%3E%3Ccircle cx=%22121%22 cy=%22439%22 r=%221.3%22 opacity=%220.71%22/%3E%3Ccircle cx=%2237%22 cy=%22411%22 r=%220.8%22 opacity=%220.36%22/%3E%3Ccircle cx=%2292%22 cy=%22258%22 r=%220.6%22 opacity=%220.64%22/%3E%3Ccircle cx=%22114%22 cy=%22324%22 r=%220.8%22 opacity=%220.80%22/%3E%3Ccircle cx=%2278%22 cy=%22394%22 r=%221.0%22 opacity=%220.63%22/%3E%3Ccircle cx=%2273%22 cy=%22297%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22137%22 cy=%22447%22 r=%221.0%22 opacity=%220.84%22/%3E%3Ccircle cx=%2227%22 cy=%22256%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22-21%22 cy=%22342%22 r=%220.8%22 opacity=%220.68%22/%3E%3Ccircle cx=%2274%22 cy=%22316%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2261%22 cy=%22274%22 r=%221.0%22 opacity=%220.73%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 500%22%3E%3Cdefs%3E%3ClinearGradient id=%22g%22 x1=%220%22 y1=%221%22 x2=%221%22 y2=%220%22%3E%3Cstop offset=%220%22 stop-color=%22%23c4933f%22/%3E%3Cstop offset=%22.3%22 stop-color=%22%23f7e7b8%22/%3E%3Cstop offset=%22.5%22 stop-color=%22%23d2a452%22/%3E%3Cstop offset=%22.75%22 stop-color=%22%23fbf0cf%22/%3E%3Cstop offset=%221%22 stop-color=%22%23c99a48%22/%3E%3C/linearGradient%3E%3Cfilter id=%22b%22 x=%22-20%25%22 y=%22-20%25%22 width=%22140%25%22 height=%22140%25%22%3E%3CfeGaussianBlur stdDeviation=%2222%22/%3E%3C/filter%3E%3Cfilter id=%22s%22 x=%22-10%25%22 y=%22-10%25%22 width=%22120%25%22 height=%22120%25%22%3E%3CfeGaussianBlur stdDeviation=%221.2%22/%3E%3C/filter%3E%3C/defs%3E%3Cg transform=%22rotate%28180 400 250%29%22%3E%3Cpath d=%22M-40 330C160 300 420 190 700-40h90C480 230 190 350-40 400z%22 fill=%22%23e6cf9f%22 opacity=%22.3%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-40 120C90 110 230 60 340-40h70C280 90 100 150-40 170z%22 fill=%22%23efdcb4%22 opacity=%22.3%22 filter=%22url%28%23b%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22%23a8792c%22 opacity=%22.25%22 filter=%22url%28%23s%29%22 transform=%22translate%282 5%29%22/%3E%3Cpath d=%22M-20 196C150 176 350 104 590-30h14C352 116 152 192-20 216z%22 fill=%22url%28%23g%29%22/%3E%3Cpath d=%22M-20 232C110 210 260 150 430 38C290 146 130 214-20 246z%22 fill=%22url%28%23g%29%22 opacity=%22.85%22/%3E%3Cpath d=%22M-20 300C200 262 440 160 720-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221.2%22 opacity=%22.8%22/%3E%3Cpath d=%22M-20 420C120 400 260 330 380 230%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cpath d=%22M-20 90C80 80 180 40 260-30%22 fill=%22none%22 stroke=%22url%28%23g%29%22 stroke-width=%221%22 opacity=%22.6%22/%3E%3Cg fill=%22%23c99a48%22%3E%3Ccircle cx=%2258%22 cy=%22381%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2228%22 cy=%22337%22 r=%220.6%22 opacity=%220.85%22/%3E%3Ccircle cx=%2274%22 cy=%22375%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22110%22 cy=%22384%22 r=%221.8%22 opacity=%220.42%22/%3E%3Ccircle cx=%2281%22 cy=%22433%22 r=%220.6%22 opacity=%220.67%22/%3E%3Ccircle cx=%22-28%22 cy=%22449%22 r=%220.6%22 opacity=%220.66%22/%3E%3Ccircle cx=%22101%22 cy=%22396%22 r=%221.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2240%22 cy=%22453%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2244%22 cy=%22333%22 r=%220.6%22 opacity=%220.65%22/%3E%3Ccircle cx=%2285%22 cy=%22358%22 r=%220.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%22-6%22 cy=%22329%22 r=%221.3%22 opacity=%220.67%22/%3E%3Ccircle cx=%2234%22 cy=%22365%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%2272%22 cy=%22428%22 r=%221.8%22 opacity=%220.62%22/%3E%3Ccircle cx=%2243%22 cy=%22405%22 r=%221.8%22 opacity=%220.89%22/%3E%3Ccircle cx=%22105%22 cy=%22392%22 r=%221.0%22 opacity=%220.43%22/%3E%3Ccircle cx=%2257%22 cy=%22351%22 r=%220.6%22 opacity=%220.77%22/%3E%3Ccircle cx=%22-12%22 cy=%22296%22 r=%221.0%22 opacity=%220.54%22/%3E%3Ccircle cx=%2239%22 cy=%22407%22 r=%221.3%22 opacity=%220.39%22/%3E%3Ccircle cx=%22100%22 cy=%22376%22 r=%220.6%22 opacity=%220.38%22/%3E%3Ccircle cx=%2251%22 cy=%22267%22 r=%221.3%22 opacity=%220.51%22/%3E%3Ccircle cx=%2220%22 cy=%22409%22 r=%220.6%22 opacity=%220.87%22/%3E%3Ccircle cx=%2232%22 cy=%22415%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2273%22 cy=%22319%22 r=%220.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%220.8%22 opacity=%220.60%22/%3E%3Ccircle cx=%22-19%22 cy=%22312%22 r=%221.3%22 opacity=%220.83%22/%3E%3Ccircle cx=%2262%22 cy=%22411%22 r=%221.0%22 opacity=%220.73%22/%3E%3Ccircle cx=%2246%22 cy=%22380%22 r=%220.6%22 opacity=%220.45%22/%3E%3Ccircle cx=%2274%22 cy=%22393%22 r=%221.3%22 opacity=%220.81%22/%3E%3Ccircle cx=%2285%22 cy=%22394%22 r=%220.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%2230%22 cy=%22407%22 r=%220.8%22 opacity=%220.73%22/%3E%3Ccircle cx=%228%22 cy=%22342%22 r=%220.6%22 opacity=%220.60%22/%3E%3Ccircle cx=%22146%22 cy=%22243%22 r=%221.8%22 opacity=%220.57%22/%3E%3Ccircle cx=%2253%22 cy=%22367%22 r=%221.3%22 opacity=%220.38%22/%3E%3Ccircle cx=%2298%22 cy=%22367%22 r=%220.8%22 opacity=%220.41%22/%3E%3Ccircle cx=%2253%22 cy=%22334%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22104%22 cy=%22384%22 r=%220.6%22 opacity=%220.39%22/%3E%3Ccircle cx=%2281%22 cy=%22406%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2229%22 cy=%22309%22 r=%220.6%22 opacity=%220.82%22/%3E%3Ccircle cx=%22120%22 cy=%22347%22 r=%221.3%22 opacity=%220.52%22/%3E%3Ccircle cx=%22116%22 cy=%22429%22 r=%221.0%22 opacity=%220.61%22/%3E%3Ccircle cx=%2251%22 cy=%22282%22 r=%220.8%22 opacity=%220.87%22/%3E%3Ccircle cx=%2245%22 cy=%22344%22 r=%221.8%22 opacity=%220.85%22/%3E%3Ccircle cx=%2272%22 cy=%22300%22 r=%220.6%22 opacity=%220.73%22/%3E%3Ccircle cx=%2267%22 cy=%22407%22 r=%220.8%22 opacity=%220.55%22/%3E%3Ccircle cx=%2280%22 cy=%22424%22 r=%221.8%22 opacity=%220.53%22/%3E%3Ccircle cx=%2284%22 cy=%22458%22 r=%220.8%22 opacity=%220.79%22/%3E%3Ccircle cx=%22101%22 cy=%22260%22 r=%220.8%22 opacity=%220.46%22/%3E%3Ccircle cx=%22-3%22 cy=%22354%22 r=%220.6%22 opacity=%220.78%22/%3E%3Ccircle cx=%2241%22 cy=%22357%22 r=%221.8%22 opacity=%220.88%22/%3E%3Ccircle cx=%22-30%22 cy=%22396%22 r=%221.0%22 opacity=%220.88%22/%3E%3Ccircle cx=%2249%22 cy=%22382%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2243%22 cy=%22409%22 r=%221.8%22 opacity=%220.81%22/%3E%3Ccircle cx=%225%22 cy=%22361%22 r=%220.6%22 opacity=%220.81%22/%3E%3Ccircle cx=%22103%22 cy=%22391%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%22104%22 cy=%22445%22 r=%221.0%22 opacity=%220.40%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%221.3%22 opacity=%220.57%22/%3E%3Ccircle cx=%22138%22 cy=%22318%22 r=%220.8%22 opacity=%220.90%22/%3E%3Ccircle cx=%22129%22 cy=%22364%22 r=%221.3%22 opacity=%220.79%22/%3E%3Ccircle cx=%22121%22 cy=%22439%22 r=%221.3%22 opacity=%220.71%22/%3E%3Ccircle cx=%2237%22 cy=%22411%22 r=%220.8%22 opacity=%220.36%22/%3E%3Ccircle cx=%2292%22 cy=%22258%22 r=%220.6%22 opacity=%220.64%22/%3E%3Ccircle cx=%22114%22 cy=%22324%22 r=%220.8%22 opacity=%220.80%22/%3E%3Ccircle cx=%2278%22 cy=%22394%22 r=%221.0%22 opacity=%220.63%22/%3E%3Ccircle cx=%2273%22 cy=%22297%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22137%22 cy=%22447%22 r=%221.0%22 opacity=%220.84%22/%3E%3Ccircle cx=%2227%22 cy=%22256%22 r=%221.8%22 opacity=%220.58%22/%3E%3Ccircle cx=%22116%22 cy=%22315%22 r=%221.8%22 opacity=%220.43%22/%3E%3Ccircle cx=%22-21%22 cy=%22342%22 r=%220.8%22 opacity=%220.68%22/%3E%3Ccircle cx=%2274%22 cy=%22316%22 r=%220.8%22 opacity=%220.61%22/%3E%3Ccircle cx=%2261%22 cy=%22274%22 r=%221.0%22 opacity=%220.73%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background:
+    radial-gradient(ellipse 60% 50% at 78% 18%, rgba(255, 255, 255, 0.9), transparent 70%),
+    radial-gradient(ellipse 50% 45% at 12% 80%, rgba(255, 255, 255, 0.8), transparent 70%),
+    linear-gradient(135deg, #fbf5ea 0%, #fdfaf4 45%, #f8f0e2 100%);
+  background-attachment: fixed;
+}
+.ribbon-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--ribbon-opacity);
+  background-image: var(--ribbon);
+  background-repeat: no-repeat;
+  background-position: left top, right bottom;
+  background-size: min(34vw, 580px) auto, min(34vw, 580px) auto;
+}
+[data-theme="light"] .ribbon-bg .header.is-scrolled {
+  background: rgba(253, 250, 244, 0.55);
+}
+@media (max-width: 860px) {
+  .ribbon-bg::before { background-size: 80vw auto, 80vw auto; }
+}
+
+/* ---------- 商品一覧（item.html） ----------
+   body.shop-body のときだけ適用する。写真の背景、枠付きの商品カード、左右の英文コピー。 */
+.shop-body {
+  --shop-serif: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --shop-latin: "Cormorant Garamond", "Times New Roman", serif;
+  --shop-script: "Mrs Saint Delafield", "Snell Roundhand", cursive;
+  --shop-accent: var(--gold-soft);
+  --shop-rule: rgba(201, 162, 95, 0.55);
+  --shop-panel: rgba(24, 23, 26, 0.82);
+  --shop-panel-line: rgba(201, 162, 95, 0.28);
+  --shop-panel-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --shop-bg-shade: linear-gradient(rgba(10, 10, 11, 0.8), rgba(10, 10, 11, 0.86));
+}
+[data-theme="light"] .shop-body {
+  --shop-accent: #6f5430;
+  --shop-rule: rgba(168, 126, 62, 0.7);
+  --shop-panel: rgba(255, 251, 246, 0.86);
+  --shop-panel-line: rgba(184, 147, 90, 0.32);
+  --shop-panel-shadow: 0 8px 22px rgba(120, 84, 50, 0.12);
+  --shop-bg-shade: linear-gradient(transparent, transparent);
+  background: #f3e6da;
+}
+/* 背景の写真（images/shop-bg.jpg）。画面に固定して、スクロールしても動かさない */
+.shop-body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--shop-bg-shade), url("images/shop-bg.jpg");
+  background-repeat: no-repeat;
+  background-position: center top;
+  background-size: cover;
+}
+.shop-body .header.is-scrolled { border-bottom-color: var(--shop-rule); }
+[data-theme="light"] .shop-body .header.is-scrolled { background: rgba(247, 238, 229, 0.55); }
+
+.shop-body .shop { max-width: 1480px; padding: 1.7rem 2.5rem 3rem; }
+.shop-body .page > .shop:first-child { padding-top: 1.7rem; }
+
+/* 見出しの段：左に英文コピー、中央に見出しとカテゴリー、右に手書き風のコピー */
+.shop__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 36rem) minmax(0, 1fr);
+  align-items: start;
+  gap: 2rem;
+  margin-bottom: 0.7rem;
+}
+.shop__copy,
+.shop__script { color: var(--shop-accent); padding-top: 1.7rem; }
+.shop__copy { padding-left: 4%; }
+.shop__copy-title {
+  font-family: var(--shop-latin);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.75;
+  letter-spacing: 0.28em;
+}
+.shop__copy-sub {
+  font-family: var(--shop-latin);
+  font-style: italic;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  letter-spacing: 0.18em;
+}
+/* ひし形を中央に置いた飾り罫 */
+.shop__orn {
+  position: relative;
+  display: block;
+  width: 110px;
+  height: 9px;
+  margin: 0.9rem 0;
+}
+.shop__orn::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 4px;
+  height: 1px;
+  background: var(--shop-rule);
+}
+.shop__orn::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 1px;
+  width: 7px; height: 7px;
+  margin-left: -3.5px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+.shop__orn--wide { width: min(300px, 70vw); margin: 0.7rem auto 0; }
+.shop__orn--dot { width: 9px; margin: 0.6rem auto 0; }
+.shop__orn--dot::before { display: none; }
+
+.shop__script { text-align: center; justify-self: end; padding-right: 6%; }
+.shop__script-text {
+  font-family: var(--shop-script);
+  font-size: 2.9rem;
+  line-height: 0.95;
+  transform: rotate(-9deg);
+  transform-origin: center;
+  white-space: nowrap;
+}
+.shop__script-text span { display: block; }
+.shop__script-text span + span { padding-left: 1.6em; }
+.shop__script-brand {
+  margin-top: 1.5rem;
+  padding-left: 35%;
+  font-family: var(--shop-latin);
+  font-size: 0.72rem;
+  letter-spacing: 0.42em;
+}
+.shop__script .shop__orn--dot { margin-left: calc(50% + 17.5% - 4px); }
+
+.shop-body .shop .section-head { margin-bottom: 1.3rem; }
+.shop-body .shop .section-head__title {
+  font-family: var(--shop-serif);
+  font-weight: 700;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  padding-left: 0.1em;
+}
+.shop-body .filters { margin-bottom: 0; gap: 0.7rem; }
+.shop-body .filter {
+  font-family: var(--shop-serif);
+  font-weight: 600;
+  font-size: 0.72rem;
+  padding: 0.5rem 1.5rem;
+  border-color: var(--shop-rule);
+}
+[data-theme="light"] .shop-body .filter { background: rgba(255, 251, 246, 0.6); color: rgba(22, 22, 26, 0.8); }
+[data-theme="light"] .shop-body .filter.is-active { background: var(--text); color: #fff; border-color: var(--text); }
+
+.shop-body .grid {
+  max-width: 1090px;
+  margin: 0 auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+/* 商品カードは枠付きのパネルにする */
+.shop-body .card {
+  padding: 0.5rem 0.5rem 0.9rem;
+  background: var(--shop-panel);
+  border: 1px solid var(--shop-panel-line);
+  border-radius: 8px;
+  box-shadow: var(--shop-panel-shadow);
+}
+.shop-body .card__media { aspect-ratio: 27 / 19; border-radius: 3px; }
+.shop-body .card:hover .card__media { box-shadow: none; }
+.shop-body .card__body { padding: 0.75rem 0.45rem 0; gap: 0.3rem; }
+.shop-body .card__name {
+  font-family: var(--shop-serif);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+}
+.shop-body .card__tag {
+  font-family: var(--shop-serif);
+  font-size: 0.56rem;
+  border-color: var(--shop-panel-line);
+}
+.shop-body .card__price { font-size: 0.98rem; font-weight: 600; }
+.shop-body .card__add { width: 32px; height: 32px; border-color: var(--shop-panel-line); }
+[data-theme="light"] .shop-body .card__add { background: rgba(255, 255, 255, 0.6); color: var(--text); }
+[data-theme="light"] .shop-body .card__add:hover { background: var(--gold); }
+[data-theme="light"] .shop-body .card:hover .card__name { color: #8a5f1e; }
+[data-theme="light"] .shop-body .card__tag { color: #8a5f1e; }
+
+/* 一覧の下の署名 */
+.shop__sign {
+  margin-top: 1rem;
+  text-align: center;
+  color: var(--shop-accent);
+  font-family: var(--shop-latin);
+}
+.shop__sign-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.5em;
+  padding-left: 0.5em;
+}
+.shop__sign-brand::before,
+.shop__sign-brand::after {
+  content: "";
+  width: 90px;
+  height: 1px;
+  background: var(--shop-rule);
+}
+.shop__sign-sub {
+  margin-top: 0.6rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.46em;
+  padding-left: 0.46em;
+}
+
+@media (max-width: 1180px) {
+  .shop__top { grid-template-columns: minmax(0, 1fr); margin-bottom: 1.8rem; }
+  .shop__copy,
+  .shop__script { display: none; }
+  .shop-body .shop,
+  .shop-body .page > .shop:first-child { padding-top: 1.6rem; }
+}
+@media (max-width: 960px) {
+  .shop-body .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 860px) {
+  .shop-body .shop,
+  .shop-body .page > .shop:first-child { padding: 1.4rem 1rem 3.5rem; }
+  .shop-body .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+  .shop-body .card { padding: 0.4rem 0.4rem 0.7rem; }
+  .shop-body .card__body { padding: 0.6rem 0.3rem 0; }
+  .shop-body .card__name { font-size: 0.76rem; letter-spacing: 0.03em; }
+  .shop-body .card__price { font-size: 0.9rem; }
+  .shop-body .filter { padding: 0.45rem 1.1rem; }
+  .shop-body .card__add { width: 30px; height: 30px; flex-basis: 30px; }
+  .shop__sign-brand { gap: 1rem; letter-spacing: 0.36em; }
+  .shop__sign-brand::before,
+  .shop__sign-brand::after { width: 40px; }
+  .shop__sign-sub { font-size: 0.54rem; letter-spacing: 0.3em; }
+}
