@@ -48,7 +48,7 @@ const NAV_LINKS = [
   { label: "ABOUT", href: "index.html", sub: "ブランドについて" },
   { label: "ITEM", href: "item.html", sub: "商品について" },
   { label: "NEWS", href: "news.html", sub: "ニュース" },
-  { label: "JOURNAL", href: "journal.html", sub: "読みもの" },
+  { label: "TIME LINE", href: "journal.html", sub: "記録" },
 ];
 
 function currentPage() {
@@ -334,6 +334,22 @@ function getRankingProducts(count = 3) {
   return [...ranked, ...fillers].slice(0, count);
 }
 
+// メインビジュアル下の NEWS ティッカー（トップページ）。最新 1 件を表示する。
+function renderHeroNews() {
+  const box = document.getElementById("heroNews");
+  if (!box || typeof NewsStore === "undefined") return;
+  NewsStore.findAll()
+    .then((items) => {
+      const latest = items[0];
+      if (!latest) return;
+      document.getElementById("heroNewsDate").textContent = String(latest.date || "").replace(/-/g, ".");
+      document.getElementById("heroNewsTitle").textContent = latest.title || "";
+      document.getElementById("heroNewsLink").href = `news-detail.html?id=${encodeURIComponent(latest.id)}`;
+      box.hidden = false;
+    })
+    .catch((err) => console.error("NEWS の読み込みに失敗しました:", err));
+}
+
 function renderRanking() {
   const row = document.getElementById("rankingRow");
   if (!row) return;
@@ -423,7 +439,7 @@ function renderProductDetail() {
   const escD = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const nl2br = (s) => escD(s).replace(/\n/g, "<br />");
   const dFeatureHead = "解凍したての、いちばん澄んだ甘さを。";
-  const dFeatureBody = "室温で1時間ほど解凍すると、外はしっとり、中はとろりとほどける食べごろに。ひと口運べば、濃厚なコクのあとに、すっと澄んだ余韻が広がります。小分けにカットして、食べる分だけ解凍し、残りは冷凍庫へ。慌ただしい毎日の中の、静かなご褒美のひとときに。";
+  const dFeatureBody = "室温で1時間ほど解凍すると、外はしっとり、中はとろりとほどける食べごろに。<br />ひと口運べば、濃厚なコクのあとに、すっと澄んだ余韻が広がります。<br />小分けにカットして、食べる分だけ解凍し、残りは冷凍庫へ。<br />慌ただしい毎日の中の、静かなご褒美のひとときに。";
   const dSpecSize = "約15cm（4〜6名様分）";
   const dSpecExpiry = "冷凍（−18℃以下）で約30日<br />※解凍後は冷蔵で2日以内にお召し上がりください<br />※詳しくは商品ラベルの日付をご確認ください";
   const dSpecIngredients = "クリームチーズ、生クリーム（国内製造）、卵、グラニュー糖、薄力粉、バター、レモン果汁／（一部に乳成分・卵・小麦・大豆を含む）<br />※仕入れ状況により原材料の一部が変わる場合がありますが、味・品質に影響はありません。";
@@ -1935,6 +1951,7 @@ applySiteText();
   applyAuthButtons();
   updateCartBadge();
   updateWishlistBadge();
+  renderHeroNews();
 
   // 商品はストアから読み込んでから描画（将来 fetch に変わっても同じ流れ）
   try {
