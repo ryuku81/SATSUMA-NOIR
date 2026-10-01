@@ -894,7 +894,6 @@ img { display: block; max-width: 100%; }
   position: relative;
   max-width: none;
   margin: 0;
-  margin-top: 8rem;
   padding: 0;
   min-height: 74vh;
   display: flex;
@@ -3871,7 +3870,6 @@ img { display: block; max-width: 100%; }
   .contact { padding: 5rem 1.4rem; }
   .statement {
     min-height: 68vh;
-    margin-top: 3rem;
     align-items: flex-end;
   }
   .statement__inner {
@@ -7973,4 +7971,150 @@ img { display: block; max-width: 100%; }
   .ranking--ribbon .rank-row:first-child .rank-row__add:hover { background: #fff; color: #000; }
   .ranking--ribbon .section-more { margin-top: 2.8rem; }
   .ranking__more { padding: 0.9rem 2.2rem; }
+}
+
+/* ---------- ブランド概要（index.html） ----------
+   人気商品の下。明朝の見出しと、数字を大きく見せる 3 つの項目。 */
+.overview {
+  position: relative;
+  padding: 6.5rem 2.5rem 7rem;
+  background: var(--bg);
+  overflow: hidden;
+}
+[data-theme="light"] .overview { background: #fdfaf4; }
+.overview__inner { max-width: 1040px; margin: 0 auto; text-align: center; }
+.overview__eyebrow {
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.42em;
+  padding-left: 0.42em;
+  color: var(--gold-soft);
+  margin-bottom: 0.5rem;
+}
+[data-theme="light"] .overview__eyebrow { color: #8a6424; }
+.overview__title {
+  font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-weight: 600;
+  font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+  letter-spacing: 0.14em;
+  padding-left: 0.14em;
+}
+/* ひし形を中央に置いた飾り罫 */
+.overview__orn {
+  position: relative;
+  display: block;
+  width: 180px;
+  height: 9px;
+  margin: 1.4rem auto 1.6rem;
+}
+.overview__orn::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 4px;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201, 162, 95, 0.8), transparent);
+}
+.overview__orn::after {
+  content: "";
+  position: absolute;
+  left: 50%; top: 1px;
+  width: 7px; height: 7px;
+  margin-left: -3.5px;
+  background: var(--gold);
+  transform: rotate(45deg);
+}
+.overview__lead {
+  font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(0.92rem, 1.4vw, 1.08rem);
+  line-height: 2.2;
+  letter-spacing: 0.12em;
+  color: var(--text);
+}
+.overview__facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 4rem 0 3.2rem;
+  padding: 0;
+  list-style: none;
+}
+.overview__fact {
+  position: relative;
+  padding: 1.2rem 1.6rem;
+}
+/* 項目のあいだに細い金の縦線 */
+.overview__fact + .overview__fact::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 1px;
+  background: linear-gradient(transparent, rgba(201, 162, 95, 0.6), transparent);
+}
+.overview__num {
+  display: block;
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-weight: 500;
+  font-size: clamp(2.2rem, 3.6vw, 3rem);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  color: var(--gold-soft);
+  min-height: 2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-theme="light"] .overview__num { color: #a07a3a; }
+.overview__label {
+  display: block;
+  margin-top: 0.9rem;
+  font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.3em;
+  padding-left: 0.3em;
+}
+.overview__text {
+  margin-top: 0.9rem;
+  font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 0.8rem;
+  line-height: 2;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-wrap: balance;
+  word-break: auto-phrase;
+}
+[data-theme="light"] .overview__text { color: #5a4d3f; }
+.overview__sign {
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.44em;
+  padding-left: 0.44em;
+  color: var(--gold-soft);
+}
+[data-theme="light"] .overview__sign { color: #8a6424; }
+.overview__sign::before,
+.overview__sign::after {
+  content: "";
+  display: inline-block;
+  vertical-align: middle;
+  width: 40px;
+  height: 1px;
+  margin: 0 1.4rem;
+  background: rgba(201, 162, 95, 0.6);
+}
+@media (max-width: 860px) {
+  .overview { padding: 4rem 1.25rem 4.5rem; }
+  .overview__br { display: none; }
+  .overview__lead { font-size: 0.86rem; letter-spacing: 0.06em; }
+  .overview__facts { grid-template-columns: minmax(0, 1fr); gap: 0; margin: 2.6rem 0 2.4rem; }
+  .overview__fact { padding: 1.6rem 0.5rem; }
+  .overview__fact + .overview__fact::before {
+    top: 0; bottom: auto; left: 20%; right: 20%;
+    width: auto; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(201, 162, 95, 0.6), transparent);
+  }
+  .overview__sign::before,
+  .overview__sign::after { width: 22px; margin: 0 0.8rem; }
 }
