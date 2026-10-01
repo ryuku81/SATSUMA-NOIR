@@ -1558,6 +1558,8 @@ function shouldShowLoaderForUrl(url, link) {
 
 function navigateWithLoader(href) {
   if (!href) return;
+  // アニメーションが有効なら、幕で画面を覆ってから移動する（motion.js）
+  if (window.Motion && window.Motion.leave(href)) return;
   showPageLoader();
   window.setTimeout(() => {
     window.location.href = href;
@@ -1912,11 +1914,13 @@ function wire() {
     bindArrow("topicsPrev", -1);
   }
 
-  // Section-head reveal
-  document.querySelectorAll(".section-head").forEach((el) => {
-    el.classList.add("reveal");
-    io.observe(el);
-  });
+  // Section-head reveal（motion.js が有効なときは、そちらが見出しを動かす）
+  if (!document.documentElement.classList.contains("has-motion")) {
+    document.querySelectorAll(".section-head").forEach((el) => {
+      el.classList.add("reveal");
+      io.observe(el);
+    });
+  }
 }
 
 // ============================================================

@@ -8,7 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=205" />
+  <script src="motion-boot.js?v=1"></script>
+  <link rel="stylesheet" href="styles.css?v=228" />
 </head>
 <body class="home">
   <!-- Hero（横スクロール/スワイプで画像が切り替わるカルーセル） -->
@@ -20,8 +21,6 @@
       <img class="hero__img" src="images/souffle-cheesecake.png" alt="スフレチーズケーキ" loading="lazy" data-site-img="hero4" />
     </div>
     <div class="hero__overlay"></div>
-    <div class="hero__sparks" id="heroSparks" aria-hidden="true"></div>
-    <div class="hero__light" id="heroLight" aria-hidden="true"></div>
     <div class="hero__center">
       <h1 class="hero__brand">SATSUMA NOIR</h1>
       <span class="hero__rule" aria-hidden="true"></span>
@@ -42,22 +41,8 @@
     </div>
   </section>
 
-  <!-- Ranking -->
-  <section class="ranking ranking--ribbon" id="ranking">
-    <p class="ranking__side ranking__side--top" aria-hidden="true">特別なひとときを、日常に。</p>
-    <p class="ranking__side ranking__side--bottom" aria-hidden="true">素材がつくる、やさしいしあわせ。</p>
-    <div class="section-head">
-      <p class="section-head__eyebrow">PRODUCTS</p>
-      <h2 class="section-head__title">人気商品</h2>
-      <span class="ranking__rule" aria-hidden="true"></span>
-      <p class="ranking__sub">サツマノワールの、いちばんの味わいを。</p>
-    </div>
-    <div class="ranking__row" id="rankingRow"></div>
-    <div class="section-more"><a href="item.html" class="btn btn--ghost ranking__more">すべての商品を見る<span aria-hidden="true">→</span></a></div>
-  </section>
-
   <!-- Overview（ブランド概要） -->
-  <section class="overview" id="overview">
+  <section class="overview overview--photo" id="overview">
     <div class="overview__inner">
       <div class="overview__head">
         <p class="overview__eyebrow" lang="en">ABOUT</p>
@@ -84,6 +69,20 @@
       </ul>
       <p class="overview__sign" lang="en">FROM KAGOSHIMA, WITH CARE</p>
     </div>
+  </section>
+
+  <!-- Ranking -->
+  <section class="ranking ranking--ribbon" id="ranking">
+    <p class="ranking__side ranking__side--top" aria-hidden="true">特別なひとときを、日常に。</p>
+    <p class="ranking__side ranking__side--bottom" aria-hidden="true">素材がつくる、やさしいしあわせ。</p>
+    <div class="section-head">
+      <p class="section-head__eyebrow">PRODUCTS</p>
+      <h2 class="section-head__title">人気商品</h2>
+      <span class="ranking__rule" aria-hidden="true"></span>
+      <p class="ranking__sub">サツマノワールの、いちばんの味わいを。</p>
+    </div>
+    <div class="ranking__row" id="rankingRow"></div>
+    <div class="section-more"><a href="item.html" class="btn btn--ghost ranking__more">すべての商品を見る<span aria-hidden="true">→</span></a></div>
   </section>
 
   <!-- Statement -->
@@ -189,98 +188,18 @@
   <script src="bestseller.js?v=1"></script>
   <script src="auth.js?v=4"></script>
 
-  <script src="app.js?v=43"></script>
+  <script src="app.js?v=44"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" integrity="sha384-HOvlOYPIs/zjoIkWUGXkVmXsjr8GuZLV+Q+rcPwmJOVZVpvTSXQChiN4t9Euv9Vc" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" integrity="sha384-P8VzCVnT9NBUkMrpcIZrJbA7EBjJvh/fJS6PmP+4nLIM284DtsImIv8D0fFjIkeh" crossorigin="anonymous"></script>
+  <script src="motion.js?v=19"></script>
 
-  <!-- メインビジュアル：横スクロール/スワイプで画像切り替え＋ドット連動（文字は全スライド共通） -->
+  <!-- メインビジュアル：横スクロール/スワイプで画像切り替え＋ドット連動（文字は全スライド共通）。
+       表示時・スクロール時の動きは motion.js が担当 -->
   <script>
     (function () {
       const track = document.getElementById("heroTrack");
       const dotsWrap = document.getElementById("heroDots");
       const hero = document.querySelector(".hero");
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-      // ブランド名を 1 文字ずつ span に分けて、順番にめくれるように登場させる
-      const brand = document.querySelector(".hero__brand");
-      if (brand && !reduceMotion) {
-        const text = brand.textContent;
-        brand.setAttribute("aria-label", text);
-        brand.innerHTML = Array.from(text)
-          .map((ch, i) =>
-            ch === " "
-              ? `<span class="hero__gap" aria-hidden="true"> </span>`
-              : `<span class="hero__ch" aria-hidden="true" style="--i:${i}">${ch}</span>`
-          )
-          .join("");
-      }
-
-      // 金の粒（ランダムな位置・大きさ・速さで舞い上がる）
-      const sparks = document.getElementById("heroSparks");
-      if (sparks && !reduceMotion) {
-        sparks.innerHTML = Array.from({ length: 28 }, (_, i) => {
-          const size = (1.5 + Math.random() * 3).toFixed(1);
-          const left = (Math.random() * 100).toFixed(1);
-          const dur = (9 + Math.random() * 10).toFixed(1);
-          const delay = (-Math.random() * 20).toFixed(1);
-          const drift = ((Math.random() - 0.5) * 80).toFixed(0);
-          return `<i style="--x:${left}%;--s:${size}px;--d:${dur}s;--dl:${delay}s;--dx:${drift}px"></i>`;
-        }).join("");
-      }
-
-      // スクロールすると写真が奥に沈み、文字が先に薄れて上へ抜ける
-      const overlayEls = document.querySelectorAll(".hero__center, .hero__side, .hero__scroll, .hero__news, .hero__dots");
-      if (hero && !reduceMotion) {
-        let rafS = null;
-        const onScroll = () => {
-          rafS = null;
-          const y = Math.min(window.scrollY, hero.offsetHeight);
-          const r = y / hero.offsetHeight;
-          track.style.setProperty("--sy", (y * 0.45).toFixed(1) + "px");
-          track.style.setProperty("--sb", Math.min(r * 10, 8).toFixed(2) + "px");
-          overlayEls.forEach((el) => {
-            el.style.opacity = Math.max(0, 1 - r * 2.2).toFixed(3);
-            el.style.translate = `0 ${(-y * 0.25).toFixed(1)}px`;
-          });
-        };
-        window.addEventListener("scroll", () => { if (!rafS) rafS = requestAnimationFrame(onScroll); }, { passive: true });
-        onScroll();
-      }
-
-      // カーソルに淡い金色の光が付いてくる
-      const light = document.getElementById("heroLight");
-      if (hero && light && !reduceMotion && window.matchMedia("(hover: hover)").matches) {
-        hero.addEventListener("mousemove", (e) => {
-          const r = hero.getBoundingClientRect();
-          light.style.setProperty("--lx", (e.clientX - r.left).toFixed(0) + "px");
-          light.style.setProperty("--ly", (e.clientY - r.top).toFixed(0) + "px");
-          light.classList.add("is-on");
-        });
-        hero.addEventListener("mouseleave", () => light.classList.remove("is-on"));
-      }
-
-      // マウスの動きに合わせて、写真は逆方向に、文字は同じ方向にわずかに動く（視差）
-      const center = document.querySelector(".hero__center");
-      if (hero && center && !reduceMotion && window.matchMedia("(hover: hover)").matches) {
-        let px = 0, py = 0, tx = 0, ty = 0, rafP = null;
-        const tick = () => {
-          px += (tx - px) * 0.08;
-          py += (ty - py) * 0.08;
-          track.style.setProperty("--px", px.toFixed(3));
-          track.style.setProperty("--py", py.toFixed(3));
-          center.style.transform = `translate(${(px * 18).toFixed(1)}px, ${(py * 12).toFixed(1)}px)`;
-          rafP = Math.abs(tx - px) > 0.001 || Math.abs(ty - py) > 0.001 ? requestAnimationFrame(tick) : null;
-        };
-        hero.addEventListener("mousemove", (e) => {
-          const r = hero.getBoundingClientRect();
-          tx = (e.clientX - r.left) / r.width - 0.5;
-          ty = (e.clientY - r.top) / r.height - 0.5;
-          if (!rafP) rafP = requestAnimationFrame(tick);
-        });
-        hero.addEventListener("mouseleave", () => {
-          tx = 0; ty = 0;
-          if (!rafP) rafP = requestAnimationFrame(tick);
-        });
-      }
-
       if (!track || !dotsWrap) return;
       const slides = Array.from(track.querySelectorAll(".hero__img"));
       if (slides.length <= 1) return;
@@ -301,17 +220,7 @@
         if (hero) {
           hero.classList.toggle("is-alt-slide", idx !== 0);
         }
-        // スライドが変わったら、文字を一度消して再登場させる
-        if (idx !== lastIdx) {
-          lastIdx = idx;
-          if (center && !reduceMotion) {
-            center.classList.remove("is-replay");
-            void center.offsetWidth; // アニメーションをやり直すためのリフロー
-            center.classList.add("is-replay");
-          }
-        }
       };
-      let lastIdx = 0;
 
       let raf = null;
       track.addEventListener(
@@ -332,6 +241,7 @@
       const AUTO_MS = 6000;
       let timer = null;
       const next = () => {
+        if (window.scrollY > 0) return; // スクロール連動の演出中は写真を切り替えない
         const idx = Math.round(track.scrollLeft / track.clientWidth);
         const to = (idx + 1) % slides.length;
         track.scrollTo({ left: track.clientWidth * to, behavior: "smooth" });
