@@ -1,36 +1,33 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" class="home-page">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SATSUMA NOIR — 上質なスイーツ</title>
+  <title>SATSUMA NOIR | 上質なスイーツ</title>
   <meta name="description" content="夜のように静かで、深い甘さ。SATSUMA NOIR が贈る上質なスイーツコレクション。" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=Shippori+Mincho:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preload" as="image" href="images/hero-basque-classic.png" fetchpriority="high" />
   <script src="motion-boot.js?v=1"></script>
-  <link rel="stylesheet" href="styles.css?v=228" />
+  <link rel="stylesheet" href="styles.css?v=245" />
 </head>
 <body class="home">
-  <!-- Hero（横スクロール/スワイプで画像が切り替わるカルーセル） -->
+  <!-- Hero（ゆっくりクロスフェードするカルーセル） -->
   <section class="hero">
     <div class="hero__track" id="heroTrack">
-      <img class="hero__img" src="images/basque-cheesecake.png" alt="バスクチーズケーキ" data-site-img="hero" />
-      <img class="hero__img" src="images/berry-rare-cheesecake.png" alt="ベリーレアチーズケーキ" loading="lazy" data-site-img="hero2" />
-      <img class="hero__img" src="images/noir-tablette.png" alt="NOIR タブレット" loading="lazy" data-site-img="hero3" />
-      <img class="hero__img" src="images/souffle-cheesecake.png" alt="スフレチーズケーキ" loading="lazy" data-site-img="hero4" />
+      <img class="hero__img is-active" src="images/hero-basque-classic.png" alt="焼きたてのバスクチーズケーキ" fetchpriority="high" />
+      <img class="hero__img" src="images/hero-berry-slice.png" alt="ベリーを飾ったレアチーズケーキ" loading="lazy" />
+      <img class="hero__img" src="images/hero-tiramisu-warm.png" alt="カカオパウダーをまとったティラミス" loading="lazy" />
+      <img class="hero__img" src="images/hero-truffle-plated.png" alt="黒トリュフを添えたバスクチーズケーキ" loading="lazy" />
     </div>
     <div class="hero__overlay"></div>
     <div class="hero__center">
-      <h1 class="hero__brand">SATSUMA NOIR</h1>
-      <span class="hero__rule" aria-hidden="true"></span>
-      <p class="hero__sub" lang="en">BASQUE CHEESECAKE</p>
-      <p class="hero__tagline">ひとくちで、特別な時間を。</p>
+      <img class="hero__identity" src="images/satsuma-noir-logo-transparent.png" alt="SATSUMA NOIR MADE IN JAPAN" />
     </div>
     <p class="hero__side hero__side--left" lang="en" aria-hidden="true">FROM<br />KAGOSHIMA</p>
     <p class="hero__side hero__side--right" lang="en" aria-hidden="true">GOOD<br />THINGS<br />TAKE TIME</p>
     <div class="hero__dots" id="heroDots" aria-label="メインビジュアルの切り替え"></div>
-    <div class="hero__scroll">SCROLL</div>
     <div class="hero__news" id="heroNews" hidden>
       <a class="hero__news-link" id="heroNewsLink" href="news.html">
         <span class="hero__news-label" lang="en">NEWS</span>
@@ -191,9 +188,9 @@
   <script src="app.js?v=44"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" integrity="sha384-HOvlOYPIs/zjoIkWUGXkVmXsjr8GuZLV+Q+rcPwmJOVZVpvTSXQChiN4t9Euv9Vc" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" integrity="sha384-P8VzCVnT9NBUkMrpcIZrJbA7EBjJvh/fJS6PmP+4nLIM284DtsImIv8D0fFjIkeh" crossorigin="anonymous"></script>
-  <script src="motion.js?v=19"></script>
+  <script src="motion.js?v=27"></script>
 
-  <!-- メインビジュアル：横スクロール/スワイプで画像切り替え＋ドット連動（文字は全スライド共通）。
+  <!-- メインビジュアル：クロスフェード＋スワイプ＋ドット連動。
        表示時・スクロール時の動きは motion.js が担当 -->
   <script>
     (function () {
@@ -203,63 +200,82 @@
       if (!track || !dotsWrap) return;
       const slides = Array.from(track.querySelectorAll(".hero__img"));
       if (slides.length <= 1) return;
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let currentIndex = 0;
+
       slides.forEach((_, i) => {
         const b = document.createElement("button");
         b.type = "button";
         b.className = "hero__dot" + (i === 0 ? " is-active" : "");
         b.setAttribute("aria-label", i + 1 + "枚目を表示");
-        b.addEventListener("click", () => {
-          track.scrollTo({ left: track.clientWidth * i, behavior: "smooth" });
-        });
+        b.addEventListener("click", () => showSlide(i));
         dotsWrap.appendChild(b);
       });
       const dots = Array.from(dotsWrap.children);
-      const updateHeroState = () => {
-        const idx = Math.round(track.scrollLeft / track.clientWidth);
-        dots.forEach((d, i) => d.classList.toggle("is-active", i === idx));
+
+      const updateHeroState = (idx) => {
+        slides.forEach((slide, i) => {
+          const active = i === idx;
+          slide.classList.toggle("is-active", active);
+          slide.setAttribute("aria-hidden", String(!active));
+        });
+        dots.forEach((dot, i) => {
+          const active = i === idx;
+          dot.classList.toggle("is-active", active);
+          dot.setAttribute("aria-current", active ? "true" : "false");
+        });
         if (hero) {
           hero.classList.toggle("is-alt-slide", idx !== 0);
         }
+        track.dispatchEvent(new CustomEvent("hero:slidechange", { detail: { index: idx } }));
       };
 
-      let raf = null;
-      track.addEventListener(
-        "scroll",
-        () => {
-          if (raf) return;
-          raf = requestAnimationFrame(() => {
-            raf = null;
-            updateHeroState();
-          });
-        },
-        { passive: true }
-      );
-      window.addEventListener("resize", updateHeroState, { passive: true });
-      updateHeroState();
+      function showSlide(index) {
+        const nextIndex = (index + slides.length) % slides.length;
+        if (nextIndex === currentIndex) return;
+        currentIndex = nextIndex;
+        updateHeroState(currentIndex);
+      }
 
-      // 6 秒ごとに次のスライドへ（最後の次は先頭）。ホバー中・タッチ中は止める
-      const AUTO_MS = 6000;
+      updateHeroState(currentIndex);
+
+      // 4 秒ごとに、2.6 秒かけて次の写真へ溶け合わせる。
+      const AUTO_MS = 4000;
       let timer = null;
       const next = () => {
         if (window.scrollY > 0) return; // スクロール連動の演出中は写真を切り替えない
-        const idx = Math.round(track.scrollLeft / track.clientWidth);
-        const to = (idx + 1) % slides.length;
-        track.scrollTo({ left: track.clientWidth * to, behavior: "smooth" });
+        showSlide(currentIndex + 1);
       };
       const start = () => {
         stop();
+        if (reduceMotion) return;
         timer = setInterval(next, AUTO_MS);
       };
       const stop = () => {
         if (timer) clearInterval(timer);
         timer = null;
       };
-      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+
+      // 横へ払う操作でも前後を切り替える。縦スクロールはブラウザに任せる。
+      let touchStartX = null;
+      track.addEventListener("touchstart", (event) => {
+        touchStartX = event.touches[0]?.clientX ?? null;
+        stop();
+      }, { passive: true });
+      track.addEventListener("touchend", (event) => {
+        const touchEndX = event.changedTouches[0]?.clientX;
+        if (touchStartX !== null && typeof touchEndX === "number") {
+          const delta = touchEndX - touchStartX;
+          if (Math.abs(delta) > 45) showSlide(currentIndex + (delta < 0 ? 1 : -1));
+        }
+        touchStartX = null;
+        start();
+      }, { passive: true });
+
+      if (!reduceMotion) {
         start();
         hero.addEventListener("mouseenter", stop);
         hero.addEventListener("mouseleave", start);
-        track.addEventListener("touchstart", stop, { passive: true });
-        track.addEventListener("touchend", start, { passive: true });
         dotsWrap.addEventListener("click", start);
         document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
       }

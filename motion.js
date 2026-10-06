@@ -26,7 +26,7 @@
   const EASE = "power3.out";
   const EASE_HEAD = "power4.out"; // 見出し：すっと出て長く減速する
   const EASE_LINE = "expo.out"; // 線：一気に伸びて静かに止まる
-  const EASE_WIPE = "expo.inOut"; // 幕：ゆっくり動き出して一気に開く
+  const EASE_WIPE = "expo.inOut"; // 写真と幕が下から上へせり上がる
   const START = "top 86%"; // 画面に入ってすぐ
   const INTRO_SKIP_SCALE = 2.5; // イントロ中に操作されたら早送りする倍率
   const LEAVE_MS = 760; // 金の線が伸びて面になり、画面を覆うまで
@@ -278,57 +278,75 @@
   }
 
   // ---------- メインビジュアル ----------
-  // 表示時：暗い幕に小さなロゴ → 幕が中央から上下に開く → 写真が引く → タイトルが 1 文字ずつ現れる
+  // 表示時：ページの幕が開く → 写真が引く → ブランドロゴと補助 UI が現れる
   function heroIntro() {
     const hero = document.querySelector(".hero");
     if (!hero) return () => {};
     const q = gsap.utils.selector(hero);
-    const brand = q(".hero__brand")[0];
+    const identity = q(".hero__identity")[0];
     const header = document.getElementById("header");
-    const blur = window.matchMedia("(min-width: 861px)").matches ? "blur(12px)" : "blur(0px)";
+    const veil = addNode(hero, "m-hero-veil", "div");
+    const seam = addNode(document.body, "m-opening-seam", "div");
 
-    const intro = addNode(document.body, "m-intro", "div");
-    const top = addNode(intro, "m-intro__half m-intro__half--top");
-    const bottom = addNode(intro, "m-intro__half m-intro__half--bottom");
-    const logo = addNode(intro, "m-intro__logo");
-    logo.textContent = "SATSUMA NOIR";
+    const tl = gsap.timeline({
+      defaults: { ease: EASE },
+      onComplete: () => {
+        veil.remove();
+        seam.remove();
+      },
+    });
 
-    const tl = gsap.timeline({ defaults: { ease: EASE }, onComplete: () => intro.remove() });
+    // 1：画面下で金の線が伸び、黒い幕の下端と一緒に上へ抜ける。
+    tl.fromTo(
+      seam,
+      { opacity: 0, scaleX: 0, y: 0 },
+      { opacity: 1, scaleX: 1, duration: 0.32, ease: "power3.out" },
+      0
+    )
+      .to(seam, { y: () => -window.innerHeight, duration: 1.35, ease: EASE_WIPE }, 0.32)
+      .to(seam, { opacity: 0, duration: 0.25, ease: "power2.in" }, 1.42);
 
-    // 1〜2：暗い画面に小さなロゴ
-    tl.fromTo(logo, { opacity: 0, scaleX: 1.12 }, { opacity: 1, scaleX: 1, duration: 1.1, ease: "power2.out" }, 0.2);
-    // 3：幕が中央から上下に開き、写真が現れる
-    tl.to([top, bottom], { scaleY: 0, duration: 1.5, ease: EASE_WIPE }, 1.1);
-    // 4：写真は寄った状態からゆっくり引く（CSS 変数で動かし、スクロール連動の transform と分ける）
-    tl.fromTo(q(".hero__track"), { "--hero-zoom": 1.15 }, { "--hero-zoom": 1, duration: 2.8, ease: "power2.out" }, 1.1);
-    tl.to(logo, { opacity: 0, duration: 0.5, ease: "power1.in" }, 1.7);
-    // 5：タイトルは 1 文字ずつ、ぼけた状態から下からせり上がる
-    if (brand) {
-      // スクロールで字間を広げるとき用に、中央からの位置を各文字に持たせる
-      const chars = splitChars(brand);
-      const mid = (chars.length - 1) / 2;
-      chars.forEach((ch, i) => ch.style.setProperty("--i", String(i - mid)));
-      // SATSUMA は左へ、NOIR は右へ分かれる
-      brand.querySelectorAll(".m-word").forEach((word, i) => word.style.setProperty("--dir", i === 0 ? "-1" : "1"));
+    // 2：金の線を追うように、商品写真を下から上へ開く。
+    tl.fromTo(
+      q(".hero__track"),
+      { "--hero-zoom": 1.12, clipPath: "inset(100% 0 0 0)" },
+      {
+        "--hero-zoom": 1,
+        clipPath: "inset(0% 0 0 0)",
+        duration: 1.55,
+        ease: EASE_WIPE,
+        clearProps: "clipPath",
+      },
+      0.32
+    );
+    // 写真のスリットが開くのに合わせ、暗いベールを外す。
+    tl.fromTo(veil, { opacity: 1 }, { opacity: 0, duration: 1.35, ease: "power2.out" }, 0.58);
+    // 3：ロゴも写真と同じ方向に、下から上へせり上げる。
+    if (identity) {
       tl.fromTo(
-        chars,
-        { opacity: 0, yPercent: 60, filter: blur },
-        { opacity: 1, yPercent: 0, filter: "blur(0px)", duration: 1.3, ease: EASE_HEAD, stagger: 0.045, clearProps: "filter" },
-        1.9
+        identity,
+        { opacity: 0, y: 42, scale: 0.98, clipPath: "inset(100% 0 0 0)" },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          clipPath: "inset(0% 0 0% 0)",
+          duration: 1.25,
+          ease: EASE_HEAD,
+          clearProps: "transform,opacity,clipPath",
+        },
+        0.88
       );
     }
-    // 6：残りを少しずつ
-    line(tl, q(".hero__rule")[0], 2.4);
-    rise(tl, q(".hero__sub"), 2.55, { y: 16, duration: 1 });
-    rise(tl, q(".hero__tagline"), 2.7, { y: 16, duration: 1 });
+    // 4：ヘッダーと補助 UI を少しずつ表示。
     if (header) {
-      tl.fromTo(header, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 1.1, clearProps: "transform,opacity" }, 2.6);
+      tl.fromTo(header, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 1.05, clearProps: "transform,opacity" }, 1.25);
     }
     tl.fromTo(
       q(".hero__side, .hero__news, .hero__dots, .hero__scroll"),
-      { opacity: 0 },
-      { opacity: 1, duration: 0.9, stagger: 0.08, clearProps: "opacity" },
-      2.8
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.9, stagger: 0.08, clearProps: "transform,opacity" },
+      1.38
     );
 
     // 途中で操作されたら早送りして、待たせない
@@ -338,12 +356,13 @@
 
     return () => {
       events.forEach((type) => window.removeEventListener(type, skip));
-      intro.remove();
+      veil.remove();
+      seam.remove();
     };
   }
 
   // スクロール：メインビジュアルを固定し、1 本のタイムラインで ABOUT へつなぐ。
-  //   UI が消える → SATSUMA / NOIR が左右に分かれる → 中央へ寄りながらぼやける → 暗くなって濃茶 → ABOUT が重なる
+  //   ヒーロー内の補助 UI が消える → SATSUMA / NOIR が左右に分かれる → 中央へ寄りながらぼやける → 暗くなって濃茶 → ABOUT が重なる
   // 文字まわりは CSS 変数で動かす（表示時のイントロと同じプロパティを取り合わないため）。
   // 毎フレーム動かすのは transform と opacity だけ。ぼかしは「あらかじめぼかした写真」を重ねて濃くしていく
   // （ぼかしの量そのものを動かすと、全画面を毎フレーム計算し直すことになり重い）
@@ -353,7 +372,6 @@
     const hero = document.querySelector(".hero");
     if (!hero) return () => {};
     const track = hero.querySelector(".hero__track");
-    const header = document.getElementById("header");
     const soft = addNode(hero, "m-soft");
     const vignette = addNode(hero, "m-scene m-scene--vignette");
     const brown = addNode(hero, "m-scene m-scene--void");
@@ -362,11 +380,12 @@
     // ぼかした写真には、いま表示中のスライドを使う
     const syncSoft = () => {
       const slides = track.querySelectorAll(".hero__img");
-      const current = slides[Math.round(track.scrollLeft / Math.max(track.clientWidth, 1))] || slides[0];
+      const current = track.querySelector(".hero__img.is-active") || slides[0];
       const image = current ? `url("${current.currentSrc || current.src}")` : "";
       if (soft.style.backgroundImage !== image) soft.style.backgroundImage = image;
     };
     syncSoft();
+    track.addEventListener("hero:slidechange", syncSoft);
 
     gsap.set([track, soft], { scale: baseScale });
     const tl = gsap
@@ -382,9 +401,8 @@
           // 固定で増える高さを、先に作った下のセクションの位置にも反映させるため、最初に測り直す
           refreshPriority: 1,
           onEnter: syncSoft,
-          // 場面の間はヘッダーを退かせる（ABOUT が現れるころに戻す）
-          onUpdate: (self) =>
-            header && header.classList.toggle("is-away", self.progress > 0.02 && self.progress < 0.9),
+          // ヘッダーはスクロール中も常に表示する。
+          // 視認性は app.js が付ける is-scrolled の半透明背景で確保する。
         },
       })
       // スクロールし始めた瞬間からズームが動く（待ち時間を作らない。速さは一定）
@@ -409,8 +427,8 @@
       .to({}, { duration: 0.26 });
 
     return () => {
+      track.removeEventListener("hero:slidechange", syncSoft);
       tl.kill();
-      if (header) header.classList.remove("is-away");
       [soft, vignette, brown, morph].forEach((node) => node.remove());
     };
   }
@@ -690,6 +708,9 @@
     return;
   }
 
-  // 初期状態を入れ終えてから幕を引く
-  requestAnimationFrame(() => root.classList.add("is-entered"));
+  // トップは画面下の金の線が伸びてから、幕を上へ引く。下層ページは待たせない。
+  requestAnimationFrame(() => {
+    if (root.classList.contains("home-page")) setTimeout(() => root.classList.add("is-entered"), 320);
+    else root.classList.add("is-entered");
+  });
 })();

@@ -445,7 +445,7 @@ img { display: block; max-width: 100%; }
 .hero {
   position: relative;
   height: 100vh;
-  min-height: 600px;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -457,22 +457,27 @@ img { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   z-index: 0;
-  display: flex;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  scroll-behavior: smooth;
+  overflow: hidden;
+  touch-action: pan-y;
 }
-.hero__track::-webkit-scrollbar { display: none; }
 .hero__img {
-  flex: 0 0 100%;
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  scroll-snap-align: center;
-  scroll-snap-stop: always;
+  opacity: 0;
+  transform: scale(1.025);
+  transition:
+    opacity 2.6s cubic-bezier(0.45, 0, 0.2, 1),
+    transform 8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  pointer-events: none;
+  user-select: none;
+}
+.hero__img.is-active {
+  z-index: 1;
+  opacity: 1;
+  transform: scale(1);
 }
 /* ドットインジケーター */
 .hero__dots {
@@ -525,6 +530,17 @@ img { display: block; max-width: 100%; }
   position: relative;
   z-index: 2;
   padding: 0 1.5rem;
+}
+.hero__identity {
+  display: block;
+  width: min(106vw, 920px, 142dvh);
+  max-width: none;
+  flex-shrink: 0;
+  height: auto;
+  margin: 0 auto;
+  /* 透過 PNG の黒いロゴを白く反転して写真に重ねる */
+  filter: invert(1);
+  opacity: 0.96;
 }
 /* 表示時・スクロール時の動きは motion.js（GSAP）が担当する。
    heroFade はログイン画面のタブ切り替えで使用 */
@@ -8017,6 +8033,20 @@ html.has-motion::after {
 }
 html.has-motion::before { left: 0; transform-origin: left center; }
 html.has-motion::after { right: 0; transform-origin: right center; }
+/* トップの初期画面は写真を際立たせる黒い幕にする */
+html.has-motion.home-page::before,
+html.has-motion.home-page::after { background: #0a0a0b; }
+html.has-motion.home-page::before {
+  left: 0;
+  right: 0;
+  width: 100%;
+}
+html.has-motion.home-page::after { display: none; }
+html.has-motion.home-page.is-entered::before {
+  transform: translateY(-100%);
+  visibility: hidden;
+  transition: transform 1.35s cubic-bezier(0.76, 0, 0.24, 1), visibility 0s linear 1.35s;
+}
 html.has-motion.is-entered::before,
 html.has-motion.is-entered::after {
   transform: scaleX(0);
@@ -8045,40 +8075,39 @@ html.has-motion .hero__track {
   translate: var(--hero-mx, 0px) var(--hero-my, 0px) !important;
 }
 html.has-motion .hero__center { translate: var(--hero-tx, 0px) var(--hero-ty, 0px) !important; }
+.m-hero-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: #0a0a0b;
+}
+.m-opening-seam {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 201;
+  height: 1px;
+  pointer-events: none;
+  background: rgba(201, 164, 91, 0.88);
+  transform-origin: center;
+}
 /* 固定中のスクロールで、まわりの文字を薄くする */
 html.has-motion .hero__side,
 html.has-motion .hero__news,
 html.has-motion .hero__dots,
 html.has-motion .hero__scroll { opacity: var(--hero-fade, 1); }
 
-/* イントロ：暗い幕（上下 2 枚）と小さなロゴ。操作は妨げない */
-.m-intro { position: fixed; inset: 0; z-index: 150; pointer-events: none; }
-.m-intro__half { position: absolute; left: 0; right: 0; height: 50.5%; background: var(--void); }
-.m-intro__half--top { top: 0; transform-origin: top; }
-.m-intro__half--bottom { bottom: 0; transform-origin: bottom; }
-.m-intro__logo {
-  position: absolute;
-  left: 0; right: 0; top: 50%;
-  margin-top: -0.9em;
-  text-align: center;
-  font-family: "Cormorant Garamond", "Times New Roman", serif;
-  font-size: clamp(0.8rem, 1.1vw, 1rem);
-  font-weight: 500;
-  letter-spacing: 0.72em;
-  padding-left: 0.72em;
-  color: #e9dfcc;
-  opacity: 0;
-}
-
 /* FV → ABOUT：固定中のスクロールで、文字まわりは CSS 変数で動かす */
-html.has-motion .hero__brand { opacity: var(--hero-title, 1); }
+html.has-motion .hero__brand,
+html.has-motion .hero__identity { opacity: var(--hero-title, 1); }
 /* 字間を広げる代わりに、各文字を中央からの位置（--i）に応じて左右へずらす */
 html.has-motion .hero__brand .m-ch { translate: calc(var(--i, 0) * var(--hero-spread, 0px)) 0 !important; }
 /* SATSUMA（--dir: -1）は左へ、NOIR（--dir: 1）は右へ分かれる */
 html.has-motion .hero__brand .m-word { translate: calc(var(--dir, 0) * var(--hero-split, 0vw)) 0; }
-/* 場面の間はヘッダーを退かせる */
+/* ヘッダーの背景・登場アニメーション */
 html.has-motion .home .header { transition: background 0.5s var(--ease), border-color 0.5s var(--ease), opacity 0.6s var(--ease), visibility 0.6s; }
-html.has-motion .home .header.is-away { opacity: 0; visibility: hidden; }
 html.has-motion .hero__rule,
 html.has-motion .hero__sub,
 html.has-motion .hero__tagline { opacity: var(--hero-sub, 1); }
@@ -8155,6 +8184,7 @@ html.has-motion .home .overview--photo::before {
 html.has-motion .hero__track { will-change: transform; }
 @media (prefers-reduced-motion: reduce) {
   .hero__scroll::before { animation: none; }
+  .hero__img { transition: none; transform: none; }
 }
 
 
